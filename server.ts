@@ -349,6 +349,330 @@ async function startServer() {
     }
   });
 
+  // Student Management APIs
+  app.post('/api/students/create', checkPermission('manageStudents'), async (req, res) => {
+    try {
+      const { email, password, displayName, classId, section, linkedParentIds } = req.body;
+      const creator = (req as any).user;
+
+      // 1. Create Auth User
+      const userRecord = await admin.auth().createUser({
+        email,
+        password,
+        displayName,
+      });
+
+      const studentData = {
+        uid: userRecord.uid,
+        email,
+        displayName,
+        roles: ['student'],
+        classId: classId || null,
+        section: section || null,
+        linkedParentIds: linkedParentIds || [],
+        createdBy: creator.uid,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        permissions: { submitAssignments: true, viewOwnRecords: true }
+      };
+
+      // 2. Set Claims
+      await admin.auth().setCustomUserClaims(userRecord.uid, {
+        roles: studentData.roles,
+        classId: studentData.classId,
+        permissions: studentData.permissions
+      });
+
+      // 3. Create Firestore Doc
+      await admin.firestore().collection('users').doc(userRecord.uid).set(studentData);
+
+      // 4. Log Audit
+      await admin.firestore().collection('auditLogs').add({
+        action: 'create',
+        targetUid: userRecord.uid,
+        performedBy: creator.uid,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        details: `Created student: ${displayName} (${email})`
+      });
+
+      res.status(201).json({ uid: userRecord.uid, success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.put('/api/students/:uid', checkPermission('manageStudents'), async (req, res) => {
+    try {
+      const { uid } = req.params;
+      const { displayName, classId, section, linkedParentIds, roles } = req.body;
+      const updater = (req as any).user;
+
+      const updateData: any = {
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      };
+      if (displayName !== undefined) updateData.displayName = displayName;
+      if (classId !== undefined) updateData.classId = classId;
+      if (section !== undefined) updateData.section = section;
+      if (linkedParentIds !== undefined) updateData.linkedParentIds = linkedParentIds;
+      if (roles !== undefined) updateData.roles = roles;
+
+      await admin.firestore().collection('users').doc(uid).update(updateData);
+
+      // Log Audit
+      await admin.firestore().collection('auditLogs').add({
+        action: 'update',
+        targetUid: uid,
+        performedBy: updater.uid,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        details: `Updated student record. Fields: ${Object.keys(updateData).join(', ')}`
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/students/:uid', checkPermission('manageStudents'), async (req, res) => {
+    try {
+      const { uid } = req.params;
+      const deleter = (req as any).user;
+
+      await admin.auth().deleteUser(uid);
+      await admin.firestore().collection('users').doc(uid).delete();
+
+      // Log Audit
+      await admin.firestore().collection('auditLogs').add({
+        action: 'delete',
+        targetUid: uid,
+        performedBy: deleter.uid,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        details: `Deleted student user and record.`
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/students/bulk-import', checkPermission('manageStudents'), async (req, res) => {
+    try {
+      const { students } = req.body; // Array of student objects
+      const creator = (req as any).user;
+      const results = [];
+
+      for (const student of students) {
+        try {
+          const userRecord = await admin.auth().createUser({
+            email: student.email,
+            password: student.password || 'TempPass123!',
+            displayName: student.displayName,
+          });
+
+          const studentData = {
+            uid: userRecord.uid,
+            email: student.email,
+            displayName: student.displayName,
+            roles: ['student'],
+            classId: student.classId || null,
+            section: student.section || null,
+            linkedParentIds: [],
+            createdBy: creator.uid,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            permissions: { submitAssignments: true, viewOwnRecords: true }
+          };
+
+          await admin.auth().setCustomUserClaims(userRecord.uid, {
+            roles: studentData.roles,
+            classId: studentData.classId,
+            permissions: studentData.permissions
+          });
+
+          await admin.firestore().collection('users').doc(userRecord.uid).set(studentData);
+          results.push({ email: student.email, success: true, uid: userRecord.uid });
+        } catch (err) {
+          results.push({ email: student.email, success: false, error: (err as Error).message });
+        }
+      }
+
+      // Log Bulk Audit
+      await admin.firestore().collection('auditLogs').add({
+        action: 'bulk_import',
+        performedBy: creator.uid,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        details: `Bulk imported ${results.filter(r => r.success).length} students.`
+      });
+
+      res.json({ results, success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // Teacher Management APIs
+  app.post('/api/teachers/create', checkPermission('manageTeachers'), async (req, res) => {
+    try {
+      const { email, password, displayName, subjects, classes } = req.body;
+      const creator = (req as any).user;
+
+      const userRecord = await admin.auth().createUser({
+        email,
+        password,
+        displayName,
+      });
+
+      const teacherData = {
+        uid: userRecord.uid,
+        email,
+        displayName,
+        roles: ['teacher'],
+        subjects: subjects || [],
+        classes: classes || [],
+        createdBy: creator.uid,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        permissions: {
+          manageStudents: true,
+          manageAnnouncements: true,
+          manageAttendance: true,
+          manageAssignments: true,
+          managePerformance: true
+        }
+      };
+
+      await admin.auth().setCustomUserClaims(userRecord.uid, {
+        roles: teacherData.roles,
+        permissions: teacherData.permissions
+      });
+
+      await admin.firestore().collection('users').doc(userRecord.uid).set(teacherData);
+
+      await admin.firestore().collection('auditLogs').add({
+        action: 'create_teacher',
+        targetUid: userRecord.uid,
+        performedBy: creator.uid,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        details: `Created teacher: ${displayName} (${email})`
+      });
+
+      res.status(201).json({ uid: userRecord.uid, success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.put('/api/teachers/:uid', checkPermission('manageTeachers'), async (req, res) => {
+    try {
+      const { uid } = req.params;
+      const { displayName, subjects, classes, roles } = req.body;
+      const updater = (req as any).user;
+
+      const updateData: any = {
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      };
+      if (displayName !== undefined) updateData.displayName = displayName;
+      if (subjects !== undefined) updateData.subjects = subjects;
+      if (classes !== undefined) updateData.classes = classes;
+      if (roles !== undefined) updateData.roles = roles;
+
+      await admin.firestore().collection('users').doc(uid).update(updateData);
+
+      await admin.firestore().collection('auditLogs').add({
+        action: 'update_teacher',
+        targetUid: uid,
+        performedBy: updater.uid,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        details: `Updated teacher record. Fields: ${Object.keys(updateData).join(', ')}`
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/teachers/:uid', checkPermission('manageTeachers'), async (req, res) => {
+    try {
+      const { uid } = req.params;
+      const deleter = (req as any).user;
+
+      await admin.auth().deleteUser(uid);
+      await admin.firestore().collection('users').doc(uid).delete();
+
+      await admin.firestore().collection('auditLogs').add({
+        action: 'delete_teacher',
+        targetUid: uid,
+        performedBy: deleter.uid,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        details: `Deleted teacher user and record.`
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/teachers/bulk-import', checkPermission('manageTeachers'), async (req, res) => {
+    try {
+      const { teachers } = req.body;
+      const creator = (req as any).user;
+      const results = [];
+
+      for (const teacher of teachers) {
+        try {
+          const userRecord = await admin.auth().createUser({
+            email: teacher.email,
+            password: teacher.password || 'StaffPass123!',
+            displayName: teacher.displayName,
+          });
+
+          const teacherData = {
+            uid: userRecord.uid,
+            email: teacher.email,
+            displayName: teacher.displayName,
+            roles: ['teacher'],
+            subjects: teacher.subjects || [],
+            classes: teacher.classes || [],
+            createdBy: creator.uid,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            permissions: {
+              manageStudents: true,
+              manageAnnouncements: true,
+              manageAttendance: true,
+              manageAssignments: true,
+              managePerformance: true
+            }
+          };
+
+          await admin.auth().setCustomUserClaims(userRecord.uid, {
+            roles: teacherData.roles,
+            permissions: teacherData.permissions
+          });
+
+          await admin.firestore().collection('users').doc(userRecord.uid).set(teacherData);
+          results.push({ email: teacher.email, success: true, uid: userRecord.uid });
+        } catch (err) {
+          results.push({ email: teacher.email, success: false, error: (err as Error).message });
+        }
+      }
+
+      await admin.firestore().collection('auditLogs').add({
+        action: 'bulk_import_teachers',
+        performedBy: creator.uid,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        details: `Bulk imported ${results.filter(r => r.success).length} teachers.`
+      });
+
+      res.json({ results, success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
   // Example API route: Set User Permissions (Financial Admin only)
   app.post('/api/roles', checkPermission('financialOps'), async (req, res) => {
     const { uid, roles, isAdmin, permissions } = req.body;

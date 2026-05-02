@@ -25,6 +25,8 @@ import { RoleGuard } from './components/RoleGuard';
 import { AnnouncementsPage } from './pages/Announcements';
 import { AttendancePage } from './pages/Attendance';
 import { UsersPage } from './pages/Users';
+import { StudentsPage } from './pages/Students';
+import { TeachersPage } from './pages/Teachers';
 import { AssignmentsPage } from './pages/Assignments';
 import { ChatPage } from './pages/Chat';
 import { LibraryPage } from './pages/Library';
@@ -376,15 +378,15 @@ const AppContent = () => {
         <Route path="/performance" element={<PerformancePage />} />
         <Route path="/students" element={
           <RoleGuard allowedRoles={['teacher', 'staff', 'admin']}>
-            <UsersPage type="student" />
+            <StudentsPage />
           </RoleGuard>
         } />
         <Route path="/teachers" element={
           <RoleGuard allowedRoles={['staff', 'admin']}>
-            <UsersPage type="teacher" />
+            <TeachersPage />
           </RoleGuard>
         } />
-        <Route path="*" element={<Navigate to="/" />} />
+        <Route path="/all-users" element={
       </Routes>
     </Layout>
   );

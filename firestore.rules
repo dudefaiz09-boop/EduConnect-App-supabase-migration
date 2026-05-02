@@ -39,13 +39,24 @@ service cloud.firestore {
 
     // USERS
     match /users/{userId} {
-      allow get: if isSignedIn() && (request.auth.uid == userId || can('manageStudents') || can('manageTeachers'));
+      allow get: if isSignedIn() && (
+        request.auth.uid == userId || 
+        can('manageStudents') || 
+        can('manageTeachers') ||
+        (request.auth.uid in resource.data.linkedParentIds)
+      );
       allow list: if can('manageStudents') || can('manageTeachers');
       
       allow update: if isSignedIn() && (
           can('financialOps') || 
           (request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL']))
       );
+    }
+
+    // AUDIT LOGS
+    match /auditLogs/{logId} {
+      allow read: if can('manageStudents') || can('manageTeachers') || hasRole('principal') || hasRole('staff');
+      allow write: if false; // Only server-side via Admin SDK
     }
 
     // ANNOUNCEMENTS

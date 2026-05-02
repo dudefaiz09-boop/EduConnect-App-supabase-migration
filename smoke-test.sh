@@ -2,7 +2,7 @@
 
 # Configuration
 API_KEY="AIzaSyAMBaqtdxkZ1MUKwLrA7k_JzDA4eLwPpxQ"
-LOCAL_URL="http://localhost:8080"
+LOCAL_URL="http://localhost:3000"
 
 echo "🔍 Starting EduConnect Smoke Tests..."
 echo "-----------------------------------"
@@ -154,6 +154,34 @@ AI_TIPS=$(curl -s -X POST "${LOCAL_URL}/api/performance/ai-suggestions" \
   -H "Content-Type: application/json" \
   -d "{\"studentId\":\"$STUDENT_A_UID\",\"records\":$STUDENT_PERF}")
 echo "AI Study Tips: $AI_TIPS"
+
+# 10. Student Management Tests
+echo "📝 Testing Student Management APIs..."
+NEW_STUDENT_EMAIL="new.student.$(date +%s)@educonnect.test"
+CREATE_STUDENT_RESP=$(curl -s -X POST "${LOCAL_URL}/api/students/create" \
+  -H "Authorization: Bearer ${TEACHER_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"$NEW_STUDENT_EMAIL\",\"password\":\"TestPass123!\",\"displayName\":\"New Student\",\"classId\":\"10A\",\"section\":\"A\"}")
+NEW_UID=$(echo $CREATE_STUDENT_RESP | jq -r '.uid')
+echo "Created Student UID: $NEW_UID"
+
+test_endpoint "Update Student Record" "$TEACHER_TOKEN" "PUT" "/api/students/$NEW_UID" '{"displayName":"Updated Student Name","classId":"10B"}'
+
+test_endpoint "Bulk Student Import" "$TEACHER_TOKEN" "POST" "/api/students/bulk-import" '{"students":[{"email":"bulk1@educonnect.test","displayName":"Bulk Student 1","classId":"9A"},{"email":"bulk2@educonnect.test","displayName":"Bulk Student 2","classId":"9B"}]}'
+
+# 11. Teacher Management Tests
+echo "📝 Testing Teacher Management APIs..."
+NEW_TEACHER_EMAIL="new.teacher.$(date +%s)@educonnect.test"
+CREATE_TEACHER_RESP=$(curl -s -X POST "${LOCAL_URL}/api/teachers/create" \
+  -H "Authorization: Bearer ${PRINCIPAL_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"$NEW_TEACHER_EMAIL\",\"password\":\"StaffPass123!\",\"displayName\":\"New Teacher\",\"subjects\":[\"History\"],\"classes\":[\"10A\"]}")
+NEW_T_UID=$(echo $CREATE_TEACHER_RESP | jq -r '.uid')
+echo "Created Teacher UID: $NEW_T_UID"
+
+test_endpoint "Update Teacher Record" "$PRINCIPAL_TOKEN" "PUT" "/api/teachers/$NEW_T_UID" '{"displayName":"Updated Teacher Name","subjects":["History", "Civics"]}'
+
+test_endpoint "Bulk Teacher Import" "$PRINCIPAL_TOKEN" "POST" "/api/teachers/bulk-import" '{"teachers":[{"email":"tbulk1@educonnect.test","displayName":"Bulk Teacher 1","subjects":["Art"]},{"email":"tbulk2@educonnect.test","displayName":"Bulk Teacher 2","subjects":["Music"]}]}'
 
 echo "-----------------------------------"
 echo "✅ Smoke tests completed."
