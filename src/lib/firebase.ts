@@ -3,9 +3,14 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json' with { type: 'json' };
 
-const app = initializeApp(firebaseConfig);
+const firebaseConfigWithOverrides = {
+  ...firebaseConfig,
+  apiKey: (typeof process !== 'undefined' && process.env?.FIREBASE_API_KEY) || firebaseConfig.apiKey
+};
+
+const app = initializeApp(firebaseConfigWithOverrides);
 export const auth = getAuth(app);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = getFirestore(app, firebaseConfigWithOverrides.firestoreDatabaseId);
 
 async function testConnection() {
   try {

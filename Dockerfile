@@ -10,9 +10,9 @@ RUN npm run build
 FROM node:20-slim
 WORKDIR /app
 
-# Install production dependencies only
+# Install dependencies (including tsx)
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN npm install
 
 # Copy built assets and server code
 COPY --from=builder /app/dist ./dist
@@ -25,5 +25,5 @@ EXPOSE 8080
 ENV PORT=8080
 ENV NODE_ENV=production
 
-# Start the application
-CMD ["npm", "start"]
+# Start the application using tsx directly to avoid complex build steps
+CMD ["npx", "tsx", "server.ts"]

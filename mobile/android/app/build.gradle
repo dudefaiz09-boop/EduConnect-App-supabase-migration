@@ -1,0 +1,16 @@
+apply plugin: "com.android.application"
+apply plugin: "com.facebook.react"
+apply plugin: "com.google.gms.google-services"
+
+android {
+    namespace "com.educonnect.app"
+    compileSdkVersion 34
+
+    defaultConfig {
+        applicationId "com.educonnect.app"
+        minSdkVersion 23
+        targetSdkVersion 34
+        versionCode 1
+        versionName "1.0"
+    }
+}
