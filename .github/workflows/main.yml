@@ -4,14 +4,14 @@ on:
   push:
     branches: [ main ]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   # --- Backend & Website Job ---
   backend-deploy:
     if: "!contains(github.event.head_commit.message, 'skip ci')"
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: .
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -19,9 +19,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
-          cache-dependency-path: 'EduConnect-App/package-lock.json'
+          cache-dependency-path: 'package-lock.json'
 
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v2
@@ -30,28 +30,27 @@ jobs:
 
       - name: Create Firebase Config
         run: |
-          echo '${{ secrets.FIREBASE_APPLET_CONFIG }}' > EduConnect-App/firebase-applet-config.json
+          echo '${{ secrets.FIREBASE_APPLET_CONFIG }}' > firebase-applet-config.json
 
       - name: Install Dependencies
-        run: cd EduConnect-App && npm install
+        run: npm install
 
       - name: Build Frontend
-        run: cd EduConnect-App && npm run build
+        run: npm run build
         env:
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
           FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
 
       - name: Run Linting
-        run: cd EduConnect-App && npm run lint
+        run: npm run lint
 
       - name: Seed Database
-        run: cd EduConnect-App && npm run seed
+        run: npm run seed
         env:
           FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
 
       - name: Run Smoke Tests
         run: |
-          cd EduConnect-App
           # Start server in background (port 8080 as per Dockerfile/server.ts)
           npm start &
           
@@ -80,7 +79,6 @@ jobs:
 
       - name: Build & Deploy to Cloud Run
         run: |
-          cd EduConnect-App
           gcloud run deploy educonnect-app \
             --source . \
             --project ${{ secrets.GCP_PROJECT }} \
@@ -101,7 +99,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -111,20 +109,16 @@ jobs:
 
       - name: Decode Google Services JSON
         run: |
-          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > EduConnect-App/mobile/android/app/google-services.json
+          mkdir -p mobile/android/app
+          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > mobile/android/app/google-services.json
 
       - name: Install Mobile Dependencies
         run: |
-          if [ -d "EduConnect-App/mobile" ]; then
-            cd EduConnect-App/mobile && npm install
-          else
-            echo "Mobile directory not found. Skipping build."
-            exit 1
-          fi
+          cd mobile && npm install
 
       - name: Build Android APK
         run: |
-          cd EduConnect-App/mobile/android
+          cd mobile/android
           chmod +x gradlew
           ./gradlew assembleRelease
 
@@ -132,12 +126,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
-          path: EduConnect-App/mobile/android/app/build/outputs/apk/release/app-release.apk
+          path: mobile/android/app/build/outputs/apk/release/app-release.apk
 
       - name: Upload to Firebase App Distribution
         uses: w9jds/firebase-action@master
         with:
-          args: appdistribution:distribute EduConnect-App/mobile/android/app/build/outputs/apk/release/app-release.apk --app ${{ secrets.FIREBASE_APP_ID_ANDROID }} --groups testers
+          args: appdistribution:distribute mobile/android/app/build/outputs/apk/release/app-release.apk --app ${{ secrets.FIREBASE_APP_ID_ANDROID }} --groups testers
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
