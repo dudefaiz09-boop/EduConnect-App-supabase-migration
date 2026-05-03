@@ -127,5 +127,5 @@ jobs:
         with:
           args: appdistribution:distribute EduConnect-App/mobile/android/app/build/outputs/apk/release/app-release.apk --app ${{ secrets.FIREBASE_APP_ID_ANDROID }} --groups testers
         env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          GCP_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
 
