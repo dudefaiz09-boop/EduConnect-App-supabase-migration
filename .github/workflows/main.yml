@@ -128,6 +128,12 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease
 
+      - name: Upload APK to GitHub Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: EduConnect-App/mobile/android/app/build/outputs/apk/release/app-release.apk
+
       - name: Upload to Firebase App Distribution
         uses: w9jds/firebase-action@master
         with:
