@@ -9,9 +9,6 @@ jobs:
   backend-deploy:
     if: "!contains(github.event.head_commit.message, 'skip ci')"
     runs-on: ubuntu-latest
-    # Trigger only if files OUTSIDE the mobile folder change
-    # Note: GitHub Actions paths work best for PRs or push. 
-    # For concurrent jobs in a monorepo, we use 'paths-ignore'.
     defaults:
       run:
         working-directory: .
@@ -26,11 +23,23 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'EduConnect-App/package-lock.json'
 
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Create Firebase Config
+        run: |
+          echo '${{ secrets.FIREBASE_APPLET_CONFIG }}' > EduConnect-App/firebase-applet-config.json
+
       - name: Install Dependencies
         run: cd EduConnect-App && npm install
 
       - name: Build Frontend
         run: cd EduConnect-App && npm run build
+        env:
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
 
       - name: Run Linting
         run: cd EduConnect-App && npm run lint
@@ -43,13 +52,13 @@ jobs:
       - name: Run Smoke Tests
         run: |
           cd EduConnect-App
-          # Start server in background (port 3000)
+          # Start server in background (port 8080 as per Dockerfile/server.ts)
           npm start &
           
           # Wait for server to be ready
           MAX_RETRIES=30
           COUNT=0
-          until $(curl -sSf http://localhost:3000/api/health > /dev/null); do
+          until $(curl -sSf http://localhost:8080/api/health > /dev/null); do
             if [ $COUNT -eq $MAX_RETRIES ]; then
               echo "Server failed to start"
               exit 1
@@ -63,14 +72,11 @@ jobs:
           bash smoke-test.sh
         env:
           FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PORT: 8080
           
           # Cleanup
           kill $(jobs -p) || true
-
-      - name: Authenticate with Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
       - name: Build & Deploy to Cloud Run
         run: |
@@ -127,5 +133,5 @@ jobs:
         with:
           args: appdistribution:distribute EduConnect-App/mobile/android/app/build/outputs/apk/release/app-release.apk --app ${{ secrets.FIREBASE_APP_ID_ANDROID }} --groups testers
         env:
-          GCP_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
