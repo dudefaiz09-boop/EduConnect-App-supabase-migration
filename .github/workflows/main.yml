@@ -23,12 +23,18 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'package-lock.json'
 
+      - name: Verify GCP Credentials Secret
+        run: |
+          if [ -z "${{ secrets.GCP_CREDENTIALS }}" ]; then
+            echo "::error::GCP_CREDENTIALS secret is MISSING. Please add it in Settings > Secrets > Actions."
+            exit 1
+          fi
+
       - name: Authenticate with Google Cloud
         id: auth
         uses: google-github-actions/auth@v2.1.3
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
-          project_id: ${{ secrets.GCP_PROJECT }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2.1.1
@@ -94,8 +100,7 @@ jobs:
 
   # --- Mobile (React Native) Job ---
   mobile-distribute:
-    needs: backend-deploy
-    if: always() && needs.backend-deploy.result == 'success'
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -139,4 +144,3 @@ jobs:
           args: appdistribution:distribute mobile/android/app/build/outputs/apk/release/app-release.apk --app ${{ secrets.FIREBASE_APP_ID_ANDROID }} --groups testers
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-
