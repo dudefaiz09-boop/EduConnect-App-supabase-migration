@@ -9,5 +9,9 @@ plugins {
     id("com.facebook.react.settings")
 }
 
+extensions.configure(com.facebook.react.ReactSettingsExtension) {
+    it.autolinkLibrariesFromCommand()
+}
+
 rootProject.name = 'EduConnect'
 include ':app'

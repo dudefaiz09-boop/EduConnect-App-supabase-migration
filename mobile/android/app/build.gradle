@@ -12,6 +12,10 @@ react {
     /* Folders */
     //   The root of your project, i.e. where "package.json" lives. Default is '..'
     root = file("../../")
+    
+    autolink {
+        autolinkInputFile = file("${project.rootProject.buildDir}/generated/autolinking/autolinking.json")
+    }
 }
 
 android {
