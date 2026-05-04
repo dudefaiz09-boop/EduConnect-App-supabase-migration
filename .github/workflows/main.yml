@@ -143,7 +143,7 @@ jobs:
           path: mobile/android/app/build/outputs/apk/release/app-release.apk
 
       - name: Upload to Firebase App Distribution
-        uses: w9jds/firebase-action@v2.6.4
+        uses: w9jds/firebase-action@master
         with:
           args: appdistribution:distribute mobile/android/app/build/outputs/apk/release/app-release.apk --app ${{ secrets.FIREBASE_APP_ID_ANDROID }} --groups testers
         env:
