@@ -134,8 +134,14 @@ jobs:
       - name: Build Android APK
         run: |
           cd mobile/android
+          echo "${{ secrets.MYAPP_RELEASE_STORE_FILE_BASE64 }}" | base64 -d > release.keystore
           chmod +x gradlew
-          ./gradlew assembleRelease --stacktrace --info
+          ./gradlew assembleRelease \
+            -PMYAPP_RELEASE_STORE_FILE=release.keystore \
+            -PMYAPP_RELEASE_STORE_PASSWORD='${{ secrets.MYAPP_RELEASE_STORE_PASSWORD }}' \
+            -PMYAPP_RELEASE_KEY_ALIAS='${{ secrets.MYAPP_RELEASE_KEY_ALIAS }}' \
+            -PMYAPP_RELEASE_KEY_PASSWORD='${{ secrets.MYAPP_RELEASE_KEY_PASSWORD }}' \
+            --stacktrace --info
 
       - name: Upload APK to GitHub Actions
         uses: actions/upload-artifact@v4
