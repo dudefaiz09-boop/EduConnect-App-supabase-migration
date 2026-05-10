@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { auth } from '../lib/firebase';
 import { logger } from '../lib/logger';
-import { UserContext } from '../lib/types';
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;

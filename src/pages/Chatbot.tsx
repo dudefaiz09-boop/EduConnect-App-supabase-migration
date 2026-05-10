@@ -29,7 +29,7 @@ export const ChatbotPage = () => {
     try {
       const data = await apiFetch(`/api/chatbot/history/${user?.uid}`);
       setLogs(data.reverse()); // Reverse to show oldest first in the scroll area
-    } catch (_error) {
+    } catch {
       // Error handled silently
     } finally {
       setHistoryLoading(false);
@@ -66,7 +66,7 @@ export const ChatbotPage = () => {
       };
 
       setLogs(prev => [...prev, newLog]);
-    } catch (error) {
+    } catch {
       alert('AI assistant is currently unavailable. Please try again later.');
     } finally {
       setLoading(false);

@@ -52,7 +52,7 @@ router.get('/:studentId', async (req, res, next) => {
   }
 });
 
-router.post('/ai-suggestions', async (req, res, next) => {
+router.post('/ai-suggestions', async (req, res) => {
   try {
     const { records } = z.object({ records: z.array(z.any()) }).parse(req.body);
     const prompt = `Based on these records: ${JSON.stringify(records)}, provide 3 study tips in JSON: {"suggestions": ["tip1", "tip2", "tip3"]}`;
@@ -63,7 +63,7 @@ router.post('/ai-suggestions', async (req, res, next) => {
     const aiResultText = result.text || '{"suggestions": []}';
     const aiResult = JSON.parse(aiResultText.replace(/```json|```/g, "").trim());
     res.json({ ...aiResult, generatedAt: new Date().toISOString() });
-  } catch (error) {
+  } catch {
     res.json({ suggestions: ["Keep studying hard!", "Review your notes regularly.", "Ask teachers for help."], generatedAt: new Date().toISOString() });
   }
 });

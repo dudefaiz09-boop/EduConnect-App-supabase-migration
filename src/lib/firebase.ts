@@ -27,9 +27,44 @@ try {
   console.error("Failed to parse Firebase configuration", e);
 }
 
-const app = initializeApp(config);
-export const auth = getAuth(app);
-export const db = getFirestore(app, config.firestoreDatabaseId || '(default)');
+let app;
+let auth: any;
+let db: any;
+
+try {
+  // Priority 1: Individual environment variables (Standard for Vite)
+  config = {
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+    firestoreDatabaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID || '(default)'
+  };
+
+  // Priority 2: Fallback to a stringified JSON if provided
+  if (!config.apiKey && import.meta.env.VITE_FIREBASE_CONFIG_JSON) {
+    config = JSON.parse(import.meta.env.VITE_FIREBASE_CONFIG_JSON);
+  }
+
+  if (!config.apiKey) {
+    throw new Error("Missing Firebase API Key");
+  }
+
+  app = initializeApp(config);
+  auth = getAuth(app);
+  db = getFirestore(app, config.firestoreDatabaseId || '(default)');
+} catch (e) {
+  console.error("Firebase initialization failed:", e);
+  // Provide mock objects to prevent top-level crashes
+  app = {};
+  auth = { onAuthStateChanged: (cb: any) => cb(null) };
+  db = {};
+}
+
+export { auth, db };
 
 async function testConnection() {
   try {
