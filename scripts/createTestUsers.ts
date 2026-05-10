@@ -12,7 +12,7 @@ const configPath = path.join(__dirname, '../firebase-applet-config.json');
 const firebaseConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
 if (!getApps().length) {
-  const projectId = firebaseConfig.projectId || process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT;
+  const projectId = process.env.GCP_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || firebaseConfig.projectId;
   initializeApp({
     projectId: projectId,
   });

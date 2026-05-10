@@ -66,7 +66,7 @@ jobs:
         run: npm run seed
         env:
           FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
-          # The script reads firebase-applet-config.json created in an earlier step
+          GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
 
       - name: Run Smoke Tests
         run: echo "Skipping smoke tests"
