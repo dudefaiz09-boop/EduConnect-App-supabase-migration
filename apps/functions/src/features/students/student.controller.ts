@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { StudentRepository } from './student.repository';
+import { StudentRepository } from './student.repository.js';
 
 export class StudentController {
   static async create(req: Request, res: Response, next: NextFunction) {
@@ -13,7 +13,7 @@ export class StudentController {
 
   static async update(req: Request, res: Response, next: NextFunction) {
     try {
-      const { uid } = req.params;
+      const uid = req.params.uid as string;
       const student = await StudentRepository.update(uid, req.body);
       res.json({ success: true, data: student });
     } catch (error) {
@@ -23,7 +23,7 @@ export class StudentController {
 
   static async getProfile(req: Request, res: Response, next: NextFunction) {
     try {
-      const { uid } = req.params;
+      const uid = req.params.uid as string;
       const student = await StudentRepository.getById(uid);
       res.json({ success: true, data: student });
     } catch (error) {

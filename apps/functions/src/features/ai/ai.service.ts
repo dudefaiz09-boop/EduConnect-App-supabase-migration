@@ -1,5 +1,5 @@
-import { generateSafeContent } from '../../lib/ai';
-import { db } from '../../lib/firebase';
+import { generateSafeContent } from '../../lib/ai.js';
+import { db } from '../../lib/firebase.js';
 import { FieldValue } from 'firebase-admin/firestore';
 
 export class AiService {
@@ -20,7 +20,7 @@ export class AiService {
       .get();
     
     const history = historySnapshot.docs.reverse()
-      .map(doc => `User: ${doc.data().query}\nAssistant: ${doc.data().response}`)
+      .map((doc: any) => `User: ${doc.data().query}\nAssistant: ${doc.data().response}`)
       .join('\n\n');
 
     const fullPrompt = history ? `Recent History:\n${history}\n\nCurrent User Query: ${query}` : query;

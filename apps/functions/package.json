@@ -28,7 +28,11 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/compression": "^1.8.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.6.2",
     "firebase-functions-test": "^3.4.0",
-    "typescript": "~5.8.2"
+    "typescript": "~5.8.3"
   }
 }

@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import { StudentController } from './student.controller';
-import { validate } from '../../middleware/validate';
-import { createStudentSchema, updateStudentSchema, studentQuerySchema } from './student.validation';
-import { checkPermission } from '../../middleware/auth';
+import { StudentController } from './student.controller.js';
+import { validate } from '../../middleware/validate.js';
+import { createStudentSchema, updateStudentSchema, studentQuerySchema } from './student.validation.js';
+import { checkPermission } from '../../middleware/auth.js';
 
-const router = Router();
+const router: Router = Router();
 
 router.post(
   '/create', 

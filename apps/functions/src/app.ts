@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Express } from 'express';
 import compression from 'compression';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -6,24 +6,24 @@ import { pinoHttp } from 'pino-http';
 import { logger } from '@educonnect/logger';
 
 // Middleware
-import { authMiddleware } from './middleware/auth';
-import { globalErrorHandler } from './middleware/error';
+import { authMiddleware } from './middleware/auth.js';
+import { globalErrorHandler } from './middleware/error.js';
 
 // Features (Refactored)
-import studentRoutes from './features/students/student.routes';
-import aiRoutes from './features/ai/ai.routes';
+import studentRoutes from './features/students/student.routes.js';
+import aiRoutes from './features/ai/ai.routes.js';
 
 // Legacy Routes (Pending Refactor)
-import announcementsRouter from './routes/announcements';
-import attendanceRouter from './routes/attendance';
-import assignmentsRouter from './routes/assignments';
-import libraryRouter from './routes/library';
-import feesRouter from './routes/fees';
-import performanceRouter from './routes/performance';
-import teachersRouter from './routes/teachers';
-import chatRouter from './routes/chat';
+import announcementsRouter from './routes/announcements.js';
+import attendanceRouter from './routes/attendance.js';
+import assignmentsRouter from './routes/assignments.js';
+import libraryRouter from './routes/library.js';
+import feesRouter from './routes/fees.js';
+import performanceRouter from './routes/performance.js';
+import teachersRouter from './routes/teachers.js';
+import chatRouter from './routes/chat.js';
 
-const app = express();
+const app: Express = express();
 app.set('trust proxy', 1);
 
 // 1. Security & Observability

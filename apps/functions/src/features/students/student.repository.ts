@@ -1,5 +1,5 @@
-import { db, auth } from '../../lib/firebase';
-import { AppError } from '../../middleware/error';
+import { db, auth } from '../../lib/firebase.js';
+import { AppError } from '../../middleware/error.js';
 
 export class StudentRepository {
   static async create(studentData: any) {

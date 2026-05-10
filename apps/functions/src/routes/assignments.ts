@@ -1,103 +1,110 @@
-import { Router, Request, Response, NextFunction } from 'express';
-import { db } from '../lib/firebase';
-import { checkPermission } from '../middleware/auth';
-import { FieldValue } from 'firebase-admin/firestore';
-import { z } from 'zod';
-import { ai, GEMINI_MODEL } from '../lib/ai';
+import { Router } from 'express';
+import { db } from '../lib/firebase.js';
+import { checkPermission } from '../middleware/auth.js';
 import { logger } from '@educonnect/logger';
+import { ai, GEMINI_MODEL } from '../lib/ai.js';
 
-const router = Router();
+const router: Router = Router();
 
-const AssignmentSchema = z.object({
-  title: z.string().min(3).max(100),
-  description: z.string().min(10).max(5000),
-  dueDate: z.string(),
-  classId: z.string(),
-});
-
-const GradeSchema = z.object({
-  assignmentId: z.string(),
-  studentId: z.string(),
-  grade: z.string(),
-  feedback: z.string().optional(),
-});
-
-const SubmissionSchema = z.object({
-  assignmentId: z.string(),
-  content: z.string().min(10),
-  fileUrl: z.string().url().optional().nullable(),
-});
-
-router.post('/create', checkPermission('manageAssignments'), async (req: Request, res: Response, next: NextFunction) => {
+// List assignments
+router.get('/', async (req, res, next) => {
   try {
-    const validatedData = AssignmentSchema.parse(req.body);
-    const docRef = await db.collection('assignments').add({
-      ...validatedData,
+    const snapshot = await db.collection('assignments').get();
+    res.json(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Create assignment
+router.post('/', checkPermission('manageAssignments'), async (req, res, next) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+
+    const assignment = {
+      ...req.body,
       createdBy: req.user.uid,
-      createdAt: FieldValue.serverTimestamp()
-    });
-    res.status(201).json({ id: docRef.id, success: true });
+      createdAt: new Date().toISOString()
+    };
+    const docRef = await db.collection('assignments').add(assignment);
+    res.json({ id: docRef.id, ...assignment });
   } catch (error) {
-    if (error instanceof z.ZodError) return res.status(400).json({ error: 'Validation Failed', details: error.issues });
     next(error);
   }
 });
 
-router.post('/grade', checkPermission('manageAssignments'), async (req: Request, res: Response, next: NextFunction) => {
+// Grade with AI
+router.post('/:id/grade', checkPermission('manageAssignments'), async (req, res, next) => {
   try {
-    const { assignmentId, studentId, grade, feedback } = GradeSchema.parse(req.body);
-    const docId = `${assignmentId}_${studentId}`;
-    await db.collection('submissions').doc(docId).update({
-      grade, feedback,
-      gradedBy: req.user.uid,
-      gradedAt: FieldValue.serverTimestamp()
-    });
-    res.json({ success: true });
-  } catch (error) {
-    if (error instanceof z.ZodError) return res.status(400).json({ error: 'Validation Failed', details: error.issues });
-    next(error);
-  }
-});
+    const { submission } = req.body;
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
 
-router.post('/submit', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { assignmentId, content, fileUrl } = SubmissionSchema.parse(req.body);
-    const user = req.user;
-    const docId = `${assignmentId}_${user.uid}`;
+    const promptText = `Grade this student submission: ${submission}. Provide score (0-10) and feedback.`;
     
-    const existingDoc = await db.collection('submissions').doc(docId).get();
-    const existingData = existingDoc.data();
+    const result = await ai.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: [{ role: 'user', parts: [{ text: promptText }] }]
+    });
 
-    if (existingData && existingData.checkedByAI && existingData.content === content && existingData.fileUrl === fileUrl) {
-      return res.json({ success: true, cached: true, aiResult: { score: existingData.aiScore, feedback: existingData.aiFeedback } });
-    }
+    const responseText = result.text || '';
+    const aiResult = JSON.parse(responseText.replace(/```json|```/g, "").trim() || '{}');
 
-    await db.collection('submissions').doc(docId).set({
-      assignmentId, studentId: user.uid, studentName: user.displayName || 'Student',
-      content, fileUrl: fileUrl || null, status: 'submitted',
-      submittedAt: FieldValue.serverTimestamp(),
-      grade: null, feedback: null, aiScore: null, aiFeedback: null, checkedByAI: false, recheckedByTeacher: false
-    }, { merge: true });
+    await db.collection('submissions').add({
+      assignmentId: req.params.id,
+      gradedBy: req.user.uid,
+      aiResult,
+      timestamp: new Date().toISOString()
+    });
 
+    res.json(aiResult);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Submit assignment
+router.post('/:id/submit', async (req, res, next) => {
+  try {
+    const { content } = req.body;
+    const assignmentId = req.params.id;
+    const user = req.user;
+
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+    const docId = `${assignmentId}_${user.uid}`;
+    const submissionRef = db.collection('submissions').doc(docId);
+
+    const submissionData = {
+      assignmentId,
+      studentId: user.uid,
+      studentName: user.displayName || 'Student',
+      content,
+      status: 'submitted',
+      submittedAt: new Date().toISOString(),
+    };
+
+    await submissionRef.set(submissionData);
+
+    // Trigger AI Grading
     try {
-      const promptText = `Evaluate: ${content}. Score out of 10 and feedback in JSON: {"score": number, "feedback": "string"}`;
+      const prompt = `Grade this student submission: ${content}. Respond in JSON: { "score": number, "feedback": "string" }`;
       const result = await ai.models.generateContent({
         model: GEMINI_MODEL,
-        contents: [{ role: 'user', parts: [{ text: promptText }] }]
+        contents: [{ role: 'user', parts: [{ text: prompt }] }]
       });
-      const aiResultText = result.text || '{}';
-      const aiResult = JSON.parse(aiResultText.replace(/```json|```/g, "").trim());
-      await db.collection('submissions').doc(docId).update({
-        aiScore: aiResult.score, aiFeedback: aiResult.feedback, checkedByAI: true,
-        grade: aiResult.score.toString(), feedback: aiResult.feedback
+      
+      const responseText = result.text || '';
+      const aiResult = JSON.parse(responseText.replace(/```json|```/g, "").trim() || '{}');
+      await submissionRef.update({
+        aiGrade: aiResult,
+        status: 'graded'
       });
-      res.json({ success: true, aiResult });
     } catch (aiError) {
       logger.error({ err: aiError, uid: user.uid }, 'AI evaluation failed');
-      res.json({ success: true, aiError: 'AI offline' });
     }
+
+    res.json({ success: true, id: docId });
   } catch (error) {
-    if (error instanceof z.ZodError) return res.status(400).json({ error: 'Validation Failed', details: error.issues });
     next(error);
   }
 });

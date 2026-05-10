@@ -1,6 +1,22 @@
 import { Request, Response, NextFunction } from 'express';
-import { auth } from '../lib/firebase';
+import { auth } from '../lib/firebase.js';
 import { logger } from '@educonnect/logger';
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        uid: string;
+        email?: string;
+        displayName?: string;
+        roles: string[];
+        isAdmin: boolean;
+        classId: string | null;
+        permissions: Record<string, boolean>;
+      };
+    }
+  }
+}
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;

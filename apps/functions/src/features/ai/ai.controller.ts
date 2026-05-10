@@ -1,13 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
-import { AiService } from './ai.service';
+import { AiService } from './ai.service.js';
 
 export class AiController {
   static async queryChatbot(req: Request, res: Response, next: NextFunction) {
     try {
       const { query } = req.body;
-      const user = (req as any).user;
+      const user = req.user;
       
-      const response = await AiService.getChatbotResponse(user.uid, user.roles[0], query);
+      if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      
+      const response = await AiService.getChatbotResponse(user.uid, user.roles[0] || 'student', query);
       
       res.json({ success: true, response });
     } catch (error) {
