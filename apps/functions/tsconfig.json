@@ -13,7 +13,12 @@
     "resolveJsonModule": true,
     "declaration": true,
     "sourceMap": true,
-    "types": ["node", "express", "compression", "cors"]
+    "types": ["node", "express", "compression", "cors"],
+    "baseUrl": ".",
+    "paths": {
+      "@educonnect/logger": ["../../packages/logger/src/index.ts"],
+      "@educonnect/types": ["../../packages/types/src/index.ts"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]
