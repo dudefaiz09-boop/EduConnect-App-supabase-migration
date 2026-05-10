@@ -1,14 +1,12 @@
 import { GoogleGenAI } from "@google/genai";
 import { AppError } from "../middleware/error.js";
+import { env } from "./config.js";
 
-const apiKey = process.env.GEMINI_API_KEY;
-
-if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY_HERE') {
-  console.error('CRITICAL: Missing GEMINI_API_KEY in backend environment.');
-}
-
-// Export as 'ai' for legacy compatibility
-export const ai = new GoogleGenAI({ apiKey: apiKey || '' });
+/**
+ * Enterprise AI Configuration
+ * Using validated environment variables.
+ */
+export const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
 
 export const GEMINI_MODEL = "gemini-flash-latest";
 
@@ -43,9 +41,12 @@ export async function generateSafeContent(
 
     return result.text || '';
   } catch (error: any) {
+    // Check for quota or rate limit errors
     if (error.message?.includes('429')) {
-      throw new AppError('AI Service is currently busy. Please try again later.', 429);
+      throw new AppError('AI Quota exceeded or service is busy. Please try again later.', 429);
     }
-    throw new AppError('Failed to generate AI content.', 500);
+    
+    console.error('[AI] Generation failed:', error);
+    throw new AppError('Failed to generate AI content due to a system error.', 500);
   }
 }

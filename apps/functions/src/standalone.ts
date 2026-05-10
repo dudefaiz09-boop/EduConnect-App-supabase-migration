@@ -1,19 +1,15 @@
 import 'dotenv/config';
-import app from './app';
+import { env } from './src/lib/config.js'; // Trigger early validation
+import app from './app.js';
 
-// Startup Validation
-const REQUIRED_ENV = ['GEMINI_API_KEY'];
-const missingEnv = REQUIRED_ENV.filter(key => !process.env[key] && !process.env.VITE_GEMINI_API_KEY);
-if (missingEnv.length > 0) {
-  console.error(`CRITICAL: Missing required environment variables: ${missingEnv.join(', ')}`);
-  if (process.env.NODE_ENV !== 'test') process.exit(1);
-}
+// The 'env' import above validates GEMINI_API_KEY and other essentials.
+// If it fails, the process will crash safely with a clear error message.
 
-const PORT = process.env.PORT || 3000;
+const PORT = env.PORT || 3000;
 
 async function startServer() {
-  app.listen(Number(PORT), '0.0.0.0', () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 [Backend] Server running in ${env.NODE_ENV} mode on port ${PORT}`);
   });
 }
 

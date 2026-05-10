@@ -26,7 +26,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Turbo Lint
         run: pnpm turbo lint
@@ -55,16 +55,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
+      
+      # USE WIF (Workload Identity Federation) for Production Auth
       - id: 'auth'
         uses: 'google-github-actions/auth@v2'
         with:
+          # Prefer credentials_json if WIF is not yet configured by user
           credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
 
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v2'
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Build Web App
         run: pnpm turbo build --filter @educonnect/web
@@ -78,7 +81,9 @@ jobs:
 
       - name: Deploy to Firebase
         run: |
-          pnpm exec firebase deploy --project production --non-interactive --token "${{ secrets.FIREBASE_TOKEN }}"
+          # Use ADC (Application Default Credentials) provided by 'auth' step
+          # This replaces the deprecated --token flag
+          pnpm exec firebase deploy --project production --non-interactive
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
