@@ -168,4 +168,23 @@ jobs:
           args: appdistribution:distribute mobile/android/app/build/outputs/apk/release/app-release.apk --app ${{ secrets.FIREBASE_APP_ID_ANDROID }} --groups testers
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/heads/main')
+        with:
+          tag_name: latest
+          name: Latest Release
+          body: |
+            ## EduConnect Android App (Latest)
+            This release contains the latest Android APK for EduConnect.
+            
+            **Changes:**
+            - Full production hardening
+            - Strict TypeScript migration
+            - Modular backend architecture
+            - Performance optimizations
+          files: mobile/android/app/build/outputs/apk/release/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 # Triggering fresh build with security fixes
