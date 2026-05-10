@@ -13,8 +13,12 @@
     "setup": "pnpm install"
   },
   "devDependencies": {
+    "@google/genai": "^2.0.1",
+    "dotenv": "^17.2.3",
     "eslint": "^9.39.4",
+    "firebase-admin": "^13.9.0",
     "prettier": "^3.8.3",
+    "tsx": "^4.21.0",
     "turbo": "^2.4.4",
     "typescript": "~5.8.2"
   },

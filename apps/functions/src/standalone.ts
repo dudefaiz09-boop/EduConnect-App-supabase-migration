@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import app from './src/server/app';
+import app from './app';
 
 // Startup Validation
 const REQUIRED_ENV = ['GEMINI_API_KEY'];

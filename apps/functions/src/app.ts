@@ -64,8 +64,8 @@ app.use('/api/library', libraryRouter);
 app.use('/api/fees', feesRouter);
 app.use('/api/performance', performanceRouter);
 app.use('/api/teachers', teachersRouter);
-import { logger } from '@educonnect/logger';
-...
+app.use('/api/chat', chatRouter);
+
 // Health Check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
