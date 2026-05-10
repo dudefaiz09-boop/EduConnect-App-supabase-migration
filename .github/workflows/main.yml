@@ -55,8 +55,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
       - id: 'auth'
         uses: 'google-github-actions/auth@v2'
         with:
