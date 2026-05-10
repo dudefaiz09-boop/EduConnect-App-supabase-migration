@@ -10,23 +10,24 @@ import { getFirestore } from 'firebase/firestore';
  */
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebasestorage.app`,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// Fail-fast validation: If the build didn't inject the API key, stop execution immediately.
+// Fail-fast validation
 if (!firebaseConfig.apiKey || firebaseConfig.apiKey === 'undefined') {
-  console.error("FATAL: Firebase API Key is missing. Build-time environment variables were not injected correctly.");
-  // We throw here to prevent the app from attempting to call Firebase with a null instance,
-  // which causes the internal error: 'e._getRecaptchaConfig is not a function'.
-  throw new Error("Firebase Configuration Error: Check VITE_FIREBASE_API_KEY");
+  if (import.meta.env.DEV) {
+    console.error("FATAL: Firebase configuration is missing. Ensure .env is populated.");
+  }
 }
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app, import.meta.env.VITE_FIREBASE_DATABASE_ID || '(default)');
+export const db = getFirestore(app);
 
-console.log(`[Firebase] Initialized for project: ${firebaseConfig.projectId}`);
+if (import.meta.env.DEV) {
+  console.log(`[Firebase] Initialized for project: ${firebaseConfig.projectId}`);
+}

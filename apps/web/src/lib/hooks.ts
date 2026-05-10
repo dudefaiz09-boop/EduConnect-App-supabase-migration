@@ -1,23 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiFetch } from '../lib/api';
 
-/**
- * A custom hook that returns a debounced version of the provided value.
- * Useful for delaying search queries until the user stops typing.
- */
-export function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+export function useChatbot() {
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    // Set debouncedValue to value after the specified delay
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
+  const chatMutation = useMutation({
+    mutationFn: (query: string) => 
+      apiFetch('/api/ai/query', {
+        method: 'POST',
+        body: JSON.stringify({ query }),
+      }),
+    onSuccess: () => {
+      // Invalidate chatbot history if we were fetching it
+      queryClient.invalidateQueries({ queryKey: ['chatbot-history'] });
+    },
+  });
 
-    // Return a cleanup function that will be called every time useEffect runs due to value or delay changes
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
+  return {
+    askChatbot: chatMutation.mutateAsync,
+    isAsking: chatMutation.isPending,
+    error: chatMutation.error,
+  };
+}
 
-  return debouncedValue;
+export function useStudentProfile(uid?: string) {
+  return useQuery({
+    queryKey: ['student', uid],
+    queryFn: () => apiFetch(`/api/students/${uid}`),
+    enabled: !!uid,
+  });
 }
