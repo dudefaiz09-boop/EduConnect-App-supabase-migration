@@ -4,7 +4,6 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import * as path from 'path';
 import * as fs from 'fs';
-import { createServer as createViteServer } from 'vite';
 import { authMiddleware } from './middleware/auth';
 import { pinoHttp } from 'pino-http';
 import { logger } from './lib/logger';
@@ -74,8 +73,11 @@ app.get('/api/health', (req, res) => {
 
 // Vite & Static
 if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
-  const vite = await createViteServer({ server: { middlewareMode: true }, appType: 'spa' });
-  app.use(vite.middlewares);
+  (async () => {
+    const { createServer: createViteServer } = await import('vite');
+    const vite = await createViteServer({ server: { middlewareMode: true }, appType: 'spa' });
+    app.use(vite.middlewares);
+  })();
 } else {
   const distPath = path.join(process.cwd(), 'dist');
   logger.info({ distPath }, 'Serving static files from');
