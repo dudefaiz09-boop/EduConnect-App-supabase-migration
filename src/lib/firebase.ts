@@ -56,6 +56,7 @@ try {
   app = initializeApp(config);
   auth = getAuth(app);
   db = getFirestore(app, config.firestoreDatabaseId || '(default)');
+  console.log("Firebase initialized for project:", config.projectId);
 } catch (e) {
   console.error("Firebase initialization failed:", e);
   // Provide mock objects to prevent top-level crashes

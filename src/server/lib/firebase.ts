@@ -20,6 +20,7 @@ if (!getApps().length) {
   initializeApp({
     projectId: firebaseConfig.projectId,
   });
+  console.log("Firebase Admin initialized for project:", firebaseConfig.projectId);
 }
 
 export const auth = getAuth();
