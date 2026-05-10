@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { useAuth, handleFirestoreError, OperationType } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { apiFetch } from '../lib/api';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   CheckCircle2, XCircle, Clock, Search, 
   Calendar as CalendarIcon, Users, BarChart3, 
-  Download, Filter, Save, CheckSquare
+  Save, CheckSquare
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { format } from 'date-fns';
@@ -33,7 +33,7 @@ interface Student {
 }
 
 export const AttendancePage = () => {
-  const { user, isAdmin, isTeacher, isStudent, canManageAttendance, classId: userClassId } = useAuth();
+  const { user, isStudent, canManageAttendance, classId: userClassId } = useAuth();
   
   const [view, setView] = useState<'marking' | 'history' | 'reports'>(
     canManageAttendance ? 'marking' : 'history'
@@ -53,19 +53,6 @@ export const AttendancePage = () => {
 
   // History state
   const [history, setHistory] = useState<AttendanceRecord[]>([]);
-
-  // Reports state
-  const [reportData, setReportData] = useState<any>(null);
-
-  useEffect(() => {
-    if (view === 'marking' && canManageAttendance) {
-      loadMarkingData();
-    } else if (view === 'history') {
-      loadHistory();
-    } else if (view === 'reports' && canManageAttendance) {
-      loadReports();
-    }
-  }, [view, selectedDate, selectedClass, user?.uid]);
 
   const loadMarkingData = async () => {
     setLoading(true);
@@ -111,16 +98,27 @@ export const AttendancePage = () => {
   const loadReports = async () => {
     setLoading(true);
     try {
-      const data = await apiFetch(`/api/attendance/report/${selectedClass}`, {
+      await apiFetch(`/api/attendance/report/${selectedClass}`, {
         cacheTTL: 60 * 1000 // 1 minute cache for reports
       });
-      setReportData(data);
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    const fetchData = async () => {
+      if (view === 'marking' && canManageAttendance) {
+        await loadMarkingData();
+      } else if (view === 'history') {
+        await loadHistory();
+      } else if (view === 'reports' && canManageAttendance) {
+        await loadReports();
+      }
+    };
+    fetchData();
+  }, [view, canManageAttendance, loadHistory, loadMarkingData, loadReports]);
 
   const handleMark = (studentId: string, status: 'present' | 'absent' | 'late') => {
     setDailyRecords(prev => ({ ...prev, [studentId]: status }));

@@ -3,9 +3,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { apiFetch } from '../lib/api';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Plus, Send, X, AlertCircle, FileText, 
-  Calendar as CalendarIcon, Users, CheckCircle2, 
-  Clock, MessageSquare, GraduationCap, ChevronRight,
+  Plus, Send, AlertCircle, FileText, 
+  Calendar as CalendarIcon, Users, 
+  GraduationCap, ChevronRight,
   UploadCloud, ExternalLink
 } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -42,6 +42,7 @@ interface Submission {
 
 export const AssignmentsPage = () => {
   const { user, isStudent, canManageAssignments, classId: userClassId } = useAuth();
+  const uid = user?.uid;
   
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [selectedClass, setSelectedClass] = useState(userClassId || '10A');
@@ -49,12 +50,12 @@ export const AssignmentsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Creation Form State
-  const [newAssignment, setNewAssignment] = useState({
+  const [newAssignment, setNewAssignment] = useState(() => ({
     title: '',
     description: '',
     dueDate: format(new Date(Date.now() + 7 * 86400000), 'yyyy-MM-dd'),
-    classId: selectedClass
-  });
+    classId: userClassId || '10A'
+  }));
 
   // Submission/Grading View State
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
@@ -67,35 +68,39 @@ export const AssignmentsPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mySubmissions, setMySubmissions] = useState<Record<string, Submission>>({});
 
-  useEffect(() => {
-    loadAssignments();
-    if (isStudent) {
-      loadMyHistory();
-    }
-  }, [selectedClass, user?.uid]);
-
-  const loadAssignments = async () => {
+  const loadAssignments = React.useCallback(async () => {
     setLoading(true);
     try {
       const data = await apiFetch(`/api/assignments/${selectedClass}`);
       setAssignments(data);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedClass]);
 
-  const loadMyHistory = async () => {
+  const loadMyHistory = React.useCallback(async () => {
+    if (!uid) return;
     try {
-      const data = await apiFetch(`/api/assignments/history/${user?.uid}`);
+      const data = await apiFetch(`/api/assignments/history/${uid}`);
       const map: Record<string, Submission> = {};
       data.forEach((s: Submission) => map[s.assignmentId] = s);
       setMySubmissions(map);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
     }
-  };
+  }, [uid]);
+
+  useEffect(() => {
+    const init = async () => {
+      await loadAssignments();
+      if (isStudent) {
+        await loadMyHistory();
+      }
+    };
+    init();
+  }, [loadAssignments, loadMyHistory, isStudent]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,7 +112,7 @@ export const AssignmentsPage = () => {
       setIsModalOpen(false);
       loadAssignments();
       setNewAssignment({...newAssignment, title: '', description: ''});
-    } catch (error) {
+    } catch {
       alert('Failed to create assignment');
     }
   };
@@ -117,8 +122,8 @@ export const AssignmentsPage = () => {
     try {
       const data = await apiFetch(`/api/assignments/submissions/${assignment.id}`);
       setSubmissions(data);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -137,7 +142,7 @@ export const AssignmentsPage = () => {
       });
       setGradingState(null);
       viewSubmissions(selectedAssignment);
-    } catch (error) {
+    } catch {
       alert('Grading failed');
     }
   };
@@ -157,7 +162,7 @@ export const AssignmentsPage = () => {
       setSubmissionFileUrl('');
       setSelectedAssignment(null);
       loadMyHistory();
-    } catch (error) {
+    } catch {
       alert('Submission failed');
     } finally {
       setIsSubmitting(false);
@@ -171,7 +176,7 @@ export const AssignmentsPage = () => {
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Assignments</h1>
           <p className="text-slate-500 mt-1">
-            {isStudent ? 'Track your coursework and submit your work.' : 'Manage assignments and grade student submissions.'}
+            {isStudent ? "Track your coursework and submit your work." : "Manage assignments and grade student submissions."}
           </p>
         </div>
         
@@ -304,7 +309,7 @@ export const AssignmentsPage = () => {
                                  <span className="bg-white/20 px-2 py-1 rounded-lg text-[10px] font-bold uppercase backdrop-blur-sm">Verified</span>
                                )}
                              </div>
-                             <p className="text-sm font-medium italic opacity-90">"{mySubmissions[selectedAssignment.id].feedback}"</p>
+                             <p className="text-sm font-medium italic opacity-90">&quot;{mySubmissions[selectedAssignment.id].feedback}&quot;</p>
                              
                              {!mySubmissions[selectedAssignment.id].recheckedByTeacher && (
                                <p className="text-[10px] mt-4 opacity-50 flex items-center gap-1">
@@ -385,16 +390,16 @@ export const AssignmentsPage = () => {
                                      </span>
                                    )}
                                  </div>
+                                 <span className={cn(
+                                   "text-[10px] font-black uppercase px-2 py-0.5 rounded-full",
+                                   sub.status === 'graded' ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600"
+                                 )}>
+                                   {sub.status}
+                                 </span>
                                </div>
-                               <span className={cn(
-                                 "text-[10px] font-black uppercase px-2 py-0.5 rounded-full",
-                                 sub.status === 'graded' ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600"
-                               )}>
-                                 {sub.status}
-                               </span>
+                               <p className="text-xs text-slate-600 line-clamp-2 italic">&quot;{sub.content}&quot;</p>
                             </div>
-                            <p className="text-xs text-slate-600 line-clamp-2 italic">"{sub.content}"</p>
-                            
+
                             {gradingState?.studentId === sub.studentId ? (
                               <div className="pt-2 space-y-2">
                                 <div className="space-y-1">
@@ -403,7 +408,7 @@ export const AssignmentsPage = () => {
                                     placeholder="e.g. 8.5"
                                     defaultValue={sub.grade || ""}
                                     className="w-full bg-white border border-slate-200 px-3 py-2 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
-                                    onChange={(e) => setGradingState({...gradingState, grade: e.target.value})}
+                                    onChange={(e) => setGradingState({...gradingState, studentId: sub.studentId, grade: e.target.value})}
                                   />
                                 </div>
                                 <div className="space-y-1">
@@ -413,7 +418,7 @@ export const AssignmentsPage = () => {
                                     placeholder="Enter final feedback..."
                                     defaultValue={sub.feedback || ""}
                                     className="w-full bg-white border border-slate-200 px-3 py-2 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
-                                    onChange={(e) => setGradingState({...gradingState, feedback: e.target.value})}
+                                    onChange={(e) => setGradingState({...gradingState, studentId: sub.studentId, feedback: e.target.value})}
                                   />
                                 </div>
                                 <div className="flex gap-2">

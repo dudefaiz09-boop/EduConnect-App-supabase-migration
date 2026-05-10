@@ -113,7 +113,7 @@ async function setup() {
           displayName: user.displayName,
           emailVerified: true,
         });
-      } catch (err) {
+      } catch (_err) {
         userRecord = await auth.createUser({
           email: user.email,
           password: user.password,

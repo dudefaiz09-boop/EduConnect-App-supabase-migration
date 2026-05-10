@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { apiFetch } from '../lib/api';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { 
-  Send, Bot, User as UserIcon, MessageSquare, 
-  ThumbsUp, ThumbsDown, Sparkles, Clock, 
-  RotateCcw, Trash2, AlertCircle, ChevronRight, MoreVertical
+  Send, Bot, ThumbsUp, ThumbsDown, Sparkles, 
+  RotateCcw, ChevronRight, MoreVertical
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import ReactMarkdown from 'react-markdown';
@@ -26,20 +25,23 @@ export const ChatbotPage = () => {
   const [historyLoading, setHistoryLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    loadHistory();
-  }, [user?.uid]);
-
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     try {
       const data = await apiFetch(`/api/chatbot/history/${user?.uid}`);
       setLogs(data.reverse()); // Reverse to show oldest first in the scroll area
-    } catch (error) {
-      console.error('Failed to load history:', error);
+    } catch (_error) {
+      // Error handled silently
     } finally {
       setHistoryLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    const init = async () => {
+      await loadHistory();
+    };
+    init();
+  }, [loadHistory]);
 
   const handleQuery = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,7 +144,7 @@ export const ChatbotPage = () => {
                </div>
                <div className="space-y-2">
                  <h4 className="text-2xl font-bold text-slate-900">Hello, {user?.displayName?.split(' ')[0]}!</h4>
-                 <p className="text-slate-500 text-sm">I'm your EduConnect AI. I'm here to help you manage your {role} tasks efficiently.</p>
+                 <p className="text-slate-500 text-sm">I&apos;m your EduConnect AI. I&apos;m here to help you manage your {role} tasks efficiently.</p>
                </div>
              </div>
 

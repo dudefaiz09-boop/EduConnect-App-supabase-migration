@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { apiFetch } from '../lib/api';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   BarChart3, TrendingUp, Award, Brain, 
-  Upload, Search, Filter, Download, 
+  Upload, Search, Download, 
   ChevronRight, Sparkles, Target, AlertCircle,
-  FileText, Users, GraduationCap, ArrowUpRight
+  FileText, Users
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { 
-  LineChart, Line, AreaChart, Area, XAxis, YAxis, 
+  AreaChart, Area, XAxis, YAxis, 
   CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell 
 } from 'recharts';
 
@@ -39,16 +39,7 @@ export const PerformancePage = () => {
   const [uploadText, setUploadText] = useState('');
   const [isUploadOpen, setIsUploadOpen] = useState(false);
 
-  useEffect(() => {
-    if (isStudent) {
-      loadStudentPerformance();
-    } else {
-      loadClassReport();
-    }
-  }, [user?.uid, selectedClass]);
-
-  const loadStudentPerformance = async () => {
-    setLoading(true);
+  const loadStudentPerformance = useCallback(async () => {
     try {
       const data = await apiFetch(`/api/performance/${user?.uid}`, {
         cacheTTL: 5 * 60 * 1000 // 5 minutes cache
@@ -68,10 +59,9 @@ export const PerformancePage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
-  const loadClassReport = async () => {
-    setLoading(true);
+  const loadClassReport = useCallback(async () => {
     try {
       const data = await apiFetch(`/api/performance/report/${selectedClass}`);
       setReport(data);
@@ -80,10 +70,22 @@ export const PerformancePage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedClass]);
+
+  useEffect(() => {
+    const init = async () => {
+      if (isStudent) {
+        await loadStudentPerformance();
+      } else {
+        await loadClassReport();
+      }
+    };
+    init();
+  }, [isStudent, loadStudentPerformance, loadClassReport]);
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
       // studentId, subject, term, score, grade
       const lines = uploadText.split('\n').filter(l => l.trim() !== '');
@@ -99,7 +101,7 @@ export const PerformancePage = () => {
       setIsUploadOpen(false);
       setUploadText('');
       loadClassReport();
-    } catch (error) {
+    } catch {
       alert('Upload failed');
     }
   };

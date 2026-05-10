@@ -1,5 +1,5 @@
 import React, { useState, Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { auth } from './lib/firebase';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -252,8 +252,6 @@ const LoginPage = () => {
 // --- Pages ---
 
 const Dashboard = () => {
-  const { role } = useAuth();
-  
   const stats = [
     { label: 'Attendance', value: '98%', trend: '+2%', color: 'bg-blue-50 text-blue-600' },
     { label: 'Assignments', value: '12', sub: 'Active', color: 'bg-indigo-50 text-indigo-600' },
@@ -265,7 +263,7 @@ const Dashboard = () => {
     <div className="space-y-10">
       <div className="flex flex-col gap-2">
         <h1 className="text-4xl font-bold text-slate-900 tracking-tight">Howdy, {auth.currentUser?.displayName?.split(' ')[0]}! 👋</h1>
-        <p className="text-slate-500 text-lg">Here's what happening in your academy today.</p>
+        <p className="text-slate-500 text-lg">Here&apos;s what happening in your academy today.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -336,19 +334,6 @@ const Dashboard = () => {
     </div>
   );
 };
-
-const PlaceholderPage = ({ title }: { title: string }) => (
-  <div className="space-y-6">
-    <h1 className="text-3xl font-bold text-slate-900">{title}</h1>
-    <div className="bg-white p-20 rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 gap-4 text-center">
-      <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center">
-        <LayoutDashboard size={32} />
-      </div>
-      <p className="text-lg font-medium">This module is coming soon!</p>
-      <p className="max-w-sm text-sm">We are busy building the perfect {title} experience for you. Please check back later.</p>
-    </div>
-  </div>
-);
 
 // --- App Container ---
 

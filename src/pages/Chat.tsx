@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../lib/firebase';
-import { collection, query, orderBy, onSnapshot, doc, limit } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import { apiFetch } from '../lib/api';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { 
   Send, Search, User as UserIcon, MessageSquare, 
   MoreVertical, Phone, Video, Smile, Paperclip,
-  Check, CheckCheck, Clock, Users
+  CheckCheck, Users
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -56,14 +56,11 @@ export const ChatPage = () => {
     });
 
     return () => unsubscribe();
-  }, [user?.uid]);
+  }, [user]);
 
   // Load messages for selected conversation
   useEffect(() => {
-    if (!selectedConv) {
-      setMessages([]);
-      return;
-    }
+    if (!selectedConv) return;
 
     const q = query(
       collection(db, 'conversations', selectedConv.id, 'messages'),
@@ -76,7 +73,7 @@ export const ChatPage = () => {
     });
 
     return () => unsubscribe();
-  }, [selectedConv?.id]);
+  }, [selectedConv]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -140,7 +137,10 @@ export const ChatPage = () => {
               {conversations.map((conv) => (
                 <button
                   key={conv.id}
-                  onClick={() => setSelectedConv(conv)}
+                  onClick={() => {
+                    setSelectedConv(conv);
+                    setMessages([]);
+                  }}
                   className={cn(
                     "w-full p-6 text-left hover:bg-white transition-all flex gap-4 items-center group",
                     selectedConv?.id === conv.id ? "bg-white border-l-4 border-blue-600 pl-5" : "pl-6"
@@ -192,7 +192,7 @@ export const ChatPage = () => {
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/30">
-              {messages.map((msg, i) => {
+              {messages.map((msg) => {
                 const isMe = msg.senderId === user?.uid;
                 return (
                   <motion.div 

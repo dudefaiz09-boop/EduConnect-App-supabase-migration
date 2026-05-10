@@ -1,0 +1,37 @@
+export interface UserContext {
+  uid: string;
+  email?: string;
+  displayName?: string;
+  roles: string[];
+  isAdmin: boolean;
+  classId: string | null;
+  permissions: Record<string, boolean>;
+}
+
+declare global {
+  namespace Express {
+    interface Request {
+      user: UserContext;
+    }
+  }
+}
+
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  authorId: string;
+  targetClasses: string[];
+  visibility: 'public' | 'private';
+  createdAt: FirebaseFirestore.Timestamp | any;
+}
+
+export interface AttendanceRecord {
+  id?: string;
+  studentId: string;
+  classId: string;
+  date: string;
+  status: 'present' | 'absent' | 'late';
+  markedBy: string;
+  updatedAt: FirebaseFirestore.Timestamp | any;
+}

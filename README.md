@@ -1,20 +1,69 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# EduConnect-App
 
-# Run and deploy your AI Studio app
+A comprehensive education management system connecting students, parents, and teachers with features for attendance, assignments, fees, and communication.
 
-This contains everything you need to run your app locally.
+## 🚀 Tech Stack
 
-View your app in AI Studio: https://ai.studio/apps/ff4c2b81-1a19-47a1-a576-ea273cedfb45
+- **Frontend:** React 19, Vite, Tailwind CSS, Lucide React, Framer Motion
+- **Backend:** Node.js, Express, Firebase Admin SDK, Google Generative AI
+- **Mobile:** React Native, Firebase
+- **Testing:** Jest, Supertest, Playwright, Artillery
+- **CI/CD:** GitHub Actions, Cloud Run
 
-## Run Locally
+## 📁 Architecture
 
-**Prerequisites:**  Node.js
+The project follows a modular monolithic architecture for the backend:
 
+- `server.ts`: Entry point.
+- `src/server/app.ts`: Express application configuration and middleware.
+- `src/server/routes/`: Modular API routes.
+- `src/server/middleware/`: Custom middleware (auth, permissions).
+- `src/server/lib/`: External library initializations (Firebase, AI).
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 🛠 Getting Started
+
+### Prerequisites
+
+- Node.js (v18+)
+- Firebase Account
+- Google Gemini API Key
+
+### Installation
+
+1.  Clone the repository.
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Configure environment variables in `.env`:
+    ```bash
+    GEMINI_API_KEY=your_key
+    ```
+4.  Run development server:
+    ```bash
+    npm run dev
+    ```
+
+## 🧪 Testing
+
+Run API tests:
+```bash
+npm test
+```
+
+Run UI tests:
+```bash
+npm run test:ui
+```
+
+## 🔒 Security
+
+- Content Security Policy (CSP) enabled via Helmet.
+- Input validation using Zod.
+- Rate limiting on API routes.
+- Secure authentication via Firebase Auth.
+- Role-based access control (RBAC).
+
+## 📄 License
+
+MIT

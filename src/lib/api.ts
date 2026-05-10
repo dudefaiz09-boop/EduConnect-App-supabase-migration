@@ -19,7 +19,7 @@ export async function apiFetch(path: string, options: ApiOptions = {}, retries =
           return data;
         }
         localStorage.removeItem(`api_cache_${path}`);
-      } catch (e) {
+      } catch {
         localStorage.removeItem(`api_cache_${path}`);
       }
     }

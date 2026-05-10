@@ -10,20 +10,23 @@ RUN npm run build
 FROM node:20-slim
 WORKDIR /app
 
-# Install dependencies (including tsx)
-COPY package*.json ./
-RUN npm install
+# Set production environment
+ENV NODE_ENV=production
+ENV PORT=8080
 
-# Copy built assets and server code
+# Install production dependencies only
+COPY package*.json ./
+RUN npm install --only=production --legacy-peer-deps
+
+# Copy built assets and necessary server files
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server.ts ./
+COPY --from=builder /app/src/server ./src/server
 COPY --from=builder /app/firebase-applet-config.json ./
 COPY --from=builder /app/tsconfig.json ./
 
 # Expose port
 EXPOSE 8080
-ENV PORT=8080
-ENV NODE_ENV=production
 
-# Start the application
+# Start the application using tsx
 CMD ["npm", "start"]

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { db, auth } from '../lib/firebase';
+import { db } from '../lib/firebase';
 import { collection, query, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { useAuth, handleFirestoreError, OperationType } from '../contexts/AuthContext';
 import { motion } from 'motion/react';
-import { User as UserIcon, Shield, Search, MoreVertical, Check } from 'lucide-react';
+import { User as UserIcon, Shield, Search } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useDebounce } from '../lib/hooks';
 

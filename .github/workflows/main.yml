@@ -58,6 +58,9 @@ jobs:
       - name: Run Linting
         run: npm run lint
 
+      - name: Run Unit Tests
+        run: npm run test
+
       - name: Seed Database
         run: npm run seed
         env:

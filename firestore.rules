@@ -66,25 +66,25 @@ service cloud.firestore {
         (request.auth.token.classId != null && resource.data.targetClasses.hasAny([request.auth.token.classId])) ||
         hasRole('teacher') || hasRole('principal') || hasRole('staff')
       );
-      allow create: if can('manageAnnouncements');
-      allow update: if can('manageAnnouncements') && resource.data.authorId == request.auth.uid;
-      allow delete: if can('financialOps') || (can('manageAnnouncements') && resource.data.authorId == request.auth.uid);
+      allow create: if can('manageAnnouncements') && incoming().authorId == request.auth.uid;
+      allow update: if can('manageAnnouncements') && existing().authorId == request.auth.uid;
+      allow delete: if can('financialOps') || (can('manageAnnouncements') && existing().authorId == request.auth.uid);
     }
 
     // ASSIGNMENTS
     match /assignments/{assignmentId} {
       allow read: if isSignedIn();
-      allow create: if can('manageAssignments');
-      allow update, delete: if can('manageAssignments') && resource.data.createdBy == request.auth.uid;
+      allow create: if can('manageAssignments') && incoming().createdBy == request.auth.uid;
+      allow update, delete: if can('manageAssignments') && existing().createdBy == request.auth.uid;
     }
 
     match /submissions/{submissionId} {
       allow read: if isSignedIn() && (
-        resource.data.studentId == request.auth.uid || 
+        existing().studentId == request.auth.uid || 
         can('manageAssignments')
       );
-      allow create: if hasRole('student');
-      allow update: if (resource.data.studentId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['content', 'fileUrl'])) ||
+      allow create: if hasRole('student') && incoming().studentId == request.auth.uid;
+      allow update: if (existing().studentId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['content', 'fileUrl'])) ||
                      can('manageAssignments');
     }
 
@@ -101,7 +101,7 @@ service cloud.firestore {
     // FEES
     match /fees/{feeId} {
       allow read: if isSignedIn() && (
-        resource.data.studentId == request.auth.uid || 
+        existing().studentId == request.auth.uid || 
         can('manageFees')
       );
       allow write: if can('manageFees');
@@ -109,10 +109,10 @@ service cloud.firestore {
 
     match /payments/{paymentId} {
       allow read: if isSignedIn() && (
-        resource.data.studentId == request.auth.uid || 
+        existing().studentId == request.auth.uid || 
         can('manageFees')
       );
-      allow create: if isSignedIn();
+      allow create: if isSignedIn() && incoming().studentId == request.auth.uid;
       allow update, delete: if false; // Payments are immutable
     }
 
@@ -124,17 +124,17 @@ service cloud.firestore {
 
     match /borrowRecords/{recordId} {
       allow read: if isSignedIn() && (
-        resource.data.studentId == request.auth.uid || 
+        existing().studentId == request.auth.uid || 
         can('manageLibrary')
       );
-      allow create: if hasRole('student');
+      allow create: if hasRole('student') && incoming().studentId == request.auth.uid;
       allow update: if can('manageLibrary');
     }
 
     // PERFORMANCE
     match /performance/{recordId} {
       allow read: if isSignedIn() && (
-        resource.data.studentId == request.auth.uid || 
+        existing().studentId == request.auth.uid || 
         can('managePerformance')
       );
       allow write: if can('managePerformance');
@@ -142,33 +142,28 @@ service cloud.firestore {
 
     match /aiSuggestions/{suggestionId} {
       allow read: if isSignedIn() && (
-        resource.data.studentId == request.auth.uid || 
+        existing().studentId == request.auth.uid || 
         can('managePerformance')
       );
       allow write: if can('managePerformance');
     }
 
     match /chatbotLogs/{logId} {
-      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || can('manageStudents'));
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['feedback', 'feedbackAt']);
+      allow read: if isSignedIn() && (existing().userId == request.auth.uid || can('manageStudents'));
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['feedback', 'feedbackAt']);
     }
 
     // CHAT
     match /conversations/{conversationId} {
       allow read: if isSignedIn() && request.auth.uid in resource.data.participants;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow create: if isSignedIn() && request.auth.uid in incoming().participants;
+      allow update: if isSignedIn() && request.auth.uid in existing().participants;
 
       match /messages/{messageId} {
         allow read: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
-        allow write: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+        allow write: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants && incoming().senderId == request.auth.uid;
       }
-    }
-
-    // TEST CONNECTION
-    match /test/connection {
-      allow read: if true;
     }
   }
 }

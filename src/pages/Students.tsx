@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../lib/firebase';
 import { collection, query, onSnapshot, orderBy, limit, where } from 'firebase/firestore';
-import { useAuth, handleFirestoreError, OperationType } from '../contexts/AuthContext';
+import { handleFirestoreError, OperationType } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   User as UserIcon, Shield, Search, Plus, 
   Upload, History, X, Save, Trash2, 
-  Filter, GraduationCap, Users, Clock, MoreVertical
+  Filter, GraduationCap, Clock, MoreVertical
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { apiFetch } from '../lib/api';
@@ -32,7 +32,6 @@ interface AuditLog {
 }
 
 export const StudentsPage = () => {
-  const { user: currentUser, isAdmin, isTeacher } = useAuth();
   const [students, setStudents] = useState<StudentProfile[]>([]);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);

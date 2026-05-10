@@ -16,13 +16,9 @@ if (!admin.apps.length) {
   });
 }
 
-const db = admin.firestore();
-
 async function verifyFirestoreRules() {
   console.log('🚀 Starting Firestore Rule Verification...');
   console.log('-------------------------------------------');
-
-  const testResults = [];
 
   // Mock test cases for manual verification or rule-checking logic
   const testCases = [

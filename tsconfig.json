@@ -23,6 +23,8 @@
       ]
     },
     "allowImportingTsExtensions": true,
+    "strict": true,
+    "noImplicitAny": true,
     "noEmit": true
   },
   "include": [

@@ -4,12 +4,11 @@ import { apiFetch } from '../lib/api';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   CreditCard, Upload, Download, History, 
-  AlertCircle, CheckCircle2, TrendingUp, Users,
-  ArrowRight, Filter, DollarSign, Calendar, Search,
+  AlertCircle, TrendingUp, Users,
+  DollarSign, Search,
   PieChart as PieChartIcon, FileText, Send
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { format } from 'date-fns';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, Cell 
@@ -50,15 +49,7 @@ export const FeesPage = () => {
   const [uploadText, setUploadData] = useState('');
   const [selectedClass, setSelectedClass] = useState(userClassId || '10A');
 
-  useEffect(() => {
-    if (isStudent) {
-      loadStudentData();
-    } else if (canManageFees) {
-      loadReport();
-    }
-  }, [user?.uid, selectedClass]);
-
-  const loadStudentData = async () => {
+  const loadStudentData = React.useCallback(async () => {
     setLoading(true);
     try {
       const data = await apiFetch(`/api/fees/${user?.uid}`);
@@ -69,9 +60,9 @@ export const FeesPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
-  const loadReport = async () => {
+  const loadReport = React.useCallback(async () => {
     setLoading(true);
     try {
       const data = await apiFetch(`/api/fees/report/${selectedClass}`);
@@ -81,7 +72,18 @@ export const FeesPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedClass]);
+
+  useEffect(() => {
+    const init = async () => {
+      if (isStudent) {
+        await loadStudentData();
+      } else if (canManageFees) {
+        await loadReport();
+      }
+    };
+    init();
+  }, [isStudent, canManageFees, loadStudentData, loadReport]);
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,7 +102,7 @@ export const FeesPage = () => {
       setIsUploadModalOpen(false);
       setUploadData('');
       loadReport();
-    } catch (error) {
+    } catch {
       alert('Upload failed');
     }
   };
@@ -113,7 +115,7 @@ export const FeesPage = () => {
       });
       alert('Payment successful!');
       loadStudentData();
-    } catch (error) {
+    } catch {
       alert('Payment failed');
     }
   };

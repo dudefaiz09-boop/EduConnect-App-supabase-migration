@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { apiFetch } from '../lib/api';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Book, Search, Plus, Download, BookOpen, 
-  Tag, Clock, CheckCircle2, X, Filter,
-  Layers, GraduationCap, ArrowRight
+  Tag, Clock, Filter,
+  Layers, GraduationCap
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { format } from 'date-fns';
 import { useDebounce } from '../lib/hooks';
 
 interface LibraryResource {
@@ -54,15 +53,7 @@ export const LibraryPage = () => {
     tags: ''
   });
 
-  useEffect(() => {
-    loadResources();
-    if (isStudent) {
-      loadMyHistory();
-    }
-  }, [user?.uid]);
-
-  const loadResources = async () => {
-    setLoading(true);
+  const loadResources = useCallback(async () => {
     try {
       const data = await apiFetch('/api/library/resources', {
         cacheTTL: 5 * 60 * 1000 // 5 minutes cache
@@ -73,19 +64,30 @@ export const LibraryPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const loadMyHistory = async () => {
+  const loadMyHistory = useCallback(async () => {
     try {
       const data = await apiFetch(`/api/library/borrow/history/${user?.uid}`);
       setBorrowHistory(data);
     } catch (error) {
       console.error(error);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    const init = async () => {
+      await loadResources();
+      if (isStudent) {
+        await loadMyHistory();
+      }
+    };
+    init();
+  }, [isStudent, loadResources, loadMyHistory]);
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
       await apiFetch('/api/library/upload', {
         method: 'POST',
@@ -97,7 +99,7 @@ export const LibraryPage = () => {
       setIsUploadModalOpen(false);
       loadResources();
       setUploadData({ title: '', subject: '', grade: '', fileUrl: '', tags: '' });
-    } catch (error) {
+    } catch {
       alert('Upload failed');
     }
   };
@@ -110,7 +112,7 @@ export const LibraryPage = () => {
       });
       alert('Book borrowed successfully!');
       loadMyHistory();
-    } catch (error) {
+    } catch {
       alert('Borrowing failed');
     }
   };
@@ -125,7 +127,7 @@ export const LibraryPage = () => {
       if (canManageLibrary) {
         // Refresh all if admin/teacher
       }
-    } catch (error) {
+    } catch {
       alert('Return failed');
     }
   };
@@ -219,7 +221,7 @@ export const LibraryPage = () => {
           <div className="bg-blue-600 p-8 rounded-3xl text-white shadow-xl shadow-blue-100 space-y-4 relative overflow-hidden">
              <div className="relative z-10">
                <h4 className="font-bold text-lg mb-2">Need a book?</h4>
-               <p className="text-blue-100 text-sm leading-relaxed">If you can't find what you're looking for, request a resource from the librarian.</p>
+               <p className="text-blue-100 text-sm leading-relaxed">If you can&apos;t find what you&apos;re looking for, request a resource from the librarian.</p>
                <button className="mt-4 text-xs font-black uppercase tracking-widest bg-white text-blue-600 px-4 py-2 rounded-lg">Request Book</button>
              </div>
              <Book className="absolute -bottom-4 -right-4 w-24 h-24 text-blue-500 opacity-30 rotate-12" />
