@@ -52,6 +52,15 @@ jobs:
           name: android-apk
           path: apps/mobile/android/app/build/outputs/apk/release/app-release.apk
 
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Release build-${{ github.run_number }}
+          files: apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: upload artifact to Firebase App Distribution
         uses: w9jds/firebase-action@master
         with:

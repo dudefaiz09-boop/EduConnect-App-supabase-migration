@@ -71,4 +71,13 @@ jobs:
       - name: Deploy to Firebase
         run: |
           pnpm exec firebase deploy --project production --non-interactive --token "${{ secrets.FIREBASE_TOKEN }}"
-        # Alternative: use WIF auth instead of token
+
+      - name: Build and Deploy to Cloud Run
+        run: |
+          gcloud builds submit --tag gcr.io/${{ env.PROJECT_ID }}/educonnect-backend --file Dockerfile.backend .
+          gcloud run deploy educonnect-app \
+            --image gcr.io/${{ env.PROJECT_ID }}/educonnect-backend \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars="GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }},NODE_ENV=production"
