@@ -1,5 +1,5 @@
 /**
- * CSV Validation and Parsing Utilities
+ * CSV Validation utilities for bulk imports
  */
 
 export interface CSVValidationError {
@@ -8,144 +8,221 @@ export interface CSVValidationError {
   value: string;
 }
 
-export interface CSVRecord {
+export interface CSVValidationResult<T> {
+  isValid: boolean;
+  errors?: CSVValidationError[];
+  records?: T[];
+}
+
+interface FeeRecord {
   studentId: string;
   amountDue: number;
   dueDate: string;
 }
 
-/**
- * Validates fee CSV format: studentId, amountDue, dueDate (YYYY-MM-DD)
- */
-export function validateFeesCSV(csv: string): { 
-  isValid: boolean; 
-  records?: CSVRecord[]; 
-  errors?: CSVValidationError[] 
-} {
+export function validateFeesCSV(csvText: string): CSVValidationResult<FeeRecord> {
   const errors: CSVValidationError[] = [];
-  const records: CSVRecord[] = [];
-  
-  const lines = csv.split('\n').filter(l => l.trim() !== '');
-  
+  const records: FeeRecord[] = [];
+
+  if (!csvText.trim()) {
+    return {
+      isValid: false,
+      errors: [{ line: 0, message: 'CSV content is empty', value: '' }]
+    };
+  }
+
+  const lines = csvText.split('\n').filter(line => line.trim() !== '');
+
   if (lines.length === 0) {
-    return { isValid: false, errors: [{ line: 0, message: 'CSV is empty', value: '' }] };
+    return {
+      isValid: false,
+      errors: [{ line: 0, message: 'No valid records found', value: '' }]
+    };
   }
 
   lines.forEach((line, index) => {
-    const lineNumber = index + 1;
+    const lineNum = index + 1;
     const parts = line.split(',').map(s => s.trim());
 
+    // Check column count
     if (parts.length !== 3) {
-      errors.push({ line: lineNumber, message: 'Expected 3 fields (studentId, amountDue, dueDate)', value: line });
+      errors.push({
+        line: lineNum,
+        message: `Expected 3 columns (studentId, amountDue, dueDate), got ${parts.length}`,
+        value: line
+      });
       return;
     }
 
-    const [studentId, amountStr, dueDate] = parts;
+    const [studentId, amountDueStr, dueDate] = parts;
 
-    // Validate studentId (non-empty)
-    if (!studentId) {
-      errors.push({ line: lineNumber, message: 'Student ID cannot be empty', value: line });
+    // Validate studentId
+    if (!studentId || studentId.length === 0) {
+      errors.push({
+        line: lineNum,
+        message: 'Student ID cannot be empty',
+        value: line
+      });
       return;
     }
 
-    // Validate amountDue (positive number)
-    const amount = parseFloat(amountStr);
-    if (isNaN(amount) || amount <= 0) {
-      errors.push({ line: lineNumber, message: 'Amount must be a positive number', value: line });
+    // Validate amountDue
+    const amountDue = parseFloat(amountDueStr);
+    if (isNaN(amountDue) || amountDue <= 0) {
+      errors.push({
+        line: lineNum,
+        message: `Invalid amount: "${amountDueStr}". Must be a positive number.`,
+        value: line
+      });
       return;
     }
 
-    // Validate dueDate (YYYY-MM-DD format)
+    // Validate dueDate format (yyyy-mm-dd)
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(dueDate)) {
-      errors.push({ line: lineNumber, message: 'Due date must be in YYYY-MM-DD format', value: line });
+      errors.push({
+        line: lineNum,
+        message: `Invalid date format: "${dueDate}". Expected yyyy-mm-dd.`,
+        value: line
+      });
       return;
     }
 
-    // Additional: Check if date is valid
-    const date = new Date(dueDate);
-    if (isNaN(date.getTime())) {
-      errors.push({ line: lineNumber, message: 'Invalid date value', value: line });
+    // Validate date is valid
+    const dateParsed = new Date(dueDate);
+    if (isNaN(dateParsed.getTime())) {
+      errors.push({
+        line: lineNum,
+        message: `Date is invalid: "${dueDate}"`,
+        value: line
+      });
       return;
     }
 
-    records.push({ studentId, amountDue: amount, dueDate });
+    // All validations passed
+    records.push({
+      studentId,
+      amountDue,
+      dueDate
+    });
   });
 
   return {
     isValid: errors.length === 0,
-    records: errors.length === 0 ? records : undefined,
-    errors: errors.length > 0 ? errors : undefined
+    errors: errors.length > 0 ? errors : undefined,
+    records: records.length > 0 ? records : undefined
   };
 }
 
-/**
- * Validates performance CSV format: studentId, subject, term, score, grade
- */
-export function validatePerformanceCSV(csv: string): { 
-  isValid: boolean; 
-  records?: any[]; 
-  errors?: CSVValidationError[] 
-} {
+interface PerformanceRecord {
+  studentId: string;
+  subject: string;
+  term: string;
+  score: number;
+  grade: string;
+}
+
+export function validatePerformanceCSV(csvText: string): CSVValidationResult<PerformanceRecord> {
   const errors: CSVValidationError[] = [];
-  const records: any[] = [];
-  
-  const lines = csv.split('\n').filter(l => l.trim() !== '');
-  
-  if (lines.length === 0) {
-    return { isValid: false, errors: [{ line: 0, message: 'CSV is empty', value: '' }] };
+  const records: PerformanceRecord[] = [];
+  const validGrades = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+  if (!csvText.trim()) {
+    return {
+      isValid: false,
+      errors: [{ line: 0, message: 'CSV content is empty', value: '' }]
+    };
   }
 
-  const validGrades = ['A', 'B', 'C', 'D', 'F'];
+  const lines = csvText.split('\n').filter(line => line.trim() !== '');
+
+  if (lines.length === 0) {
+    return {
+      isValid: false,
+      errors: [{ line: 0, message: 'No valid records found', value: '' }]
+    };
+  }
 
   lines.forEach((line, index) => {
-    const lineNumber = index + 1;
+    const lineNum = index + 1;
     const parts = line.split(',').map(s => s.trim());
 
+    // Check column count
     if (parts.length !== 5) {
-      errors.push({ line: lineNumber, message: 'Expected 5 fields (studentId, subject, term, score, grade)', value: line });
+      errors.push({
+        line: lineNum,
+        message: `Expected 5 columns (studentId, subject, term, score, grade), got ${parts.length}`,
+        value: line
+      });
       return;
     }
 
     const [studentId, subject, term, scoreStr, grade] = parts;
 
     // Validate studentId
-    if (!studentId) {
-      errors.push({ line: lineNumber, message: 'Student ID cannot be empty', value: line });
+    if (!studentId || studentId.length === 0) {
+      errors.push({
+        line: lineNum,
+        message: 'Student ID cannot be empty',
+        value: line
+      });
       return;
     }
 
     // Validate subject
-    if (!subject) {
-      errors.push({ line: lineNumber, message: 'Subject cannot be empty', value: line });
+    if (!subject || subject.length === 0) {
+      errors.push({
+        line: lineNum,
+        message: 'Subject cannot be empty',
+        value: line
+      });
       return;
     }
 
     // Validate term
-    if (!term || !term.match(/^Term\s*\d+$/i)) {
-      errors.push({ line: lineNumber, message: 'Term must be in format "Term 1", "Term 2", etc.', value: line });
+    if (!term || term.length === 0) {
+      errors.push({
+        line: lineNum,
+        message: 'Term cannot be empty',
+        value: line
+      });
       return;
     }
 
-    // Validate score (0-100)
+    // Validate score
     const score = parseFloat(scoreStr);
     if (isNaN(score) || score < 0 || score > 100) {
-      errors.push({ line: lineNumber, message: 'Score must be a number between 0-100', value: line });
+      errors.push({
+        line: lineNum,
+        message: `Invalid score: "${scoreStr}". Must be a number between 0-100.`,
+        value: line
+      });
       return;
     }
 
     // Validate grade
     if (!validGrades.includes(grade.toUpperCase())) {
-      errors.push({ line: lineNumber, message: `Grade must be one of: ${validGrades.join(', ')}`, value: line });
+      errors.push({
+        line: lineNum,
+        message: `Invalid grade: "${grade}". Must be one of: ${validGrades.join(', ')}`,
+        value: line
+      });
       return;
     }
 
-    records.push({ studentId, subject, term, score, grade: grade.toUpperCase() });
+    // All validations passed
+    records.push({
+      studentId,
+      subject,
+      term,
+      score,
+      grade: grade.toUpperCase()
+    });
   });
 
   return {
     isValid: errors.length === 0,
-    records: errors.length === 0 ? records : undefined,
-    errors: errors.length > 0 ? errors : undefined
+    errors: errors.length > 0 ? errors : undefined,
+    records: records.length > 0 ? records : undefined
   };
 }
