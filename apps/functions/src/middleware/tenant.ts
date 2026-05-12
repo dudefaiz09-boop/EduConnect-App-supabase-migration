@@ -16,7 +16,7 @@ declare global {
 export const tenantMiddleware = (req: Request, res: Response, next: NextFunction) => {
   // 1. Try to extract from custom headers (e.g. injected by API Gateway or Frontend Client)
   const headerTenantId = req.headers['x-school-id'] as string;
-  
+
   // 2. Try to infer from the authenticated user's custom claims (set during signup/provisioning)
   const userTenantId = (req.user as any)?.schoolId as string;
 
@@ -27,15 +27,16 @@ export const tenantMiddleware = (req: Request, res: Response, next: NextFunction
     // If strict multi-tenancy is fully enforced, this should return a 400 or 403.
     // For rolling migration, we attach 'default' or let it pass with a warning, but
     // since we want production-grade SaaS, we mandate it unless it's a public route.
-    
+
     // Bypass for health checks
     if (req.path === '/api/health') {
       return next();
     }
-    
-    return res.status(400).json({ 
-      error: 'Tenant Context Required', 
-      message: 'x-school-id header or valid school-linked user token is required for all API calls.' 
+
+    return res.status(400).json({
+      error: 'Tenant Context Required',
+      message:
+        'x-school-id header or valid school-linked user token is required for all API calls.',
     });
   }
 

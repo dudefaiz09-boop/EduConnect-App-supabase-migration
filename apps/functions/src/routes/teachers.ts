@@ -8,17 +8,23 @@ router.post('/create', checkPermission('manageTeachers'), async (req, res, next)
   try {
     const { email, password, displayName, subjects } = req.body;
     const userRecord = await auth.createUser({ email, password, displayName });
-    
-    await auth.setCustomUserClaims(userRecord.uid, { roles: ['teacher'], permissions: { manageAssignments: true } });
-    
-    await db.collection('users').doc(userRecord.uid).set({
-      uid: userRecord.uid,
-      email,
-      displayName,
+
+    await auth.setCustomUserClaims(userRecord.uid, {
       roles: ['teacher'],
-      subjects,
-      createdAt: new Date().toISOString()
+      permissions: { manageAssignments: true },
     });
+
+    await db
+      .collection('users')
+      .doc(userRecord.uid)
+      .set({
+        uid: userRecord.uid,
+        email,
+        displayName,
+        roles: ['teacher'],
+        subjects,
+        createdAt: new Date().toISOString(),
+      });
 
     res.json({ success: true, uid: userRecord.uid });
   } catch (error) {

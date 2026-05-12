@@ -13,7 +13,7 @@
     "resolveJsonModule": true,
     "declaration": true,
     "sourceMap": true,
-    "types": ["node", "express", "compression", "cors"],
+    "types": ["node"],
     "baseUrl": ".",
     "paths": {
       "@educonnect/logger": ["../../packages/logger/src/index.ts"],

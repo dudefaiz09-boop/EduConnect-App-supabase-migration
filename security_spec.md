@@ -1,12 +1,14 @@
 # EduConnect Firestore Security Specification
 
 ## Data Invariants
+
 1. A user cannot have a role other than student, parent, teacher, staff, or admin.
 2. A user document must have a valid UID matching the internal auth system.
 3. Attendance records must reference a valid student UID.
 4. Announcements must have an authorId matching a user with teacher/staff/admin role.
 
 ## The Dirty Dozen (Test Payloads)
+
 1. **Identity Spoofing**: Attempt to create a user profile with `role: "admin"` as an unauthenticated user.
 2. **Identity Spoofing**: Attempt to change another user's `role` from `student` to `admin`.
 3. **Privilege Escalation**: Attempt to create an announcement as a `student`.
@@ -21,6 +23,7 @@
 12. **Recursive Attack**: Trigger massive read costs by querying unbounded collections without filters.
 
 ## Verification Checklist
+
 - [ ] User profiles are private by default.
 - [ ] Roles are immutable by the user themselves.
 - [ ] Write operations are strictly role-gated.

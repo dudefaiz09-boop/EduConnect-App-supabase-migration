@@ -21,7 +21,6 @@ export interface Announcement {
   createdAt: string; // ISO String for JSON compatibility
 }
 
-
 export interface ApiResponse<T> {
   data?: T;
   error?: string;

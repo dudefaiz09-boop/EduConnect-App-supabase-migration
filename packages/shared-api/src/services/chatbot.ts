@@ -8,10 +8,14 @@ export class ChatbotService {
   }
 
   async query(query: string) {
-    return this.client.post<any>('/ai/query', { query }, {
-      timeout: 30000, // Longer timeout for AI calls
-      retry: 2 // Exponential backoff for rate limits handles 429
-    });
+    return this.client.post<any>(
+      '/ai/query',
+      { query },
+      {
+        timeout: 30000, // Longer timeout for AI calls
+        retry: 2, // Exponential backoff for rate limits handles 429
+      }
+    );
   }
 
   async sendFeedback(logId: string, feedback: 'helpful' | 'not_helpful') {

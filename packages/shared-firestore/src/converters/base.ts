@@ -1,11 +1,11 @@
-import { 
-  FirestoreDataConverter, 
-  QueryDocumentSnapshot, 
+import {
+  FirestoreDataConverter,
+  QueryDocumentSnapshot,
   SnapshotOptions,
   serverTimestamp,
   Timestamp,
   PartialWithFieldValue,
-  DocumentData
+  DocumentData,
 } from 'firebase/firestore';
 
 /**
@@ -25,11 +25,11 @@ export function createConverter<T extends { id?: string }>(): FirestoreDataConve
     },
     fromFirestore(snapshot: QueryDocumentSnapshot, options: SnapshotOptions): T {
       const data = snapshot.data(options);
-      
+
       // Standardize Firebase Timestamps into portable data structures
       // so React Native and Web React process them identically without SDK collision.
       const normalizedData = { ...data };
-      
+
       for (const [key, value] of Object.entries(normalizedData)) {
         if (value instanceof Timestamp) {
           normalizedData[key] = { toDate: () => value.toDate() };
@@ -38,8 +38,8 @@ export function createConverter<T extends { id?: string }>(): FirestoreDataConve
 
       return {
         id: snapshot.id,
-        ...normalizedData
+        ...normalizedData,
       } as T;
-    }
+    },
   };
 }

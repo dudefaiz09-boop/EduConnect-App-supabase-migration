@@ -23,16 +23,20 @@ export const UsersPage = ({ type }: { type: 'student' | 'teacher' | 'all' }) => 
 
   useEffect(() => {
     const q = query(collection(db, 'users'));
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      let data = snapshot.docs.map(doc => doc.data() as UserProfile);
-      if (type === 'student') data = data.filter(u => u.role === 'student');
-      if (type === 'teacher') data = data.filter(u => u.role === 'teacher');
-      setUsers(data);
-      setLoading(false);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'users');
-    });
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        let data = snapshot.docs.map((doc) => doc.data() as UserProfile);
+        if (type === 'student') data = data.filter((u) => u.role === 'student');
+        if (type === 'teacher') data = data.filter((u) => u.role === 'teacher');
+        setUsers(data);
+        setLoading(false);
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, 'users');
+      }
+    );
 
     return () => unsubscribe();
   }, [type]);
@@ -46,40 +50,43 @@ export const UsersPage = ({ type }: { type: 'student' | 'teacher' | 'all' }) => 
     try {
       // 1. Update Firestore
       await updateDoc(doc(db, 'users', targetUid), { role: nextRole });
-      
+
       // 2. Update Custom Claims via Server API
       const idToken = await currentUser?.getIdToken();
       await fetch('/api/roles', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`
+          Authorization: `Bearer ${idToken}`,
         },
-        body: JSON.stringify({ uid: targetUid, role: nextRole })
+        body: JSON.stringify({ uid: targetUid, role: nextRole }),
       });
-      
+
       alert(`Role updated to ${nextRole}`);
     } catch (error) {
       console.error('Error updating role:', error);
     }
   };
 
-  const filtered = users.filter(u => 
-    u.displayName?.toLowerCase().includes(debouncedSearch.toLowerCase()) || 
-    u.email?.toLowerCase().includes(debouncedSearch.toLowerCase())
+  const filtered = users.filter(
+    (u) =>
+      u.displayName?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      u.email?.toLowerCase().includes(debouncedSearch.toLowerCase())
   );
 
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight capitalize">{type} Management</h1>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight capitalize">
+            {type} Management
+          </h1>
           <p className="text-slate-500 mt-1">Manage accounts and platform permissions.</p>
         </div>
-        
+
         <div className="relative w-full md:w-80">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <input 
+          <input
             placeholder="Search users..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -90,7 +97,7 @@ export const UsersPage = ({ type }: { type: 'student' | 'teacher' | 'all' }) => 
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.map((u) => (
-          <motion.div 
+          <motion.div
             key={u.uid}
             layout
             initial={{ opacity: 0, scale: 0.95 }}
@@ -102,7 +109,9 @@ export const UsersPage = ({ type }: { type: 'student' | 'teacher' | 'all' }) => 
                 <UserIcon size={24} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-bold text-slate-900 truncate">{u.displayName || 'Unnamed User'}</p>
+                <p className="font-bold text-slate-900 truncate">
+                  {u.displayName || 'Unnamed User'}
+                </p>
                 <p className="text-xs text-slate-500 truncate">{u.email}</p>
               </div>
             </div>
@@ -118,23 +127,25 @@ export const UsersPage = ({ type }: { type: 'student' | 'teacher' | 'all' }) => 
 
               {currentUserRole === 'admin' && (
                 <div className="pt-2 border-t border-slate-50">
-                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Change Role</p>
-                   <div className="flex flex-wrap gap-2">
-                     {['student', 'parent', 'teacher', 'staff', 'admin'].map((r) => (
-                       <button
-                         key={r}
-                         onClick={() => updateRole(u.uid, r)}
-                         className={cn(
-                           "px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
-                           u.role === r 
-                             ? "bg-blue-600 text-white shadow-lg shadow-blue-100" 
-                             : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-                         )}
-                       >
-                         {r}
-                       </button>
-                     ))}
-                   </div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+                    Change Role
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {['student', 'parent', 'teacher', 'staff', 'admin'].map((r) => (
+                      <button
+                        key={r}
+                        onClick={() => updateRole(u.uid, r)}
+                        className={cn(
+                          'px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
+                          u.role === r
+                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-100'
+                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                        )}
+                      >
+                        {r}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

@@ -22,7 +22,7 @@ export async function createApiClient(defaultOptions: ApiClientOptions = {}) {
       'X-Client-Version': (options.headers as any)?.['X-Client-Version'] || 'unknown',
       'X-API-Version': 'v1',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers as any || {}),
+      ...((options.headers as any) || {}),
     };
 
     const response = await fetch(`${baseUrl}${path}`, {
@@ -36,7 +36,9 @@ export async function createApiClient(defaultOptions: ApiClientOptions = {}) {
     }
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'An unexpected error occurred' }));
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: 'An unexpected error occurred' }));
       throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
     }
 

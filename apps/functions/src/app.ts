@@ -23,26 +23,53 @@ import feesRouter from './routes/fees.js';
 import performanceRouter from './routes/performance.js';
 import teachersRouter from './routes/teachers.js';
 import chatRouter from './routes/chat.js';
+import rolesRouter from './routes/roles.js';
 
 const app: Express = express();
 app.set('trust proxy', 1);
 
 // 1. Security & Observability
 app.use(pinoHttp({ logger }));
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://apis.google.com", "https://*.googleapis.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://*.googleapis.com"],
-      imgSrc: ["'self'", "data:", "https://*.googleusercontent.com", "https://*.googleapis.com", "https://*.firebase.com"],
-      connectSrc: ["'self'", "https://*.googleapis.com", "https://*.firebaseio.com", "https://*.cloudfunctions.net", "https://*.firebase.com", "wss://*.firebaseio.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://*.gstatic.com"],
-      objectSrc: ["'none'"],
-      upgradeInsecureRequests: [],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "'unsafe-eval'",
+          'https://apis.google.com',
+          'https://*.googleapis.com',
+        ],
+        styleSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          'https://fonts.googleapis.com',
+          'https://*.googleapis.com',
+        ],
+        imgSrc: [
+          "'self'",
+          'data:',
+          'https://*.googleusercontent.com',
+          'https://*.googleapis.com',
+          'https://*.firebase.com',
+        ],
+        connectSrc: [
+          "'self'",
+          'https://*.googleapis.com',
+          'https://*.firebaseio.com',
+          'https://*.cloudfunctions.net',
+          'https://*.firebase.com',
+          'wss://*.firebaseio.com',
+        ],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://*.gstatic.com'],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
     },
-  },
-}));
+  })
+);
 
 app.use(compression());
 app.use(express.json());
@@ -74,6 +101,7 @@ app.use('/api/fees', feesRouter);
 app.use('/api/performance', performanceRouter);
 app.use('/api/teachers', teachersRouter);
 app.use('/api/chat', chatRouter);
+app.use('/api/roles', rolesRouter);
 
 // Health Check
 app.get('/api/health', (req, res) => {

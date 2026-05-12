@@ -12,11 +12,15 @@ export const FirestoreQueries = {
     orderDirection: 'desc' as const,
     limit: limitCount,
   }),
-  
+
   getAnnouncementsForStudent: (classId: string | null, limitCount: number = 10) => ({
     collection: COLLECTIONS.ANNOUNCEMENTS,
     whereConditions: [
-      { field: 'targetClasses', operator: 'array-contains-any' as const, value: ['all', ...(classId ? [classId] : [])] }
+      {
+        field: 'targetClasses',
+        operator: 'array-contains-any' as const,
+        value: ['all', ...(classId ? [classId] : [])],
+      },
     ],
     orderByField: 'createdAt',
     orderDirection: 'desc' as const,
@@ -27,7 +31,7 @@ export const FirestoreQueries = {
     collection: COLLECTIONS.ATTENDANCE,
     whereConditions: [
       { field: 'classId', operator: '==' as const, value: classId },
-      { field: 'date', operator: '==' as const, value: date }
-    ]
-  })
+      { field: 'date', operator: '==' as const, value: date },
+    ],
+  }),
 };

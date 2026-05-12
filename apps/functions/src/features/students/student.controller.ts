@@ -30,4 +30,14 @@ export class StudentController {
       next(error);
     }
   }
+
+  static async delete(req: Request, res: Response, next: NextFunction) {
+    try {
+      const uid = req.params.uid as string;
+      await StudentRepository.delete(uid);
+      res.json({ success: true, message: 'Student deleted successfully' });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

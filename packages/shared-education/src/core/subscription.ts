@@ -19,7 +19,7 @@ export const SubscriptionSchema = z.object({
     students: z.number(),
     assignmentsPerMonth: z.number(),
     aiRequestsPerMonth: z.number(),
-  })
+  }),
 });
 
 export type Subscription = z.infer<typeof SubscriptionSchema>;

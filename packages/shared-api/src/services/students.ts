@@ -16,7 +16,10 @@ export class StudentsService {
   }
 
   async bulkImport(data: any) {
-    return this.client.post<{ results: Array<{ success: boolean; message?: string }> }>('/students/bulk-import', data);
+    return this.client.post<{ results: Array<{ success: boolean; message?: string }> }>(
+      '/students/bulk-import',
+      data
+    );
   }
 
   async getProfile(uid: string) {

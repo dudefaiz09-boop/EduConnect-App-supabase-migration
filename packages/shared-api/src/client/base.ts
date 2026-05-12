@@ -31,7 +31,7 @@ export class ApiClient {
     this.config = {
       defaultTimeout: 15000, // 15s default for mobile stability
       defaultRetry: 3,
-      isOnline: () => typeof navigator !== 'undefined' ? navigator.onLine : true,
+      isOnline: () => (typeof navigator !== 'undefined' ? navigator.onLine : true),
       getTenantId: () => 'default-school', // Fallback for migration
       ...config,
     };
@@ -89,13 +89,13 @@ export class ApiClient {
       if (cancelToken) {
         this.abortControllers.set(cancelToken, controller);
       }
-      
+
       const id = setTimeout(() => controller.abort(), timeout);
 
       try {
         const token = this.config.getToken ? await this.config.getToken() : null;
         const tenantId = this.config.getTenantId ? this.config.getTenantId() : null;
-        
+
         const headers = new Headers(fetchConfig.headers);
         if (token && !headers.has('Authorization')) {
           headers.set('Authorization', `Bearer ${token}`);

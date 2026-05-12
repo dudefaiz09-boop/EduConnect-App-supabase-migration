@@ -1,9 +1,9 @@
-import { 
-  FirestoreDataConverter, 
-  QueryDocumentSnapshot, 
+import {
+  FirestoreDataConverter,
+  QueryDocumentSnapshot,
   SnapshotOptions,
   serverTimestamp,
-  Timestamp
+  Timestamp,
 } from 'firebase/firestore';
 import { Announcement } from '@educonnect/shared';
 
@@ -21,10 +21,7 @@ export const announcementConverter: FirestoreDataConverter<Announcement> = {
       updatedAt: serverTimestamp(),
     };
   },
-  fromFirestore(
-    snapshot: QueryDocumentSnapshot,
-    options: SnapshotOptions
-  ): Announcement {
+  fromFirestore(snapshot: QueryDocumentSnapshot, options: SnapshotOptions): Announcement {
     const data = snapshot.data(options);
     return {
       id: snapshot.id,
@@ -35,7 +32,10 @@ export const announcementConverter: FirestoreDataConverter<Announcement> = {
       targetClasses: data.targetClasses || [],
       visibility: data.visibility || 'public',
       // Standardize timestamps to ISO strings for cross-platform ease
-      createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt,
+      createdAt:
+        data.createdAt instanceof Timestamp
+          ? data.createdAt.toDate().toISOString()
+          : data.createdAt,
     } as Announcement;
-  }
+  },
 };

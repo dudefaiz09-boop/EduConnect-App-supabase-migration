@@ -2,12 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { auth, db } from '../lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { 
-  UserRole, 
-  ROLES, 
-  getUserRole, 
-  COLLECTIONS 
-} from '@educonnect/shared';
+import { UserRole, ROLES, getUserRole, COLLECTIONS } from '@educonnect/shared';
 
 export enum OperationType {
   CREATE = 'create',
@@ -27,10 +22,14 @@ export interface FirestoreErrorInfo {
     email?: string | null;
     emailVerified?: boolean | null;
     isAnonymous?: boolean | null;
-  }
+  };
 }
 
-export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+export function handleFirestoreError(
+  error: unknown,
+  operationType: OperationType,
+  path: string | null
+) {
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
@@ -40,7 +39,7 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
       isAnonymous: auth.currentUser?.isAnonymous,
     },
     operationType,
-    path
+    path,
   };
   console.error('Firestore Error: ', JSON.stringify(errInfo));
   throw new Error(JSON.stringify(errInfo));
@@ -100,16 +99,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (user) {
         try {
           const idTokenResult = await user.getIdTokenResult(true); // Force refresh
-          
+
           interface CustomClaims {
             roles?: string[];
             permissions?: Record<string, boolean>;
             classId?: string;
             linkedStudentIds?: string[];
           }
-          
+
           const claims = idTokenResult.claims as CustomClaims;
-          
+
           if (claims.roles) {
             setRoles(claims.roles);
             setPermissions(claims.permissions || {});
@@ -125,11 +124,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setClassId(data.classId || null);
               // Parents fetch their linked children by inverse lookup, but caching here is simpler if stored in custom claims.
               // For fallback, we will just set it if it exists.
-              setLinkedStudentIds(data.linkedStudentIds || []); 
+              setLinkedStudentIds(data.linkedStudentIds || []);
             }
           }
         } catch (error) {
-          console.error("Error fetching credentials:", error);
+          console.error('Error fetching credentials:', error);
         }
       } else {
         setRoles([]);
@@ -162,9 +161,5 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     canManagePerformance: !!permissions.managePerformance,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
 };

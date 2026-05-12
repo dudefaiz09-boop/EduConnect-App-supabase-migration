@@ -7,7 +7,7 @@ const pkg = JSON.parse(fs.readFileSync(functionsPkgPath, 'utf8'));
 console.log('🧹 Stripping workspace dependencies for deployment...');
 
 if (pkg.devDependencies) {
-  Object.keys(pkg.devDependencies).forEach(key => {
+  Object.keys(pkg.devDependencies).forEach((key) => {
     if (key.startsWith('@educonnect/')) {
       delete pkg.devDependencies[key];
     }
@@ -15,7 +15,7 @@ if (pkg.devDependencies) {
 }
 
 if (pkg.dependencies) {
-  Object.keys(pkg.dependencies).forEach(key => {
+  Object.keys(pkg.dependencies).forEach((key) => {
     if (key.startsWith('@educonnect/')) {
       delete pkg.dependencies[key];
     }

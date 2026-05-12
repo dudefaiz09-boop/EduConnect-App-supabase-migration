@@ -1,6 +1,6 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import { AppError } from "../middleware/error.js";
-import { env } from "./config.js";
+import { GoogleGenAI } from '@google/genai';
+import { AppError } from '../middleware/error.js';
+import { env } from './config.js';
 
 /**
  * Enterprise AI Configuration
@@ -11,11 +11,11 @@ export const ai = new GoogleGenAI({
   vertexai: {
     project: env.PROJECT_ID,
     location: env.VERTEX_LOCATION,
-  }
+  },
 });
 
 // Using Vertex AI models
-export const GEMINI_MODEL = "gemini-2.5-flash";
+export const GEMINI_MODEL = 'gemini-2.5-flash';
 
 /**
  * Safe AI Wrapper
@@ -37,13 +37,13 @@ export async function generateSafeContent(
         temperature: 0.2, // Lowered for more deterministic output
         topP: 0.9,
         systemInstruction: systemInstruction,
-        ...config
+        ...config,
       },
     };
 
     const result = await ai.models.generateContent({
       ...options,
-      contents: [{ role: "user", parts: [{ text: `User Query (Unsafe): ${userPrompt}` }] }],
+      contents: [{ role: 'user', parts: [{ text: `User Query (Unsafe): ${userPrompt}` }] }],
     });
 
     return result.text || '';
@@ -51,12 +51,11 @@ export async function generateSafeContent(
     // Quota and backoff handling
     if (error.status === 429 && retries > 0) {
       console.warn(`[AI] Rate limit hit. Retrying in 2s... (${retries} retries left)`);
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       return generateSafeContent(systemInstruction, userPrompt, config, retries - 1);
     }
-    
+
     console.error('[AI] Generation failed:', error);
     throw new AppError('Failed to generate AI content due to a system error.', 500);
   }
 }
-

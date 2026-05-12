@@ -3,51 +3,76 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react
 import { auth } from './lib/firebase';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Calendar, 
-  MessageSquare, 
-  Bell, 
-  Library, 
-  BookOpen, 
-  CreditCard, 
-  BarChart3, 
-  LogOut, 
-  Menu, 
+import {
+  LayoutDashboard,
+  Users,
+  Calendar,
+  MessageSquare,
+  Bell,
+  Library,
+  BookOpen,
+  CreditCard,
+  BarChart3,
+  LogOut,
+  Menu,
   X,
   GraduationCap,
   Bot,
-  Baby
+  Baby,
+  Shield,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
 import { RoleGuard } from './components/RoleGuard';
 
 // --- Lazy loaded pages ---
-const AnnouncementsPage = lazy(() => import('./pages/Announcements').then(m => ({ default: m.AnnouncementsPage })));
-const AttendancePage = lazy(() => import('./pages/Attendance').then(m => ({ default: m.AttendancePage })));
-const UsersPage = lazy(() => import('./pages/Users').then(m => ({ default: m.UsersPage })));
-const StudentsPage = lazy(() => import('./pages/Students').then(m => ({ default: m.StudentsPage })));
-const TeachersPage = lazy(() => import('./pages/Teachers').then(m => ({ default: m.TeachersPage })));
-const AssignmentsPage = lazy(() => import('./pages/Assignments').then(m => ({ default: m.AssignmentsPage })));
-const ChatPage = lazy(() => import('./pages/Chat').then(m => ({ default: m.ChatPage })));
-const LibraryPage = lazy(() => import('./pages/Library').then(m => ({ default: m.LibraryPage })));
-const FeesPage = lazy(() => import('./pages/Fees').then(m => ({ default: m.FeesPage })));
-const PerformancePage = lazy(() => import('./pages/Performance').then(m => ({ default: m.PerformancePage })));
-const ChatbotPage = lazy(() => import('./pages/Chatbot').then(m => ({ default: m.ChatbotPage })));
-const ParentPortal = lazy(() => import('./pages/ParentPortal').then(m => ({ default: m.ParentPortal })));
+const AnnouncementsPage = lazy(() =>
+  import('./pages/Announcements').then((m) => ({ default: m.AnnouncementsPage }))
+);
+const AttendancePage = lazy(() =>
+  import('./pages/Attendance').then((m) => ({ default: m.AttendancePage }))
+);
+const UsersPage = lazy(() => import('./pages/Users').then((m) => ({ default: m.UsersPage })));
+const StudentsPage = lazy(() =>
+  import('./pages/Students').then((m) => ({ default: m.StudentsPage }))
+);
+const TeachersPage = lazy(() =>
+  import('./pages/Teachers').then((m) => ({ default: m.TeachersPage }))
+);
+const AssignmentsPage = lazy(() =>
+  import('./pages/Assignments').then((m) => ({ default: m.AssignmentsPage }))
+);
+const ChatPage = lazy(() => import('./pages/Chat').then((m) => ({ default: m.ChatPage })));
+const LibraryPage = lazy(() => import('./pages/Library').then((m) => ({ default: m.LibraryPage })));
+const FeesPage = lazy(() => import('./pages/Fees').then((m) => ({ default: m.FeesPage })));
+const PerformancePage = lazy(() =>
+  import('./pages/Performance').then((m) => ({ default: m.PerformancePage }))
+);
+const ChatbotPage = lazy(() => import('./pages/Chatbot').then((m) => ({ default: m.ChatbotPage })));
+const ParentPortal = lazy(() =>
+  import('./pages/ParentPortal').then((m) => ({ default: m.ParentPortal }))
+);
 
 // --- Components ---
 
-const SidebarLink = ({ to, icon: Icon, label, active }: { to: string, icon: React.ElementType, label: string, active: boolean }) => (
+const SidebarLink = ({
+  to,
+  icon: Icon,
+  label,
+  active,
+}: {
+  to: string;
+  icon: React.ElementType;
+  label: string;
+  active: boolean;
+}) => (
   <Link
     to={to}
     className={cn(
-      "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
-      active 
-        ? "bg-blue-600 text-white shadow-lg shadow-blue-200" 
-        : "text-slate-600 hover:bg-slate-100"
+      'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
+      active
+        ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
+        : 'text-slate-600 hover:bg-slate-100'
     )}
   >
     <Icon size={20} />
@@ -61,18 +86,64 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const menuItems = [
-    { to: '/', icon: LayoutDashboard, label: 'Dashboard', roles: ['student', 'parent', 'teacher', 'staff', 'admin'] },
-    { to: '/chatbot', icon: Bot, label: 'AI Assistant', roles: ['student', 'parent', 'teacher', 'staff', 'admin'] },
-    { to: '/announcements', icon: Bell, label: 'Announcements', roles: ['student', 'parent', 'teacher', 'staff', 'admin'] },
-    { to: '/attendance', icon: Calendar, label: 'Attendance', roles: ['student', 'parent', 'teacher', 'staff', 'admin'] },
-    { to: '/assignments', icon: BookOpen, label: 'Assignments', roles: ['student', 'parent', 'teacher', 'staff', 'admin'] },
-    { to: '/chat', icon: MessageSquare, label: 'Chat', roles: ['student', 'parent', 'teacher', 'staff', 'admin'] },
-    { to: '/library', icon: Library, label: 'Library', roles: ['student', 'parent', 'teacher', 'staff', 'admin'] },
-    { to: '/fees', icon: CreditCard, label: 'Fees', roles: ['student', 'parent', 'teacher', 'staff', 'admin'] },
-    { to: '/performance', icon: BarChart3, label: 'Performance', roles: ['student', 'parent', 'teacher', 'staff', 'admin'] },
+    {
+      to: '/',
+      icon: LayoutDashboard,
+      label: 'Dashboard',
+      roles: ['student', 'parent', 'teacher', 'staff', 'admin'],
+    },
+    {
+      to: '/chatbot',
+      icon: Bot,
+      label: 'AI Assistant',
+      roles: ['student', 'parent', 'teacher', 'staff', 'admin'],
+    },
+    {
+      to: '/announcements',
+      icon: Bell,
+      label: 'Announcements',
+      roles: ['student', 'parent', 'teacher', 'staff', 'admin'],
+    },
+    {
+      to: '/attendance',
+      icon: Calendar,
+      label: 'Attendance',
+      roles: ['student', 'parent', 'teacher', 'staff', 'admin'],
+    },
+    {
+      to: '/assignments',
+      icon: BookOpen,
+      label: 'Assignments',
+      roles: ['student', 'parent', 'teacher', 'staff', 'admin'],
+    },
+    {
+      to: '/chat',
+      icon: MessageSquare,
+      label: 'Chat',
+      roles: ['student', 'parent', 'teacher', 'staff', 'admin'],
+    },
+    {
+      to: '/library',
+      icon: Library,
+      label: 'Library',
+      roles: ['student', 'parent', 'teacher', 'staff', 'admin'],
+    },
+    {
+      to: '/fees',
+      icon: CreditCard,
+      label: 'Fees',
+      roles: ['student', 'parent', 'teacher', 'staff', 'admin'],
+    },
+    {
+      to: '/performance',
+      icon: BarChart3,
+      label: 'Performance',
+      roles: ['student', 'parent', 'teacher', 'staff', 'admin'],
+    },
     { to: '/parent-portal', icon: Baby, label: 'Parent Portal', roles: ['parent'] },
     { to: '/students', icon: Users, label: 'Students', roles: ['teacher', 'staff', 'admin'] },
     { to: '/teachers', icon: GraduationCap, label: 'Teachers', roles: ['staff', 'admin'] },
+    { to: '/all-users', icon: Shield, label: 'All Users', roles: ['admin'] },
   ];
 
   const handleLogout = () => signOut(auth);
@@ -82,7 +153,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       {/* Mobile Menu Overlay */}
       <AnimatePresence>
         {isSidebarOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -93,10 +164,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       </AnimatePresence>
 
       {/* Sidebar */}
-      <aside className={cn(
-        "fixed inset-y-0 left-0 w-64 bg-white border-r border-slate-200 z-50 transform lg:translate-x-0 lg:static transition-transform duration-300 ease-in-out px-4 py-8",
-        isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 w-64 bg-white border-r border-slate-200 z-50 transform lg:translate-x-0 lg:static transition-transform duration-300 ease-in-out px-4 py-8',
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        )}
+      >
         <div className="flex items-center gap-3 px-4 mb-10">
           <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg">
             <GraduationCap size={24} />
@@ -105,17 +178,15 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         </div>
 
         <nav className="space-y-1">
-          {menuItems.filter(item => item.roles.includes(role || '')).map((item) => (
-            <SidebarLink 
-              key={item.to} 
-              {...item} 
-              active={location.pathname === item.to} 
-            />
-          ))}
+          {menuItems
+            .filter((item) => item.roles.includes(role || ''))
+            .map((item) => (
+              <SidebarLink key={item.to} {...item} active={location.pathname === item.to} />
+            ))}
         </nav>
 
         <div className="absolute bottom-8 left-4 right-4">
-          <button 
+          <button
             onClick={handleLogout}
             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-slate-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
           >
@@ -128,33 +199,28 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0">
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 lg:px-10">
-          <button 
-            onClick={() => setIsSidebarOpen(true)}
-            className="lg:hidden p-2 text-slate-600"
-          >
+          <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 text-slate-600">
             <Menu size={24} />
           </button>
-          
+
           <div className="flex-1" />
-          
+
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:block">
               <p className="text-sm font-semibold text-slate-900">{user?.displayName}</p>
               <p className="text-xs text-slate-500 capitalize">{role}</p>
             </div>
             <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden ring-2 ring-slate-100">
-              <img 
-                src={user?.photoURL || `https://ui-avatars.com/api/?name=${user?.displayName}`} 
-                alt="Profile" 
+              <img
+                src={user?.photoURL || `https://ui-avatars.com/api/?name=${user?.displayName}`}
+                alt="Profile"
                 className="w-full h-full object-cover"
               />
             </div>
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto p-6 lg:p-10 space-y-8">
-          {children}
-        </div>
+        <div className="flex-1 overflow-auto p-6 lg:p-10 space-y-8">{children}</div>
       </main>
     </div>
   );
@@ -174,10 +240,14 @@ const LoginPage = () => {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err: unknown) {
       console.error('Login error:', err);
-      const errorObj = err as { code?: string, message?: string };
+      const errorObj = err as { code?: string; message?: string };
       if (errorObj.code === 'auth/operation-not-allowed') {
         setError('Email/Password sign-in is disabled in Firebase Console.');
-      } else if (errorObj.code === 'auth/invalid-credential' || errorObj.code === 'auth/wrong-password' || errorObj.code === 'auth/user-not-found') {
+      } else if (
+        errorObj.code === 'auth/invalid-credential' ||
+        errorObj.code === 'auth/wrong-password' ||
+        errorObj.code === 'auth/user-not-found'
+      ) {
         setError('Invalid email or password. Please try again.');
       } else {
         setError(errorObj.message || 'An unexpected error occurred.');
@@ -189,7 +259,7 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="max-w-md w-full bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-10 text-center"
@@ -201,12 +271,12 @@ const LoginPage = () => {
         <p className="text-slate-500 mb-8 leading-relaxed">
           Sign in to your account to access the EduConnect system.
         </p>
-        
+
         <form onSubmit={handleLogin} className="space-y-4 text-left">
           <div className="space-y-1">
             <label className="text-xs font-bold text-slate-400 uppercase ml-1">Email</label>
-            <input 
-              type="email" 
+            <input
+              type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -216,8 +286,8 @@ const LoginPage = () => {
           </div>
           <div className="space-y-1">
             <label className="text-xs font-bold text-slate-400 uppercase ml-1">Password</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -233,7 +303,7 @@ const LoginPage = () => {
             </div>
           )}
 
-          <button 
+          <button
             type="submit"
             disabled={signingIn}
             className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all active:scale-[0.98] mt-4 disabled:opacity-50"
@@ -244,7 +314,7 @@ const LoginPage = () => {
 
         <div className="mt-8 pt-8 border-t border-slate-50">
           <p className="text-[10px] text-slate-400 uppercase leading-relaxed font-bold tracking-widest">
-            &copy; 2026 EduConnect Academy <br/> 
+            &copy; 2026 EduConnect Academy <br />
             Secure Academic Management System
           </p>
         </div>
@@ -259,34 +329,48 @@ const Dashboard = () => {
   const stats = [
     { label: 'Attendance', value: '98%', trend: '+2%', color: 'bg-blue-50 text-blue-600' },
     { label: 'Assignments', value: '12', sub: 'Active', color: 'bg-indigo-50 text-indigo-600' },
-    { label: 'Events Today', value: '3', sub: 'Scheduled', color: 'bg-emerald-50 text-emerald-600' },
+    {
+      label: 'Events Today',
+      value: '3',
+      sub: 'Scheduled',
+      color: 'bg-emerald-50 text-emerald-600',
+    },
     { label: 'Avg Grade', value: 'A-', trend: '+1.5%', color: 'bg-amber-50 text-amber-600' },
   ];
 
   return (
     <div className="space-y-10">
       <div className="flex flex-col gap-2">
-        <h1 className="text-4xl font-bold text-slate-900 tracking-tight">Howdy, {auth.currentUser?.displayName?.split(' ')[0]}! 👋</h1>
+        <h1 className="text-4xl font-bold text-slate-900 tracking-tight">
+          Howdy, {auth.currentUser?.displayName?.split(' ')[0]}! 👋
+        </h1>
         <p className="text-slate-500 text-lg">Here&apos;s what happening in your academy today.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => (
-          <motion.div 
+          <motion.div
             key={stat.label}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
             className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col gap-4"
           >
-            <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center font-bold", stat.color)}>
+            <div
+              className={cn(
+                'w-10 h-10 rounded-xl flex items-center justify-center font-bold',
+                stat.color
+              )}
+            >
               {stat.label[0]}
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500">{stat.label}</p>
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-bold text-slate-900">{stat.value}</span>
-                {stat.trend && <span className="text-xs font-bold text-emerald-500">{stat.trend}</span>}
+                {stat.trend && (
+                  <span className="text-xs font-bold text-emerald-500">{stat.trend}</span>
+                )}
                 {stat.sub && <span className="text-xs font-medium text-slate-400">{stat.sub}</span>}
               </div>
             </div>
@@ -298,17 +382,26 @@ const Dashboard = () => {
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-slate-900">Recent Announcements</h2>
-            <Link to="/announcements" className="text-sm font-semibold text-blue-600 hover:underline">View All</Link>
+            <Link
+              to="/announcements"
+              className="text-sm font-semibold text-blue-600 hover:underline"
+            >
+              View All
+            </Link>
           </div>
           <div className="space-y-4">
             {[1, 2, 3].map((_, i) => (
-              <div key={i} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-200">
+              <div
+                key={i}
+                className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-200"
+              >
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="font-bold text-slate-900">Annual Sports Meet 2024</h3>
                   <span className="text-xs font-medium text-slate-400">2h ago</span>
                 </div>
                 <p className="text-slate-600 leading-relaxed text-sm">
-                  We are excited to announce our upcoming sports meet scheduled for next Friday. All participants are requested...
+                  We are excited to announce our upcoming sports meet scheduled for next Friday. All
+                  participants are requested...
                 </p>
               </div>
             ))}
@@ -344,28 +437,33 @@ const Dashboard = () => {
 const AppContent = () => {
   const { user, loading } = useAuth();
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <motion.div 
-        animate={{ rotate: 360 }}
-        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-        className="text-blue-600"
-      >
-        <GraduationCap size={48} />
-      </motion.div>
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          className="text-blue-600"
+        >
+          <GraduationCap size={48} />
+        </motion.div>
+      </div>
+    );
 
   if (!user) return <LoginPage />;
 
   return (
     <Layout>
-      <Suspense fallback={
-        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-400 font-black uppercase tracking-widest text-xs">Loading Module...</p>
-        </div>
-      }>
+      <Suspense
+        fallback={
+          <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <p className="text-slate-400 font-black uppercase tracking-widest text-xs">
+              Loading Module...
+            </p>
+          </div>
+        }
+      >
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/chatbot" element={<ChatbotPage />} />
@@ -376,26 +474,38 @@ const AppContent = () => {
           <Route path="/library" element={<LibraryPage />} />
           <Route path="/fees" element={<FeesPage />} />
           <Route path="/performance" element={<PerformancePage />} />
-          <Route path="/parent-portal" element={
-            <RoleGuard allowedRoles={['parent']}>
-              <ParentPortal />
-            </RoleGuard>
-          } />
-          <Route path="/students" element={
-            <RoleGuard allowedRoles={['teacher', 'staff', 'admin']}>
-              <StudentsPage />
-            </RoleGuard>
-          } />
-          <Route path="/teachers" element={
-            <RoleGuard allowedRoles={['staff', 'admin']}>
-              <TeachersPage />
-            </RoleGuard>
-          } />
-          <Route path="/all-users" element={
-            <RoleGuard allowedRoles={['admin']}>
-              <UsersPage type="all" />
-            </RoleGuard>
-          } />
+          <Route
+            path="/parent-portal"
+            element={
+              <RoleGuard allowedRoles={['parent']}>
+                <ParentPortal />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/students"
+            element={
+              <RoleGuard allowedRoles={['teacher', 'staff', 'admin']}>
+                <StudentsPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/teachers"
+            element={
+              <RoleGuard allowedRoles={['staff', 'admin']}>
+                <TeachersPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/all-users"
+            element={
+              <RoleGuard allowedRoles={['admin']}>
+                <UsersPage type="all" />
+              </RoleGuard>
+            }
+          />
         </Routes>
       </Suspense>
     </Layout>

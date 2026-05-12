@@ -21,7 +21,7 @@ export const ROLES = {
   PARENT: 'parent',
 } as const;
 
-export type UserRole = typeof ROLES[keyof typeof ROLES];
+export type UserRole = (typeof ROLES)[keyof typeof ROLES];
 
 export const PERMISSIONS = {
   MANAGE_USERS: 'manageUsers',

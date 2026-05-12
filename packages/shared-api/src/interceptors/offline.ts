@@ -5,7 +5,12 @@ import { Interceptor, RequestConfig } from '../client/base.js';
  * Caches non-GET requests when the network is offline and retries them automatically when online.
  */
 export class OfflineQueueInterceptor {
-  private queue: Array<{ path: string; config: RequestConfig; resolve: Function; reject: Function }> = [];
+  private queue: Array<{
+    path: string;
+    config: RequestConfig;
+    resolve: Function;
+    reject: Function;
+  }> = [];
   private isOnline = true;
 
   constructor() {
@@ -27,7 +32,7 @@ export class OfflineQueueInterceptor {
   async processQueue() {
     if (this.queue.length === 0) return;
     console.log(`[OfflineQueue] Processing ${this.queue.length} queued requests...`);
-    
+
     // Create a copy and clear to prevent infinite loops if they fail again
     const items = [...this.queue];
     this.queue = [];

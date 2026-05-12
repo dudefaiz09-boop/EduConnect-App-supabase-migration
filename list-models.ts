@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI } from '@google/genai';
 
 async function listModels() {
   const apiKey = process.env.GEMINI_API_KEY;

@@ -25,7 +25,7 @@ export function useChatbot() {
   const queryClient = useQueryClient();
 
   const chatMutation = useMutation({
-    mutationFn: (query: string) => 
+    mutationFn: (query: string) =>
       apiClient.request('/api/ai/query', {
         method: 'POST',
         body: JSON.stringify({ query }),

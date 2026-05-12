@@ -5,7 +5,7 @@ const BASE_URL = 'https://us-central1-gen-lang-client-0979500227.cloudfunctions.
 
 export const apiClient = new ApiClient({
   baseUrl: BASE_URL,
-  getToken: () => auth.currentUser ? auth.currentUser.getIdToken() : Promise.resolve(null),
+  getToken: () => (auth.currentUser ? auth.currentUser.getIdToken() : Promise.resolve(null)),
   onUnauthorized: () => auth.signOut(),
 });
 

@@ -28,7 +28,7 @@ export function useAnnouncements(service: AnnouncementsService) {
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ANNOUNCEMENTS_QUERY_KEY });
       const previous = queryClient.getQueryData(ANNOUNCEMENTS_QUERY_KEY);
-      queryClient.setQueryData(ANNOUNCEMENTS_QUERY_KEY, (old: any) => 
+      queryClient.setQueryData(ANNOUNCEMENTS_QUERY_KEY, (old: any) =>
         old?.filter((a: any) => a.id !== id)
       );
       return { previous };

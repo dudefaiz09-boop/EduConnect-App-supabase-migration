@@ -17,7 +17,7 @@ export function useRealtimeAnnouncements(
 
   useEffect(() => {
     setLoading(true);
-    
+
     // Start realtime listener with automatic cleanup
     const unsubscribe = repository.subscribeToAnnouncements((announcements) => {
       setData(announcements);

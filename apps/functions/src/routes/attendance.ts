@@ -6,7 +6,7 @@ const router: Router = Router();
 
 router.get('/:classId?', checkPermission('viewAttendance'), async (req, res, next) => {
   try {
-    const classId = req.params.classId || req.query.classId as string;
+    const classId = req.params.classId || (req.query.classId as string);
     const date = req.query.date as string;
 
     if (!classId) {
@@ -14,7 +14,7 @@ router.get('/:classId?', checkPermission('viewAttendance'), async (req, res, nex
     }
 
     let query: any = db.collection('attendance').where('classId', '==', classId);
-    
+
     if (date) {
       query = query.where('date', '==', date);
     }
@@ -34,7 +34,7 @@ router.post('/mark', checkPermission('markAttendance'), async (req, res, next) =
       classId,
       date,
       records,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     });
     res.json({ success: true });
   } catch (error) {

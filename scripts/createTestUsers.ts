@@ -4,7 +4,7 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
 /**
  * Database Seeding Script
- * 
+ *
  * This script uses the Google Cloud Application Default Credentials (ADC)
  * or the service account key provided via environment variables.
  */
@@ -31,8 +31,8 @@ const TEST_USERS = [
       roles: ['student'],
       isAdmin: false,
       classId: '10A',
-      permissions: { submitAssignments: true, viewOwnRecords: true }
-    }
+      permissions: { submitAssignments: true, viewOwnRecords: true },
+    },
   },
   {
     email: 'student.b@educonnect.test',
@@ -42,8 +42,8 @@ const TEST_USERS = [
       roles: ['student'],
       isAdmin: false,
       classId: '10B',
-      permissions: { submitAssignments: true, viewOwnRecords: true }
-    }
+      permissions: { submitAssignments: true, viewOwnRecords: true },
+    },
   },
   {
     email: 'teacher.a@educonnect.test',
@@ -58,9 +58,9 @@ const TEST_USERS = [
         manageAttendance: true,
         manageAssignments: true,
         managePerformance: true,
-        financialOps: false
-      }
-    }
+        financialOps: false,
+      },
+    },
   },
   {
     email: 'teacher.b@educonnect.test',
@@ -75,9 +75,9 @@ const TEST_USERS = [
         manageAttendance: true,
         manageAssignments: true,
         managePerformance: true,
-        financialOps: false
-      }
-    }
+        financialOps: false,
+      },
+    },
   },
   {
     email: 'principal@educonnect.test',
@@ -95,10 +95,10 @@ const TEST_USERS = [
         manageLibrary: true,
         manageAssignments: true,
         managePerformance: true,
-        financialOps: true
-      }
-    }
-  }
+        financialOps: true,
+      },
+    },
+  },
 ];
 
 async function setup() {
@@ -124,17 +124,23 @@ async function setup() {
       }
 
       await auth.setCustomUserClaims(userRecord.uid, user.claims);
-      await db.collection('users').doc(userRecord.uid).set({
-        uid: userRecord.uid,
-        email: user.email,
-        displayName: user.displayName,
-        roles: user.claims.roles,
-        isAdmin: user.claims.isAdmin,
-        classId: (user.claims as any).classId || null,
-        permissions: user.claims.permissions,
-        updatedAt: FieldValue.serverTimestamp()
-      }, { merge: true });
-      
+      await db
+        .collection('users')
+        .doc(userRecord.uid)
+        .set(
+          {
+            uid: userRecord.uid,
+            email: user.email,
+            displayName: user.displayName,
+            roles: user.claims.roles,
+            isAdmin: user.claims.isAdmin,
+            classId: (user.claims as any).classId || null,
+            permissions: user.claims.permissions,
+            updatedAt: FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+
       console.log(`✅ Success: ${user.email}`);
     } catch (error: any) {
       console.error(`❌ Failed: ${user.email} - ${error.message}`);

@@ -14,14 +14,10 @@ export interface OptimisticOptions<TData, TVariables> {
  * Enforces zero-latency UI updates by artificially mutating the React Query cache.
  * Automatically rolls back the local cache if the backend API or Firestore update fails.
  */
-export function useOptimisticMutation<
-  TData,
-  TVariables,
-  TError = DefaultError
->({
+export function useOptimisticMutation<TData, TVariables, TError = DefaultError>({
   queryKey,
   mutationFn,
-  onMutateUpdate
+  onMutateUpdate,
 }: OptimisticOptions<TData, TVariables>) {
   const queryClient = useQueryClient();
 
@@ -51,6 +47,6 @@ export function useOptimisticMutation<
       // 6. Invalidate query to guarantee strict consistency with the database.
       // (Though if useRealtimeSync is active, this happens automatically via onSnapshot)
       queryClient.invalidateQueries({ queryKey });
-    }
+    },
   });
 }

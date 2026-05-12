@@ -10,13 +10,13 @@ const router: Router = Router();
 // List assignments
 router.get('/:classId?', async (req, res, next) => {
   try {
-    const classId = req.params.classId || req.query.classId as string;
+    const classId = req.params.classId || (req.query.classId as string);
     let query: any = db.collection('assignments');
-    
+
     if (classId) {
       query = query.where('targetClasses', 'array-contains', classId);
     }
-    
+
     const snapshot = await query.get();
     res.json(snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })));
   } catch (error) {
@@ -41,10 +41,10 @@ router.post(['/', '/create'], checkPermission('manageAssignments'), async (req, 
       rubric: req.body.rubric || null,
       visibility: req.body.visibility || 'public',
       createdBy: req.user.uid,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
     const docRef = await db.collection('assignments').add(assignment);
-    
+
     // Dispatch push notifications to mobile clients via FCM Topics
     try {
       const messaging = getMessaging();
@@ -59,7 +59,7 @@ router.post(['/', '/create'], checkPermission('manageAssignments'), async (req, 
           type: 'assignment',
           assignmentId: docRef.id,
           classId: req.body.classId,
-        }
+        },
       });
       logger.info(`Pushed FCM notification to topic: ${topic}`);
     } catch (fcmError) {
@@ -98,7 +98,7 @@ router.post(['/:id/submit', '/submit'], async (req, res, next) => {
       status: 'submitted',
       submittedAt: new Date().toISOString(),
       checkedByAI: false,
-      recheckedByTeacher: false
+      recheckedByTeacher: false,
     };
 
     await submissionRef.set(submissionData);
@@ -114,18 +114,18 @@ Respond strictly in JSON format: { "score": number, "feedback": "string" }`;
 
       const result = await ai.models.generateContent({
         model: GEMINI_MODEL,
-        contents: [{ role: 'user', parts: [{ text: prompt }] }]
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
       });
-      
+
       const responseText = result.text || '';
-      const aiResult = JSON.parse(responseText.replace(/```json|```/g, "").trim() || '{}');
+      const aiResult = JSON.parse(responseText.replace(/```json|```/g, '').trim() || '{}');
       await submissionRef.update({
         aiScore: aiResult.score || null,
         aiFeedback: aiResult.feedback || null,
         grade: aiResult.score?.toString() || null, // Default initial grade to AI score
         feedback: aiResult.feedback || null,
         status: 'graded',
-        checkedByAI: true
+        checkedByAI: true,
       });
     } catch (aiError) {
       logger.error({ err: aiError, uid: user.uid }, 'AI evaluation failed');
@@ -141,7 +141,7 @@ Respond strictly in JSON format: { "score": number, "feedback": "string" }`;
 router.post('/recheck', checkPermission('manageAssignments'), async (req, res, next) => {
   try {
     const { assignmentId, studentId, teacherScore, teacherFeedback } = req.body;
-    
+
     if (!assignmentId || !studentId) {
       return res.status(400).json({ error: 'assignmentId and studentId required' });
     }
@@ -154,7 +154,7 @@ router.post('/recheck', checkPermission('manageAssignments'), async (req, res, n
       feedback: teacherFeedback,
       recheckedByTeacher: true,
       status: 'returned', // Finalized state
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     });
 
     res.json({ success: true });

@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -9,15 +9,15 @@ import {
   ActivityIndicator,
   FlatList,
 } from 'react-native';
-import {auth} from './lib/firebase';
-import {signInWithEmailAndPassword, onAuthStateChanged, User} from 'firebase/auth';
-import {QueryClientProvider} from '@tanstack/react-query';
-import {queryClient} from './lib/query-client';
-import {useAnnouncements} from '@educonnect/shared-api';
-import {announcementsService} from './lib/api-client';
+import { auth } from './lib/firebase';
+import { signInWithEmailAndPassword, onAuthStateChanged, User } from 'firebase/auth';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './lib/query-client';
+import { useAnnouncements } from '@educonnect/shared-api';
+import { announcementsService } from './lib/api-client';
 
 const AnnouncementsList = () => {
-  const {data: announcements = [], isLoading} = useAnnouncements(announcementsService);
+  const { data: announcements = [], isLoading } = useAnnouncements(announcementsService);
 
   if (isLoading) {
     return <ActivityIndicator size="small" color="#2563eb" />;
@@ -27,7 +27,7 @@ const AnnouncementsList = () => {
     <FlatList
       data={announcements}
       keyExtractor={(item) => item.id}
-      renderItem={({item}) => (
+      renderItem={({ item }) => (
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{item.title}</Text>
           <Text style={styles.cardContent}>{item.content}</Text>
@@ -36,9 +36,7 @@ const AnnouncementsList = () => {
           </Text>
         </View>
       )}
-      ListEmptyComponent={
-        <Text style={styles.empty}>No announcements yet.</Text>
-      }
+      ListEmptyComponent={<Text style={styles.empty}>No announcements yet.</Text>}
     />
   );
 };
@@ -88,7 +86,7 @@ const AppContent = () => {
         <View style={styles.loginContainer}>
           <Text style={styles.title}>EduConnect</Text>
           <Text style={styles.subtitle}>Mobile Portal</Text>
-          
+
           <TextInput
             style={styles.input}
             placeholder="Email"
@@ -103,9 +101,9 @@ const AppContent = () => {
             onChangeText={setPassword}
             secureTextEntry
           />
-          
+
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          
+
           <TouchableOpacity style={styles.button} onPress={handleLogin}>
             <Text style={styles.buttonText}>Login</Text>
           </TouchableOpacity>
@@ -232,7 +230,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0',
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,

@@ -4,7 +4,7 @@ export const TimestampValueSchema = z.union([
   z.object({ toDate: z.function().returns(z.date()) }),
   z.string(),
   z.number(),
-  z.null()
+  z.null(),
 ]);
 
 export const UserProfileSchema = z.object({

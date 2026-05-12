@@ -2,9 +2,9 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   lint-and-build:
@@ -41,5 +41,5 @@ jobs:
           npx firebase emulators:start --only firestore,auth --import=./tests/data &
           npx playwright test
         env:
-          FIREBASE_AUTH_EMULATOR_HOST: "localhost:9099"
-          FIRESTORE_EMULATOR_HOST: "localhost:8080"
+          FIREBASE_AUTH_EMULATOR_HOST: 'localhost:9099'
+          FIRESTORE_EMULATOR_HOST: 'localhost:8080'

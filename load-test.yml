@@ -1,5 +1,5 @@
 config:
-  target: "https://educonnect-app-902823826580.us-central1.run.app"
+  target: 'https://educonnect-app-902823826580.us-central1.run.app'
   phases:
     - duration: 60
       arrivalRate: 5
@@ -13,19 +13,19 @@ config:
       rampTo: 100
       name: Stress phase
   payload:
-    path: "tests/users.csv"
+    path: 'tests/users.csv'
     fields:
-      - "email"
-      - "password"
+      - 'email'
+      - 'password'
 
 scenarios:
-  - name: "Student browsing and chatbot"
+  - name: 'Student browsing and chatbot'
     flow:
       - get:
-          url: "/api/health"
+          url: '/api/health'
       - get:
-          url: "/api/announcements"
+          url: '/api/announcements'
       - post:
-          url: "/api/chatbot/query"
+          url: '/api/chatbot/query'
           json:
-            query: "What is my current attendance?"
+            query: 'What is my current attendance?'

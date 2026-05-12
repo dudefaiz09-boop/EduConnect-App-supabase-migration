@@ -47,11 +47,13 @@ The project follows a modular monolithic architecture for the backend:
 ## 🧪 Testing
 
 Run API tests:
+
 ```bash
 npm test
 ```
 
 Run UI tests:
+
 ```bash
 npm run test:ui
 ```

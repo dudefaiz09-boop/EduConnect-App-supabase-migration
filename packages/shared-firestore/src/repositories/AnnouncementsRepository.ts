@@ -1,12 +1,12 @@
-import { 
-  Firestore, 
-  collection, 
-  query, 
-  orderBy, 
-  limit, 
+import {
+  Firestore,
+  collection,
+  query,
+  orderBy,
+  limit,
   onSnapshot,
   where,
-  QueryConstraint
+  QueryConstraint,
 } from 'firebase/firestore';
 import { COLLECTIONS, Announcement } from '@educonnect/shared';
 import { announcementConverter } from '../converters/index.js';
@@ -35,7 +35,7 @@ export class AnnouncementsRepository {
   ) {
     const constraints: QueryConstraint[] = [
       orderBy('createdAt', 'desc'),
-      limit(options.limit || 20)
+      limit(options.limit || 20),
     ];
 
     if (options.classId) {
@@ -44,16 +44,21 @@ export class AnnouncementsRepository {
 
     const q = query(this.getCollection(), ...constraints);
 
-    return onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
-      const announcements = snapshot.docs.map(doc => doc.data());
-      callback(announcements);
-      
-      // Log synchronization state for debugging
-      if (snapshot.metadata.fromCache) {
-        console.log('[Firestore] Serving data from local cache (offline).');
+    return onSnapshot(
+      q,
+      { includeMetadataChanges: true },
+      (snapshot) => {
+        const announcements = snapshot.docs.map((doc) => doc.data());
+        callback(announcements);
+
+        // Log synchronization state for debugging
+        if (snapshot.metadata.fromCache) {
+          console.log('[Firestore] Serving data from local cache (offline).');
+        }
+      },
+      (error) => {
+        console.error('[Firestore] Listener error:', error);
       }
-    }, (error) => {
-      console.error('[Firestore] Listener error:', error);
-    });
+    );
   }
 }

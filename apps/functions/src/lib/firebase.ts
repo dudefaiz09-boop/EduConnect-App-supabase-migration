@@ -4,8 +4,8 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 /**
  * Firebase Admin SDK Initialization
- * 
- * In Cloud Functions v2, default credentials and Project ID 
+ *
+ * In Cloud Functions v2, default credentials and Project ID
  * are automatically managed by the environment.
  */
 

@@ -12,10 +12,6 @@ export const PageHeader = ({ title, description, children }: PageHeaderProps) =>
       <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{title}</h1>
       {description && <p className="text-slate-500">{description}</p>}
     </div>
-    {children && (
-      <div className="flex items-center gap-3">
-        {children}
-      </div>
-    )}
+    {children && <div className="flex items-center gap-3">{children}</div>}
   </div>
 );

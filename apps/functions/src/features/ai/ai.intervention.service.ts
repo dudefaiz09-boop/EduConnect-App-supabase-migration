@@ -1,6 +1,5 @@
 import { db } from '../../lib/firebase.js';
 import { InterventionAlert } from '@educonnect/shared-education';
-import { FieldValue } from 'firebase-admin/firestore';
 
 export class AiInterventionService {
   static async triggerAttendanceIntervention(studentId: string, schoolId: string, reason: string) {
@@ -12,9 +11,9 @@ export class AiInterventionService {
       reason,
       status: 'pending',
       isApproved: false,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
-    
+
     return await db.collection('interventions').add(alert);
   }
 }

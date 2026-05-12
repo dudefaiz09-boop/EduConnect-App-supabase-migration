@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI } from '@google/genai';
 
 async function testAI() {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -9,8 +9,9 @@ async function testAI() {
   }
 
   const ai = new GoogleGenAI({ apiKey });
-  const content = "The solar system consists of the Sun and everything that orbits it, including eight planets, their moons, and other objects like asteroids and comets.";
-  
+  const content =
+    'The solar system consists of the Sun and everything that orbits it, including eight planets, their moons, and other objects like asteroids and comets.';
+
   const promptText = `
     You are an expert teacher grading a student's assignment.
     Assignment Content: ${content}
@@ -27,16 +28,16 @@ async function testAI() {
   try {
     console.log('Testing Gemini AI with sample content...');
     const result = await ai.models.generateContent({
-      model: "gemini-flash-latest",
-      contents: [{ role: 'user', parts: [{ text: promptText }] }]
+      model: 'gemini-flash-latest',
+      contents: [{ role: 'user', parts: [{ text: promptText }] }],
     });
-    
+
     const responseText = result.text;
     console.log('Raw AI Response:', responseText);
-    
-    const aiResult = JSON.parse(responseText.replace(/```json|```/g, "").trim());
+
+    const aiResult = JSON.parse(responseText.replace(/```json|```/g, '').trim());
     console.log('Parsed Result:', aiResult);
-    
+
     if (typeof aiResult.score === 'number' && typeof aiResult.feedback === 'string') {
       console.log('✅ AI Check works perfectly!');
     } else {

@@ -1,9 +1,9 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { 
-  initializeFirestore, 
-  persistentLocalCache, 
-  persistentMultipleTabManager 
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
 } from 'firebase/firestore';
 
 /**
@@ -24,10 +24,12 @@ export const auth = getAuth(app);
 // Initialize Firestore with persistent local cache
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager()
-  })
+    tabManager: persistentMultipleTabManager(),
+  }),
 });
 
 if (import.meta.env.DEV) {
-  console.log(`[Firebase] Initialized with offline persistence for project: ${firebaseConfig.projectId}`);
+  console.log(
+    `[Firebase] Initialized with offline persistence for project: ${firebaseConfig.projectId}`
+  );
 }

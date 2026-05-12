@@ -5,14 +5,14 @@ export const NOTIFICATION_CHANNELS = {
   PUSH: 'push',
   IN_APP: 'in-app',
   EMAIL: 'email',
-  SMS: 'sms'
+  SMS: 'sms',
 } as const;
 
 export const NOTIFICATION_PRIORITY = {
   LOW: 'low',
   NORMAL: 'normal',
   HIGH: 'high',
-  URGENT: 'urgent' // e.g. behavior alerts, emergency school closure
+  URGENT: 'urgent', // e.g. behavior alerts, emergency school closure
 } as const;
 
 export const NotificationPayloadSchema = BaseSaaSObjectSchema.extend({
@@ -41,12 +41,14 @@ export const NotificationPreferenceSchema = BaseSaaSObjectSchema.extend({
     fees: z.boolean().default(true),
     chat: z.boolean().default(true),
   }),
-  quietHours: z.object({
-    enabled: z.boolean().default(false),
-    start: z.string().optional(), // '22:00'
-    end: z.string().optional(),   // '07:00'
-    timezone: z.string().optional()
-  }).optional()
+  quietHours: z
+    .object({
+      enabled: z.boolean().default(false),
+      start: z.string().optional(), // '22:00'
+      end: z.string().optional(), // '07:00'
+      timezone: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type NotificationPayload = z.infer<typeof NotificationPayloadSchema>;
