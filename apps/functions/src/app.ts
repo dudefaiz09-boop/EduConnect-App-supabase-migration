@@ -46,15 +46,27 @@ app.use(helmet({
 app.use(compression());
 app.use(express.json());
 
-// 2. Rate Limiting
+// 2. Rate Limiting - Stricter limits for sensitive data operations
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 500,
-  message: { error: 'Too many requests' },
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Max 100 requests per window (≈6.67 req/min)
+  message: { error: 'Too many requests, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+// Higher limits for read-only operations, lower for sensitive operations
+const strictLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30, // More restrictive for fee/performance operations
+  message: { error: 'Too many requests. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use('/api/', limiter);
+app.use('/api/fees', strictLimiter);
+app.use('/api/performance', strictLimiter);
 
 // 3. Authentication
 app.use(authMiddleware);
@@ -78,7 +90,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// 6. Global Error Handling
+// 6. Global Error Handling (Must be last - Express requires 4 params for error handlers)
 app.use(globalErrorHandler);
 
 export default app;
