@@ -7,17 +7,24 @@ import { ai, GEMINI_MODEL } from '../lib/ai.js';
 const router: Router = Router();
 
 // List assignments
-router.get('/', async (req, res, next) => {
+router.get('/:classId?', async (req, res, next) => {
   try {
-    const snapshot = await db.collection('assignments').get();
-    res.json(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    const classId = req.params.classId || req.query.classId as string;
+    let query: any = db.collection('assignments');
+    
+    if (classId) {
+      query = query.where('targetClasses', 'array-contains', classId);
+    }
+    
+    const snapshot = await query.get();
+    res.json(snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })));
   } catch (error) {
     next(error);
   }
 });
 
 // Create assignment
-router.post('/', checkPermission('manageAssignments'), async (req, res, next) => {
+router.post(['/', '/create'], checkPermission('manageAssignments'), async (req, res, next) => {
   try {
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
 
@@ -33,43 +40,15 @@ router.post('/', checkPermission('manageAssignments'), async (req, res, next) =>
   }
 });
 
-// Grade with AI
-router.post('/:id/grade', checkPermission('manageAssignments'), async (req, res, next) => {
+// Submit assignment (Handle both /:id/submit and /submit with id in body)
+router.post(['/:id/submit', '/submit'], async (req, res, next) => {
   try {
-    const { submission } = req.body;
-    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
-
-    const promptText = `Grade this student submission: ${submission}. Provide score (0-10) and feedback.`;
-    
-    const result = await ai.models.generateContent({
-      model: GEMINI_MODEL,
-      contents: [{ role: 'user', parts: [{ text: promptText }] }]
-    });
-
-    const responseText = result.text || '';
-    const aiResult = JSON.parse(responseText.replace(/```json|```/g, "").trim() || '{}');
-
-    await db.collection('submissions').add({
-      assignmentId: req.params.id,
-      gradedBy: req.user.uid,
-      aiResult,
-      timestamp: new Date().toISOString()
-    });
-
-    res.json(aiResult);
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Submit assignment
-router.post('/:id/submit', async (req, res, next) => {
-  try {
-    const { content } = req.body;
-    const assignmentId = req.params.id;
+    const { content, assignmentId: bodyId } = req.body;
+    const assignmentId = req.params.id || bodyId;
     const user = req.user;
 
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    if (!assignmentId) return res.status(400).json({ error: 'assignmentId is required' });
 
     const docId = `${assignmentId}_${user.uid}`;
     const submissionRef = db.collection('submissions').doc(docId);
@@ -108,5 +87,6 @@ router.post('/:id/submit', async (req, res, next) => {
     next(error);
   }
 });
+
 
 export default router;

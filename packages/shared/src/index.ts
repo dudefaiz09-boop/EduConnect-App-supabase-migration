@@ -1,5 +1,6 @@
 export * from './constants/index.js';
 export * from './types/index.js';
+export * from './schemas/domain.ts';
 export * from './schemas/index.ts';
 export * from './api/client.ts';
 export * from './validators/firestore.ts';

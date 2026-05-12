@@ -9,11 +9,9 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.string().transform(Number).default('8080'),
   
-  // SECRETS (Required in production)
-  GEMINI_API_KEY: z.string().min(1, "GEMINI_API_KEY is required"),
-  
-  // FIREBASE (Injected by environment or Secret Manager)
-  PROJECT_ID: z.string().optional(),
+  // FIREBASE / GCP (Injected by environment or Secret Manager)
+  PROJECT_ID: z.string().min(1, "PROJECT_ID is required for Vertex AI"),
+  VERTEX_LOCATION: z.string().default('us-central1'),
   FIREBASE_STORAGE_BUCKET: z.string().optional(),
 });
 

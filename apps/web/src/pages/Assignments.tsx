@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { apiFetch } from '../lib/api';
+import { apiClient } from '../lib/api-client';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Plus, Send, AlertCircle, FileText, 
@@ -71,7 +71,7 @@ export const AssignmentsPage = () => {
   const loadAssignments = React.useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<Assignment[]>(`/api/assignments/${selectedClass}`);
+      const data = await apiClient.request<Assignment[]>(`/api/assignments/${selectedClass}`);
       setAssignments(data);
     } catch (err) {
       console.error(err);
@@ -83,7 +83,7 @@ export const AssignmentsPage = () => {
   const loadMyHistory = React.useCallback(async () => {
     if (!uid) return;
     try {
-      const data = await apiFetch<Submission[]>(`/api/assignments/history/${uid}`);
+      const data = await apiClient.request<Submission[]>(`/api/assignments/history/${uid}`);
       const map: Record<string, Submission> = {};
       data.forEach((s: Submission) => map[s.assignmentId] = s);
       setMySubmissions(map);
@@ -105,7 +105,7 @@ export const AssignmentsPage = () => {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await apiFetch('/api/assignments/create', {
+      await apiClient.request('/api/assignments/create', {
         method: 'POST',
         body: JSON.stringify(newAssignment)
       });
@@ -120,7 +120,7 @@ export const AssignmentsPage = () => {
   const viewSubmissions = async (assignment: Assignment) => {
     setSelectedAssignment(assignment);
     try {
-      const data = await apiFetch<Submission[]>(`/api/assignments/submissions/${assignment.id}`);
+      const data = await apiClient.request<Submission[]>(`/api/assignments/submissions/${assignment.id}`);
       setSubmissions(data);
     } catch (err) {
       console.error(err);
@@ -131,7 +131,7 @@ export const AssignmentsPage = () => {
     if (!gradingState || !selectedAssignment) return;
     try {
       // Use recheck endpoint if it's a teacher override
-      await apiFetch('/api/assignments/recheck', {
+      await apiClient.request('/api/assignments/recheck', {
         method: 'POST',
         body: JSON.stringify({
           assignmentId: selectedAssignment.id,
@@ -150,7 +150,7 @@ export const AssignmentsPage = () => {
   const submitAssignment = async (assignmentId: string) => {
     setIsSubmitting(true);
     try {
-      await apiFetch('/api/assignments/submit', {
+      await apiClient.request('/api/assignments/submit', {
         method: 'POST',
         body: JSON.stringify({
           assignmentId,

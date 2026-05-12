@@ -4,13 +4,23 @@ import { checkPermission } from '../middleware/auth.js';
 
 const router: Router = Router();
 
-router.get('/:classId', checkPermission('viewAttendance'), async (req, res, next) => {
+router.get('/:classId?', checkPermission('viewAttendance'), async (req, res, next) => {
   try {
-    const { classId } = req.params;
-    const snapshot = await db.collection('attendance')
-      .where('classId', '==', classId)
-      .get();
-    res.json(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    const classId = req.params.classId || req.query.classId as string;
+    const date = req.query.date as string;
+
+    if (!classId) {
+      return res.status(400).json({ error: 'classId is required' });
+    }
+
+    let query: any = db.collection('attendance').where('classId', '==', classId);
+    
+    if (date) {
+      query = query.where('date', '==', date);
+    }
+
+    const snapshot = await query.get();
+    res.json(snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })));
   } catch (error) {
     next(error);
   }

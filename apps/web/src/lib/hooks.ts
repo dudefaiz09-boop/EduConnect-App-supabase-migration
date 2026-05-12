@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
-import { apiFetch } from '../lib/api';
+import { apiClient } from '../lib/api-client';
 
 /**
  * Custom hook to debounce a value.
@@ -26,7 +26,7 @@ export function useChatbot() {
 
   const chatMutation = useMutation({
     mutationFn: (query: string) => 
-      apiFetch('/api/ai/query', {
+      apiClient.request('/api/ai/query', {
         method: 'POST',
         body: JSON.stringify({ query }),
       }),
@@ -46,7 +46,7 @@ export function useChatbot() {
 export function useStudentProfile(uid?: string) {
   return useQuery({
     queryKey: ['student', uid],
-    queryFn: () => apiFetch(`/api/students/${uid}`),
+    queryFn: () => apiClient.request(`/api/students/${uid}`),
     enabled: !!uid,
   });
 }

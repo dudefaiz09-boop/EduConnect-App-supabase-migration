@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../lib/firebase';
 import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
-import { apiFetch } from '../lib/api';
+import { apiClient } from '../lib/api-client';
 import { motion } from 'motion/react';
 import { 
   Send, Search, User as UserIcon, MessageSquare, 
@@ -85,7 +85,7 @@ export const ChatPage = () => {
 
     try {
       const recipientId = selectedConv.participants.find(p => p !== user?.uid);
-      await apiFetch('/api/chat/send', {
+      await apiClient.request('/api/chat/send', {
         method: 'POST',
         body: JSON.stringify({
           recipientId,

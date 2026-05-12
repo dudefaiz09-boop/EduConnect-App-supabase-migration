@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { apiFetch } from '../lib/api';
+import { apiClient } from '../lib/api-client';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Book, Search, Plus, Download, BookOpen, 
@@ -59,8 +59,7 @@ export const LibraryPage = () => {
 
   const loadResources = useCallback(async () => {
     try {
-      const data = await apiFetch('/api/library/resources', {
-        cacheTTL: 5 * 60 * 1000 // 5 minutes cache
+      const data = await apiClient.request<any>('/api/library/resources', {
       });
       setResources(data);
     } catch (error) {
@@ -72,7 +71,7 @@ export const LibraryPage = () => {
 
   const loadMyHistory = useCallback(async () => {
     try {
-      const data = await apiFetch(`/api/library/borrow/history/${user?.uid}`);
+      const data = await apiClient.request<any>(`/api/library/borrow/history/${user?.uid}`);
       setBorrowHistory(data);
     } catch (error) {
       console.error(error);
@@ -93,7 +92,7 @@ export const LibraryPage = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await apiFetch('/api/library/upload', {
+      await apiClient.request('/api/library/upload', {
         method: 'POST',
         body: JSON.stringify({
           ...uploadData,
@@ -110,7 +109,7 @@ export const LibraryPage = () => {
 
   const borrowBook = async (resourceId: string) => {
     try {
-      await apiFetch('/api/library/borrow', {
+      await apiClient.request('/api/library/borrow', {
         method: 'POST',
         body: JSON.stringify({ resourceId })
       });
@@ -123,7 +122,7 @@ export const LibraryPage = () => {
 
   const returnBook = async (recordId: string) => {
     try {
-      await apiFetch('/api/library/return', {
+      await apiClient.request('/api/library/return', {
         method: 'POST',
         body: JSON.stringify({ recordId })
       });
@@ -316,7 +315,7 @@ export const LibraryPage = () => {
                         </div>
                         <div>
                            <p className="font-bold text-slate-900">Resource ID: {record.resourceId.slice(-6)}</p>
-                           <p className="text-xs text-slate-400">Borrowed: {record.borrowedAt?.toDate().toLocaleDateString()}</p>
+                           <p className="text-xs text-slate-400">Borrowed: {(record.borrowedAt as any)?.toDate?.().toLocaleDateString()}</p>
                         </div>
                      </div>
                      <div className="flex items-center gap-4">

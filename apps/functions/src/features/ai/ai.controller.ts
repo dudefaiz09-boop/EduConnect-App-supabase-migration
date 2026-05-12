@@ -11,9 +11,9 @@ export class AiController {
         return res.status(401).json({ error: 'Unauthorized' });
       }
       
-      const response = await AiService.getChatbotResponse(user.uid, user.roles[0] || 'student', query);
+      const { id, response } = await AiService.getChatbotResponse(user.uid, user.roles[0] || 'student', query);
       
-      res.json({ success: true, response });
+      res.json({ success: true, id, response, timestamp: new Date().toISOString() });
     } catch (error) {
       next(error);
     }

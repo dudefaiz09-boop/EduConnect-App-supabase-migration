@@ -3,7 +3,6 @@ import { auth, db } from '../lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { 
-  UserContext, 
   UserRole, 
   ROLES, 
   getUserRole, 

@@ -14,7 +14,7 @@ export const announcementsService = new AnnouncementsService(apiClient);
 // Interceptor for logging in dev
 if (import.meta.env.DEV) {
   apiClient.addRequestInterceptor((config) => {
-    console.log(`[API Request] ${config.method} ${config.url}`);
+    console.log(`[API Request] ${config.method || 'GET'}`);
     return config;
   });
 }

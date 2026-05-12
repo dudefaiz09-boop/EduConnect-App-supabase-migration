@@ -9,37 +9,14 @@ import {
   Filter, GraduationCap, Clock, MoreVertical
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { apiFetch } from '../lib/api';
+import { apiClient } from '../lib/api-client';
 import { useDebounce } from '../lib/hooks';
-
-type TimestampValue = { toDate: () => Date } | string | number | null;
-
-type TimestampValue = { toDate: () => Date } | string | number | null;
-
-interface StudentProfile {
-  uid: string;
-  displayName: string;
-  email: string;
-  roles: string[];
-  classId?: string;
-  section?: string;
-  linkedParentIds?: string[];
-  createdAt?: TimestampValue;
-}
-
-interface AuditLog {
-  id: string;
-  action: string;
-  details: string;
-  timestamp: TimestampValue;
-  performedBy: string;
-}
+import { StudentProfile, AuditLog, BulkImportResult } from '@educonnect/shared';
 
 
-interface BulkImportResult {
-  success: boolean;
-  message?: string;
-}
+
+
+
 
 export const StudentsPage = () => {
   const [students, setStudents] = useState<StudentProfile[]>([]);
@@ -86,7 +63,7 @@ export const StudentsPage = () => {
   const handleCreateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await apiFetch('/api/students/create', {
+      await apiClient.request('/api/students/create', {
         method: 'POST',
         body: JSON.stringify(formData)
       });
@@ -102,7 +79,7 @@ export const StudentsPage = () => {
     e.preventDefault();
     if (!selectedStudent) return;
     try {
-      await apiFetch(`/api/students/${selectedStudent.uid}`, {
+      await apiClient.request(`/api/students/${selectedStudent.uid}`, {
         method: 'PUT',
         body: JSON.stringify({
           displayName: formData.displayName,
@@ -121,7 +98,7 @@ export const StudentsPage = () => {
   const handleDeleteStudent = async (uid: string) => {
     if (!window.confirm('Are you sure you want to delete this student? This action cannot be undone.')) return;
     try {
-      await apiFetch(`/api/students/${uid}`, { method: 'DELETE' });
+      await apiClient.request(`/api/students/${uid}`, { method: 'DELETE' });
       alert('Student deleted successfully');
     } catch (error) {
       alert('Error deleting student: ' + (error as Error).message);
@@ -136,7 +113,7 @@ export const StudentsPage = () => {
     });
 
     try {
-      const result = await apiFetch('/api/students/bulk-import', {
+      const result = await apiClient.request<{ results: BulkImportResult[] }>('/api/students/bulk-import', {
         method: 'POST',
         body: JSON.stringify({ students: studentsToImport })
       });
@@ -468,7 +445,7 @@ export const StudentsPage = () => {
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-black uppercase tracking-widest text-slate-400">{log.action}</span>
-                        <span className="text-xs font-bold text-slate-400">{log.timestamp?.toDate?.().toLocaleString() || 'Just now'}</span>
+                        <span className="text-xs font-bold text-slate-400">{(log.timestamp as any)?.toDate?.().toLocaleString() || 'Just now'}</span>
                       </div>
                       <p className="text-slate-900 font-bold">{log.details}</p>
                       <p className="text-xs text-slate-500 mt-2 font-medium">Performed by UID: {log.performedBy}</p>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { apiFetch } from '../lib/api';
+import { apiClient } from '../lib/api-client';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   CreditCard, Upload, Download, History, 
@@ -64,7 +64,7 @@ export const FeesPage = () => {
   const loadStudentData = React.useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiFetch(`/api/fees/${user?.uid}`);
+      const data = await apiClient.request<any>(`/api/fees/${user?.uid}`);
       setFees(data.fees);
       setPayments(data.payments);
     } catch (error) {
@@ -77,7 +77,7 @@ export const FeesPage = () => {
   const loadReport = React.useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiFetch(`/api/fees/report/${selectedClass}`);
+      const data = await apiClient.request<any>(`/api/fees/report/${selectedClass}`);
       setReport(data);
     } catch (error) {
       console.error(error);
@@ -107,7 +107,7 @@ export const FeesPage = () => {
         return { studentId, amountDue: parseFloat(amountDue), dueDate, classId: selectedClass };
       });
 
-      await apiFetch('/api/fees/upload', {
+      await apiClient.request('/api/fees/upload', {
         method: 'POST',
         body: JSON.stringify({ records })
       });
@@ -121,7 +121,7 @@ export const FeesPage = () => {
 
   const processPayment = async (feeId: string, amount: number) => {
     try {
-      await apiFetch('/api/fees/pay', {
+      await apiClient.request('/api/fees/pay', {
         method: 'POST',
         body: JSON.stringify({ feeId, amount, method: 'online' })
       });
@@ -219,7 +219,7 @@ export const FeesPage = () => {
                       <div key={p.id} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100">
                          <div>
                             <p className="font-bold text-slate-900 text-sm">${p.amount}</p>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase">{p.paidAt?.toDate().toLocaleDateString()}</p>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase">{(p.paidAt as any)?.toDate?.().toLocaleDateString()}</p>
                          </div>
                          <button onClick={() => window.open(p.receiptUrl, '_blank')} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
                             <Download size={16} />

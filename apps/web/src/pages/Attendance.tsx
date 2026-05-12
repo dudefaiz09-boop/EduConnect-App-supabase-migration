@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { db } from '../lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
-import { apiFetch } from '../lib/api';
+import { apiClient } from '../lib/api-client';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   CheckCircle2, XCircle, Clock, Search, 
@@ -68,7 +68,7 @@ export const AttendancePage = () => {
       setStudents(studentList);
 
       // 2. Fetch existing records for this date and class
-      const records = await apiFetch<AttendanceRecord[]>(`/api/attendance?classId=${selectedClass}&date=${selectedDate}`);
+      const records = await apiClient.request<AttendanceRecord[]>(`/api/attendance?classId=${selectedClass}&date=${selectedDate}`);
       const recordMap: Record<string, 'present' | 'absent' | 'late'> = {};
       records.forEach((r: AttendanceRecord) => {
         recordMap[r.studentId] = r.status;
@@ -85,8 +85,7 @@ export const AttendancePage = () => {
     if (!user?.uid) return;
     setLoading(true);
     try {
-      const data = await apiFetch<AttendanceRecord[]>(`/api/attendance/history/${user?.uid}`, {
-        cacheTTL: 5 * 60 * 1000 // 5 minutes cache for history
+      const data = await apiClient.request<AttendanceRecord[]>(`/api/attendance/history/${user?.uid}`, {
       });
       setHistory(data);
     } catch (error) {
@@ -99,8 +98,7 @@ export const AttendancePage = () => {
   const loadReports = useCallback(async () => {
     setLoading(true);
     try {
-      await apiFetch(`/api/attendance/report/${selectedClass}`, {
-        cacheTTL: 60 * 1000 // 1 minute cache for reports
+      await apiClient.request(`/api/attendance/report/${selectedClass}`, {
       });
     } catch (error) {
       console.error(error);
@@ -140,7 +138,7 @@ export const AttendancePage = () => {
         studentId,
         status
       }));
-      await apiFetch('/api/attendance/mark', {
+      await apiClient.request('/api/attendance/mark', {
         method: 'POST',
         body: JSON.stringify({
           classId: selectedClass,

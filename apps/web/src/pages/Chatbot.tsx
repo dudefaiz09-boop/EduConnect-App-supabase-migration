@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { apiFetch } from '../lib/api';
+import { apiClient } from '../lib/api-client';
 import { motion } from 'motion/react';
 import { 
   Send, Bot, ThumbsUp, ThumbsDown, Sparkles, 
@@ -8,18 +8,9 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import ReactMarkdown from 'react-markdown';
+import { ChatLog } from '@educonnect/shared';
 
-interface ChatLog {
-  id: string;
-  query: string;
-  response: string;
-  timestamp: { toDate: () => Date } | string | number | null;
-  feedback: 'helpful' | 'not_helpful' | null;
-}
 
-interface TimestampLike {
-  toDate: () => Date;
-}
 
 export const ChatbotPage = () => {
   const { user, role } = useAuth();
@@ -31,7 +22,7 @@ export const ChatbotPage = () => {
 
   const loadHistory = useCallback(async () => {
     try {
-      const data = await apiFetch<ChatLog[]>(`/api/chatbot/history/${user?.uid}`);
+      const data = await apiClient.request<ChatLog[]>(`/api/chatbot/history/${user?.uid}`);
       setLogs(data.reverse()); // Reverse to show oldest first in the scroll area
     } catch {
       // Error handled silently
@@ -61,7 +52,7 @@ export const ChatbotPage = () => {
         response: string;
         timestamp: string;
       }
-      const data = await apiFetch<QueryResponse>('/api/chatbot/query', {
+      const data = await apiClient.request<QueryResponse>('/api/ai/query', {
         method: 'POST',
         body: JSON.stringify({ query: currentQuery })
       });
@@ -84,7 +75,7 @@ export const ChatbotPage = () => {
 
   const handleFeedback = async (logId: string, feedback: 'helpful' | 'not_helpful') => {
     try {
-      await apiFetch('/api/chatbot/feedback', {
+      await apiClient.request('/api/chatbot/feedback', {
         method: 'POST',
         body: JSON.stringify({ logId, feedback })
       });
@@ -103,7 +94,7 @@ export const ChatbotPage = () => {
       case 'student': return "Ask about homework, assignments, or study tips...";
       case 'teacher': return "Ask about class management, grading, or lesson plans...";
       case 'admin':
-      case 'principal': return "Ask about analytics, reports, or school coordination...";
+      case 'staff': return "Ask about analytics, reports, or school coordination...";
       default: return "How can I help you today?";
     }
   };
@@ -112,7 +103,7 @@ export const ChatbotPage = () => {
     student: ["Explain algebra basics", "When is my next assignment?", "How to improve my grades?"],
     teacher: ["Tips for classroom management", "Create a grading rubric", "Summarize student performance"],
     admin: ["View fee collection report", "Check staff attendance", "Generate performance summary"],
-    principal: ["Overall school performance", "Analyze fee trends", "Staff coordination report"],
+    staff: ["Overall school performance", "Analyze fee trends", "Staff coordination report"],
     parent: ["Check my child's attendance", "Next parent-teacher meeting", "View latest grades"]
   }[role || 'student'] || [];
 

@@ -27,8 +27,8 @@ export class AiService {
 
     const responseText = await generateSafeContent(systemInstruction, fullPrompt);
 
-    // Async log to DB
-    await db.collection('chatbotLogs').add({
+    // Sync log to DB to get ID
+    const docRef = await db.collection('chatbotLogs').add({
       userId,
       role,
       query,
@@ -36,7 +36,10 @@ export class AiService {
       timestamp: FieldValue.serverTimestamp()
     });
 
-    return responseText;
+    return { 
+      id: docRef.id, 
+      response: responseText 
+    };
   }
 
   static async getPerformanceSuggestions(studentId: string, records: any[]) {

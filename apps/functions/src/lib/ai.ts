@@ -1,52 +1,62 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { AppError } from "../middleware/error.js";
 import { env } from "./config.js";
 
 /**
  * Enterprise AI Configuration
- * Using validated environment variables.
+ * Migrated to Vertex AI for Google Cloud billing, SLA, and ADC authentication.
+ * Removes hardcoded API keys in favor of IAM Service Accounts.
  */
-export const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
+export const ai = new GoogleGenAI({
+  vertexai: {
+    project: env.PROJECT_ID,
+    location: env.VERTEX_LOCATION,
+  }
+});
 
-export const GEMINI_MODEL = "gemini-flash-latest";
+// Using Vertex AI models
+export const GEMINI_MODEL = "gemini-2.5-flash";
 
 /**
  * Safe AI Wrapper
  * - Enforces structured prompt handling
- * - Implements timeout and retry logic
+ * - Implements token budgeting
  * - Prevents prompt injection by isolating system instructions
  */
 export async function generateSafeContent(
   systemInstruction: string,
   userPrompt: string,
-  config: any = {}
-) {
+  config: any = {},
+  retries = 2
+): Promise<string> {
   try {
     const options: any = {
       model: GEMINI_MODEL,
-      generationConfig: {
+      config: {
         maxOutputTokens: 1000,
-        temperature: 0.7,
+        temperature: 0.2, // Lowered for more deterministic output
         topP: 0.9,
+        systemInstruction: systemInstruction,
         ...config
       },
-      systemInstruction: {
-        role: "system",
-        parts: [{ text: systemInstruction }],
-      },
-      contents: [{ role: "user", parts: [{ text: userPrompt }] }],
     };
 
-    const result = await ai.models.generateContent(options);
+    const result = await ai.models.generateContent({
+      ...options,
+      contents: [{ role: "user", parts: [{ text: `User Query (Unsafe): ${userPrompt}` }] }],
+    });
 
     return result.text || '';
   } catch (error: any) {
-    // Check for quota or rate limit errors
-    if (error.message?.includes('429')) {
-      throw new AppError('AI Quota exceeded or service is busy. Please try again later.', 429);
+    // Quota and backoff handling
+    if (error.status === 429 && retries > 0) {
+      console.warn(`[AI] Rate limit hit. Retrying in 2s... (${retries} retries left)`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      return generateSafeContent(systemInstruction, userPrompt, config, retries - 1);
     }
     
     console.error('[AI] Generation failed:', error);
     throw new AppError('Failed to generate AI content due to a system error.', 500);
   }
 }
+

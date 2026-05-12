@@ -5,6 +5,8 @@ export interface RequestConfig extends RequestInit {
   timeout?: number;
   retry?: number;
   retryDelay?: (attempt: number) => number;
+  cancelToken?: string;
+  allowOfflineQueue?: boolean;
 }
 
 export type Interceptor<T> = (data: T) => T | Promise<T>;
@@ -15,17 +17,20 @@ export interface ApiClientConfig {
   onUnauthorized?: () => void;
   defaultTimeout?: number;
   defaultRetry?: number;
+  isOnline?: () => boolean;
 }
 
 export class ApiClient {
   private config: ApiClientConfig;
   private requestInterceptors: Interceptor<RequestConfig>[] = [];
   private responseInterceptors: Interceptor<any>[] = [];
+  private abortControllers: Map<string, AbortController> = new Map();
 
   constructor(config: ApiClientConfig) {
     this.config = {
-      defaultTimeout: 10000,
+      defaultTimeout: 15000, // 15s default for mobile stability
       defaultRetry: 3,
+      isOnline: () => typeof navigator !== 'undefined' ? navigator.onLine : true,
       ...config,
     };
   }
@@ -36,6 +41,13 @@ export class ApiClient {
 
   addResponseInterceptor(interceptor: Interceptor<any>) {
     this.responseInterceptors.push(interceptor);
+  }
+
+  cancelRequest(token: string) {
+    if (this.abortControllers.has(token)) {
+      this.abortControllers.get(token)?.abort();
+      this.abortControllers.delete(token);
+    }
   }
 
   async request<T>(path: string, config: RequestConfig = {}): Promise<T> {
@@ -51,8 +63,18 @@ export class ApiClient {
       timeout = this.config.defaultTimeout,
       retry = this.config.defaultRetry,
       retryDelay = (attempt) => Math.pow(2, attempt) * 1000,
+      cancelToken,
+      allowOfflineQueue,
       ...fetchConfig
     } = finalConfig;
+
+    // Check offline status
+    if (this.config.isOnline && !this.config.isOnline()) {
+      if (allowOfflineQueue && fetchConfig.method !== 'GET') {
+        throw new Error('OFFLINE_QUEUED');
+      }
+      throw new Error('NETWORK_OFFLINE');
+    }
 
     // Construct URL with params
     const url = new URL(`${this.config.baseUrl}${path}`);
@@ -62,6 +84,10 @@ export class ApiClient {
 
     const execute = async (attempt: number): Promise<T> => {
       const controller = new AbortController();
+      if (cancelToken) {
+        this.abortControllers.set(cancelToken, controller);
+      }
+      
       const id = setTimeout(() => controller.abort(), timeout);
 
       try {
@@ -81,6 +107,7 @@ export class ApiClient {
         });
 
         clearTimeout(id);
+        if (cancelToken) this.abortControllers.delete(cancelToken);
 
         if (response.status === 401) {
           this.config.onUnauthorized?.();
@@ -105,12 +132,13 @@ export class ApiClient {
         return data;
       } catch (error: any) {
         clearTimeout(id);
+        if (cancelToken) this.abortControllers.delete(cancelToken);
 
         if (error.name === 'AbortError') {
-          throw new Error('Request Timeout');
+          throw new Error('Request Timeout or Cancelled');
         }
 
-        // Retry logic
+        // Retry logic for 5xx or network failures
         if (attempt < (retry ?? 0) && (error.status >= 500 || !error.status)) {
           await new Promise((resolve) => setTimeout(resolve, retryDelay(attempt)));
           return execute(attempt + 1);

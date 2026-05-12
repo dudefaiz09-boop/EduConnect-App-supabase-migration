@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { apiFetch } from '../lib/api';
+import { apiClient } from '../lib/api-client';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   BarChart3, TrendingUp, Award, Brain, 
@@ -56,18 +56,17 @@ export const PerformancePage = () => {
 
   const loadStudentPerformance = useCallback(async () => {
     try {
-      const data = await apiFetch(`/api/performance/${user?.uid}`, {
-        cacheTTL: 5 * 60 * 1000 // 5 minutes cache
+      const data = await apiClient.request<any>(`/api/performance/${user?.uid}`, {
       });
       setRecords(data);
       
       // Generate AI suggestions
       if (data.length > 0) {
-        const ai = await apiFetch('/api/performance/ai-suggestions', {
+        const ai = await apiClient.request<{ success: boolean; tips: string }>('/api/ai/suggestions', {
           method: 'POST',
           body: JSON.stringify({ studentId: user?.uid, records: data })
         });
-        setAiSuggestions(ai.suggestions);
+        setAiSuggestions(ai.tips.split('\n').filter(Boolean));
       }
     } catch (error) {
       console.error(error);
@@ -78,7 +77,7 @@ export const PerformancePage = () => {
 
   const loadClassReport = useCallback(async () => {
     try {
-      const data = await apiFetch(`/api/performance/report/${selectedClass}`);
+      const data = await apiClient.request<any>(`/api/performance/report/${selectedClass}`);
       setReport(data);
     } catch (error) {
       console.error(error);
@@ -109,7 +108,7 @@ export const PerformancePage = () => {
         return { studentId, subject, term, score: parseFloat(score), grade, classId: selectedClass };
       });
 
-      await apiFetch('/api/performance/upload', {
+      await apiClient.request('/api/performance/upload', {
         method: 'POST',
         body: JSON.stringify({ records: batchRecords })
       });

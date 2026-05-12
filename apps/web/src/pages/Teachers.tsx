@@ -9,33 +9,14 @@ import {
   BookOpen, Briefcase, Clock, ChevronRight
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { apiFetch } from '../lib/api';
+import { apiClient } from '../lib/api-client';
 import { useDebounce } from '../lib/hooks';
+import { TeacherProfile, AuditLog, BulkImportResult } from '@educonnect/shared';
 
-type TimestampValue = { toDate: () => Date } | string | number | null;
 
-interface TeacherProfile {
-  uid: string;
-  displayName: string;
-  email: string;
-  roles: string[];
-  subjects?: string[];
-  classes?: string[];
-  createdAt?: TimestampValue;
-}
 
-interface AuditLog {
-  id: string;
-  action: string;
-  details: string;
-  timestamp: TimestampValue;
-  performedBy: string;
-}
 
-interface BulkImportResult {
-  success: boolean;
-  message?: string;
-}
+
 
 export const TeachersPage = () => {
   const [teachers, setTeachers] = useState<TeacherProfile[]>([]);
@@ -81,7 +62,7 @@ export const TeachersPage = () => {
   const handleCreateTeacher = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await apiFetch('/api/teachers/create', {
+      await apiClient.request('/api/teachers/create', {
         method: 'POST',
         body: JSON.stringify({
           ...formData,
@@ -101,7 +82,7 @@ export const TeachersPage = () => {
     e.preventDefault();
     if (!selectedTeacher) return;
     try {
-      await apiFetch(`/api/teachers/${selectedTeacher.uid}`, {
+      await apiClient.request(`/api/teachers/${selectedTeacher.uid}`, {
         method: 'PUT',
         body: JSON.stringify({
           displayName: formData.displayName,
@@ -120,7 +101,7 @@ export const TeachersPage = () => {
   const handleDeleteTeacher = async (uid: string) => {
     if (!window.confirm('Are you sure you want to delete this teacher? This action cannot be undone.')) return;
     try {
-      await apiFetch(`/api/teachers/${uid}`, { method: 'DELETE' });
+      await apiClient.request(`/api/teachers/${uid}`, { method: 'DELETE' });
       alert('Teacher deleted successfully');
     } catch (error) {
       alert('Error deleting teacher: ' + (error as Error).message);
@@ -141,7 +122,7 @@ export const TeachersPage = () => {
     });
 
     try {
-      const result = await apiFetch<{ results: BulkImportResult[] }>('/api/teachers/bulk-import', {
+      const result = await apiClient.request<{ results: BulkImportResult[] }>('/api/teachers/bulk-import', {
         method: 'POST',
         body: JSON.stringify({ teachers: teachersToImport })
       });
@@ -452,7 +433,7 @@ export const TeachersPage = () => {
                    </div>
                 </div>
                 <button onClick={() => setIsAuditModalOpen(false)} className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white/60 hover:bg-white/20 hover:text-white transition-all">
-                  <X size size={24} />
+                  <X size={24} />
                 </button>
               </div>
 
@@ -472,7 +453,7 @@ export const TeachersPage = () => {
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-black uppercase tracking-widest text-blue-600">{log.action.replace('_', ' ')}</span>
-                        <span className="text-xs font-bold text-slate-400">{log.timestamp?.toDate?.().toLocaleString() || 'Just now'}</span>
+                        <span className="text-xs font-bold text-slate-400">{(log.timestamp as any)?.toDate?.().toLocaleString() || 'Just now'}</span>
                       </div>
                       <p className="text-slate-900 font-bold text-lg leading-snug">{log.details}</p>
                       <p className="text-xs text-slate-500 mt-2 font-medium flex items-center gap-2">

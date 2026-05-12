@@ -4,7 +4,7 @@ import { checkPermission } from '../middleware/auth.js';
 
 const router: Router = Router();
 
-router.get('/student/:uid', async (req, res, next) => {
+router.get('/:uid', async (req, res, next) => {
   try {
     const snapshot = await db.collection('fees')
       .where('studentId', '==', req.params.uid)
