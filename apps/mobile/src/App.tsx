@@ -15,6 +15,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/query-client';
 import { useAnnouncements } from '@educonnect/shared-api';
 import { announcementsService } from './lib/api-client';
+import { AssignmentsScreen } from './screens/AssignmentsScreen';
 
 const AnnouncementsList = () => {
   const { data: announcements = [], isLoading } = useAnnouncements(announcementsService);
@@ -47,6 +48,7 @@ const AppContent = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState<'announcements' | 'assignments'>('announcements');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
@@ -125,8 +127,32 @@ const AppContent = () => {
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.sectionTitle}>Latest Announcements</Text>
-        <AnnouncementsList />
+        <View style={styles.tabContainer}>
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'announcements' && styles.activeTab]}
+            onPress={() => setActiveTab('announcements')}
+          >
+            <Text style={[styles.tabText, activeTab === 'announcements' && styles.activeTabText]}>News</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'assignments' && styles.activeTab]}
+            onPress={() => setActiveTab('assignments')}
+          >
+            <Text style={[styles.tabText, activeTab === 'assignments' && styles.activeTabText]}>Work</Text>
+          </TouchableOpacity>
+        </View>
+
+        {activeTab === 'announcements' ? (
+          <>
+            <Text style={styles.sectionTitle}>Latest Announcements</Text>
+            <AnnouncementsList />
+          </>
+        ) : (
+          <>
+            <Text style={styles.sectionTitle}>My Assignments</Text>
+            <AssignmentsScreen />
+          </>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -214,7 +240,37 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 24,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#f1f5f9',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 24,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  activeTab: {
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  activeTabText: {
+    color: '#2563eb',
   },
   sectionTitle: {
     fontSize: 20,

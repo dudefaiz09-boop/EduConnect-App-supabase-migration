@@ -4,8 +4,38 @@ import { getMessaging } from 'firebase-admin/messaging';
 import { checkPermission } from '../middleware/auth.js';
 import { logger } from '@educonnect/logger';
 import { ai, GEMINI_MODEL } from '../lib/ai.js';
+import { AssignmentAnalytics } from '@educonnect/shared-analytics';
 
 const router: Router = Router();
+
+// Get assignment analytics for a class
+router.get('/report/:classId', checkPermission('manageAssignments'), async (req, res, next) => {
+  try {
+    const { classId } = req.params;
+    
+    // 1. Get all assignments for this class
+    const assignmentsSnap = await db.collection('assignments')
+      .where('tenantId', '==', req.tenantId)
+      .where('targetClasses', 'array-contains', classId)
+      .get();
+      
+    const assignments = assignmentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+    
+    // 2. Get all submissions for these assignments
+    const report = await Promise.all(assignments.map(async (assignment: any) => {
+      const submissionsSnap = await db.collection('submissions')
+        .where('assignmentId', '==', assignment.id)
+        .get();
+      
+      const submissions = submissionsSnap.docs.map(doc => doc.data() as any);
+      return AssignmentAnalytics.calculateStats(assignment, submissions);
+    }));
+
+    res.json(report);
+  } catch (error) {
+    next(error);
+  }
+});
 
 // Get student submission history
 router.get('/history/:uid', async (req, res, next) => {
