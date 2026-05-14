@@ -41,12 +41,13 @@ Create a Vercel project named `educonnect-api` from this repository.
 Use these settings:
 
 - Framework Preset: Other
-- Root Directory: repository root
-- Install Command: `corepack pnpm install --frozen-lockfile`
-- Build Command: `corepack pnpm --filter @educonnect/functions build`
+- Root Directory: `apps/functions`
+- Include source files outside Root Directory: enabled
+- Install Command: `cd ../.. && corepack pnpm install --frozen-lockfile`
+- Build Command: `cd ../.. && corepack pnpm --filter @educonnect/functions build`
 - Output Directory: `public`
 
-The root `vercel.json` is API-focused. It builds `@educonnect/functions`, includes `apps/functions/dist/**`, rewrites `/api` requests to `api/index.ts`, and publishes a tiny `public` directory so Vercel's default static output check passes.
+The `apps/functions/vercel.json` file is API-focused. It builds `@educonnect/functions`, includes `dist/**`, rewrites `/api` requests to `api/index.ts`, and publishes a tiny `public` directory so Vercel's default static output check passes.
 
 Set these Vercel environment variables:
 

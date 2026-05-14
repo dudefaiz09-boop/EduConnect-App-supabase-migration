@@ -16,13 +16,13 @@ Confirm the `educonnect-uploads` storage bucket exists before testing file uploa
 
 ## Backend API
 
-Deploy the API as the `educonnect-api` Vercel project from the repository root.
+Deploy the API as the `educonnect-api` Vercel project with `apps/functions` as the root directory.
 
 Use these settings:
 
 - Framework Preset: Other
-- Install Command: `corepack pnpm install --frozen-lockfile`
-- Build Command: `corepack pnpm --filter @educonnect/functions build`
+- Install Command: `cd ../.. && corepack pnpm install --frozen-lockfile`
+- Build Command: `cd ../.. && corepack pnpm --filter @educonnect/functions build`
 - Output Directory: `public`
 
 Set:

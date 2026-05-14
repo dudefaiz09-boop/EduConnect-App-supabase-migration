@@ -49,12 +49,13 @@ Never add `SUPABASE_SERVICE_ROLE_KEY` to the web project.
 Create a second Vercel project from the same GitHub repository with these settings:
 
 - Framework Preset: Other
-- Root Directory: repository root
-- Install Command: `corepack pnpm install --frozen-lockfile`
-- Build Command: `corepack pnpm --filter @educonnect/functions build`
+- Root Directory: `apps/functions`
+- Include source files outside Root Directory: enabled
+- Install Command: `cd ../.. && corepack pnpm install --frozen-lockfile`
+- Build Command: `cd ../.. && corepack pnpm --filter @educonnect/functions build`
 - Output Directory: `public`
 
-The existing root [vercel.json](./vercel.json) handles the API entrypoint, includes the compiled Express bundle from `apps/functions/dist/**`, rewrites `/api` traffic to `api/index.ts`, and publishes a small `public` directory so Vercel does not fail with `No Output Directory named "public"`.
+The [apps/functions/vercel.json](./apps/functions/vercel.json) file handles the API entrypoint when `apps/functions` is the Vercel project root. The root [vercel.json](./vercel.json) is kept as a fallback for repository-root API deployments.
 
 Set these API environment variables:
 
