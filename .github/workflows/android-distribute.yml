@@ -22,7 +22,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          cache: true
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -34,12 +37,10 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Install dependencies
-        run: |
-          corepack enable
-          corepack pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Build Android (Debug)
-        run: corepack pnpm --filter mobile build:android
+        run: pnpm --filter mobile build:android
 
       - name: Upload APK to GitHub Actions
         uses: actions/upload-artifact@v4
