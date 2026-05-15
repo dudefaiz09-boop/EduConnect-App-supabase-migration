@@ -2,7 +2,6 @@ import {
   ALL_MODULES,
   ALL_PERMISSIONS,
   DEFAULT_ROLE_MODULES,
-  DEFAULT_ROLE_PERMISSIONS,
   getDefaultPermissionMap,
   isModuleKey,
   isPermissionKey,
