@@ -11,10 +11,12 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       pull-requests: read
     outputs:
       mobile: ${{ steps.filter.outputs.mobile }}
     steps:
+      - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v4
         id: filter
         with:
@@ -31,21 +33,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
-      - name: Enable corepack
-        run: corepack enable
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          cache: true
       - name: Install dependencies
-        run: corepack pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
       - name: Format check
-        run: corepack pnpm format:check
+        run: pnpm format:check
       - name: Lint
-        run: corepack pnpm lint
+        run: pnpm lint
       - name: Test
-        run: corepack pnpm test
+        run: pnpm test
       - name: Build API
-        run: corepack pnpm --filter @educonnect/functions build
+        run: pnpm --filter @educonnect/functions build
       - name: Build Web
-        run: corepack pnpm --filter @educonnect/web build
+        run: pnpm --filter @educonnect/web build
 
   android-build:
     runs-on: ubuntu-latest
@@ -56,7 +59,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
       - uses: actions/setup-java@v4
         with:
           java-version: '17'
@@ -64,13 +66,15 @@ jobs:
           cache: gradle
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-      - name: Enable corepack
-        run: corepack enable
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          cache: true
       - name: Install dependencies
-        run: corepack pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
       - name: Mobile tests
-        run: corepack pnpm --filter mobile test
+        run: pnpm --filter mobile test
       - name: Mobile lint
-        run: corepack pnpm --filter mobile lint
+        run: pnpm --filter mobile lint
       - name: Android build (Debug)
-        run: corepack pnpm --filter mobile build:android
+        run: pnpm --filter mobile build:android
