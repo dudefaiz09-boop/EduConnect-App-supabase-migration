@@ -115,12 +115,14 @@ export const ChatPage = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const selectedConversationId = selectedConv?.id;
+
   useEffect(() => {
-    if (!selectedConv) return;
-    void apiClient.request(`/api/chat/rooms/${selectedConv.id}/read`, { method: 'PATCH' }).catch(() => {
+    if (!selectedConversationId) return;
+    void apiClient.request(`/api/chat/rooms/${selectedConversationId}/read`, { method: 'PATCH' }).catch(() => {
       // Read receipts should not block the message view.
     });
-  }, [selectedConv?.id]);
+  }, [selectedConversationId]);
 
   const startConversation = async (profile: UserProfile) => {
     const recipientId = profile.uid || profile.id;
@@ -163,7 +165,7 @@ export const ChatPage = () => {
         }),
       });
       setNewMessage('');
-    } catch (error) {
+    } catch {
       toast({
         tone: 'error',
         title: 'Message not sent',

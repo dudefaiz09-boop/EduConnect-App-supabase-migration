@@ -33,6 +33,7 @@ export const AssignmentsPage = () => {
   const [selectedClass, setSelectedClass] = useState(userClassId || '10A');
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [renderedAt] = useState(() => Date.now());
 
   const {
     data: assignments = [],
@@ -180,7 +181,7 @@ export const AssignmentsPage = () => {
   const submittedCount = Object.keys(mySubmissions).length;
   const dueSoonCount = assignments.filter((assignment) => {
     const due = new Date(assignment.dueDate).getTime();
-    return Number.isFinite(due) && due - Date.now() <= 7 * 86400000 && due >= Date.now();
+    return Number.isFinite(due) && due - renderedAt <= 7 * 86400000 && due >= renderedAt;
   }).length;
 
   return (

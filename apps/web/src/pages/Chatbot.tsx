@@ -24,6 +24,7 @@ const modes = [
 
 export const ChatbotPage = () => {
   const { user, role } = useAuth();
+  const userId = user?.uid;
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<(typeof modes)[number]['key']>('chat');
   const [logs, setLogs] = useState<ChatLog[]>([]);
@@ -47,10 +48,10 @@ export const ChatbotPage = () => {
   );
 
   const loadHistory = useCallback(async () => {
-    if (!user?.uid) return;
+    if (!userId) return;
     try {
       setError(null);
-      const data = await apiClient.request<ChatLog[]>(`/api/ai/history/${user.uid}`);
+      const data = await apiClient.request<ChatLog[]>(`/api/ai/history/${userId}`);
       setLogs((data || []).reverse());
     } catch (err) {
       console.error('Error loading chat history:', err);
@@ -58,10 +59,13 @@ export const ChatbotPage = () => {
     } finally {
       setHistoryLoading(false);
     }
-  }, [user?.uid]);
+  }, [userId]);
 
   useEffect(() => {
-    void loadHistory();
+    const timer = window.setTimeout(() => {
+      void loadHistory();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [loadHistory]);
 
   useEffect(() => {

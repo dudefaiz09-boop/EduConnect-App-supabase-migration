@@ -71,10 +71,7 @@ export function NotificationDropdown() {
     item.read ||
     (item.id ? localReadIds.has(item.id) : false) ||
     (user?.uid ? item.readBy?.includes(user.uid) : false);
-  const unread = useMemo(
-    () => notifications.filter((item) => !isRead(item)).length,
-    [notifications, user?.uid]
-  );
+  const unread = notifications.filter((item) => !isRead(item)).length;
 
   const markRead = async (item: NotificationRecord) => {
     if (!item.id || item.id.startsWith('demo-') || isRead(item)) return;

@@ -97,7 +97,7 @@ const roleCopy = {
 };
 
 export function DashboardPage() {
-  const { user, role } = useAuth();
+  const { role } = useAuth();
   const { data: announcements } = useDocuments<any>('announcements', {
     order: { field: 'createdAt', ascending: false },
     limit: 4,
@@ -180,7 +180,7 @@ export function DashboardPage() {
           <div className="mb-5 flex items-center justify-between">
             <div>
               <h2 className="text-lg font-black text-slate-950 dark:text-white">Quick Actions</h2>
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Fast paths for today's work</p>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Fast paths for today&apos;s work</p>
             </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">

@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
-  AlertCircle,
   Bell,
   Calendar,
   Filter,
@@ -51,6 +50,7 @@ const priorities = {
 export const AnnouncementsPage = () => {
   const { isAdmin, isTeacher, user, role, classIds } = useAuth();
   const { toast } = useToast();
+  const [renderedAt] = useState(() => Date.now());
   const canPost = isAdmin || isTeacher || role === 'principal';
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -265,7 +265,7 @@ export const AnnouncementsPage = () => {
                       <p className="mt-2 text-xs font-bold uppercase tracking-widest text-slate-400">
                         {announcement.authorName || 'EduConnect'} •{' '}
                         {formatDistanceToNow(
-                          new Date(announcement.createdAt || announcement.timestamp || Date.now()),
+                          new Date(announcement.createdAt || announcement.timestamp || renderedAt),
                           { addSuffix: true }
                         )}
                       </p>
