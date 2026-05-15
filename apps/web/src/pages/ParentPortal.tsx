@@ -7,7 +7,9 @@ import {
   Clock,
   AlertCircle,
   Calendar,
+  CreditCard,
   FileText,
+  TrendingUp,
   Users,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -19,6 +21,35 @@ import {
 } from '@educonnect/shared-education';
 
 type StudentProfileResponse = StudentProfile | { success?: boolean; data?: StudentProfile };
+
+type FeeRecord = {
+  id: string;
+  studentId: string;
+  amountDue: number;
+  amountPaid?: number;
+  dueDate: string;
+  status?: 'pending' | 'paid' | 'partial';
+};
+
+type PaymentRecord = {
+  id: string;
+  feeId: string;
+  amount: number;
+  paidAt: string;
+};
+
+type FeeResponse = {
+  fees?: FeeRecord[];
+  payments?: PaymentRecord[];
+};
+
+type PerformanceRecord = {
+  id: string;
+  subject: string;
+  term: string;
+  score: number;
+  grade: string;
+};
 
 function unwrapStudentProfile(response: StudentProfileResponse): StudentProfile {
   return 'data' in response && response.data ? response.data : (response as StudentProfile);
@@ -33,6 +64,9 @@ export const ParentPortal = () => {
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Record<string, Submission>>({});
+  const [fees, setFees] = useState<FeeRecord[]>([]);
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
+  const [performance, setPerformance] = useState<PerformanceRecord[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -60,6 +94,15 @@ export const ParentPortal = () => {
         );
         setAttendance(att);
 
+        const feeData = await apiClient.request<FeeResponse>(`/api/fees/${selectedStudentId}`);
+        setFees(feeData.fees || []);
+        setPayments(feeData.payments || []);
+
+        const performanceData = await apiClient.request<PerformanceRecord[]>(
+          `/api/performance/${selectedStudentId}`
+        );
+        setPerformance(performanceData || []);
+
         // Fetch assignments for student's class
         if (profile.classId) {
           const ass = await apiClient.request<Assignment[]>(`/api/assignments/${profile.classId}`);
@@ -71,6 +114,9 @@ export const ParentPortal = () => {
           const subMap: Record<string, Submission> = {};
           subs.forEach((s) => (subMap[s.assignmentId] = s));
           setSubmissions(subMap);
+        } else {
+          setAssignments([]);
+          setSubmissions({});
         }
       } catch (err) {
         console.error('Failed to fetch parent portal data:', err);
@@ -81,6 +127,26 @@ export const ParentPortal = () => {
 
     fetchStudentData();
   }, [selectedStudentId]);
+
+  const attendanceRate =
+    attendance.length > 0
+      ? Math.round(
+          (attendance.filter((record) => record.status === 'present').length / attendance.length) *
+            100
+        )
+      : 0;
+  const pendingAssignments = Math.max(assignments.length - Object.keys(submissions).length, 0);
+  const averageScore =
+    performance.length > 0
+      ? Math.round(
+          performance.reduce((sum, record) => sum + Number(record.score || 0), 0) /
+            performance.length
+        )
+      : 0;
+  const pendingFees = fees.reduce(
+    (sum, fee) => sum + Math.max(Number(fee.amountDue || 0) - Number(fee.amountPaid || 0), 0),
+    0
+  );
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
@@ -143,7 +209,7 @@ export const ParentPortal = () => {
                 <div className="mt-6 space-y-3">
                   <div className="flex items-center gap-3 text-sm font-bold bg-white/10 p-3 rounded-2xl backdrop-blur-md">
                     <GraduationCap size={20} />
-                    Class {studentData?.classId} • Section {studentData?.section}
+                    Class {studentData?.classId || 'N/A'} - Section {studentData?.section || 'N/A'}
                   </div>
                   <div className="flex items-center gap-3 text-sm font-bold bg-white/10 p-3 rounded-2xl backdrop-blur-md">
                     <Users size={20} />
@@ -152,6 +218,39 @@ export const ParentPortal = () => {
                 </div>
               </div>
               <Baby className="absolute -right-4 -bottom-4 w-40 h-40 text-white/5 rotate-12" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="rounded-[28px] border border-slate-100 bg-white p-5 shadow-sm">
+                <Calendar size={20} className="text-emerald-500" />
+                <p className="mt-4 text-2xl font-black text-slate-900">{attendanceRate}%</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                  Attendance
+                </p>
+              </div>
+              <div className="rounded-[28px] border border-slate-100 bg-white p-5 shadow-sm">
+                <TrendingUp size={20} className="text-blue-600" />
+                <p className="mt-4 text-2xl font-black text-slate-900">{averageScore}%</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                  Average
+                </p>
+              </div>
+              <div className="rounded-[28px] border border-slate-100 bg-white p-5 shadow-sm">
+                <FileText size={20} className="text-orange-500" />
+                <p className="mt-4 text-2xl font-black text-slate-900">{pendingAssignments}</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                  Pending
+                </p>
+              </div>
+              <div className="rounded-[28px] border border-slate-100 bg-white p-5 shadow-sm">
+                <CreditCard size={20} className="text-violet-600" />
+                <p className="mt-4 text-2xl font-black text-slate-900">
+                  ${Math.round(pendingFees)}
+                </p>
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                  Fee Due
+                </p>
+              </div>
             </div>
 
             {/* Attendance Snapshot */}
@@ -205,6 +304,90 @@ export const ParentPortal = () => {
 
           {/* Right Column: Assignments & Grades */}
           <div className="lg:col-span-2 space-y-8">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+              <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="font-black text-slate-900 flex items-center gap-2">
+                    <TrendingUp size={22} className="text-blue-600" />
+                    Performance
+                  </h3>
+                  <span className="bg-blue-50 text-blue-600 text-[10px] font-black uppercase px-2 py-1 rounded-lg">
+                    {performance.length} Records
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {performance.slice(0, 4).map((record) => (
+                    <div
+                      key={record.id}
+                      className="flex items-center justify-between rounded-2xl bg-slate-50 p-4"
+                    >
+                      <div>
+                        <p className="font-bold text-slate-900">{record.subject}</p>
+                        <p className="text-xs font-medium text-slate-400">{record.term}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-black text-slate-900">{record.score}%</p>
+                        <p className="text-xs font-bold text-blue-600">{record.grade}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {performance.length === 0 && (
+                    <p className="rounded-2xl bg-slate-50 p-5 text-sm font-semibold text-slate-400">
+                      No performance records are available yet.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="font-black text-slate-900 flex items-center gap-2">
+                    <CreditCard size={22} className="text-violet-600" />
+                    Fees
+                  </h3>
+                  <span className="bg-violet-50 text-violet-600 text-[10px] font-black uppercase px-2 py-1 rounded-lg">
+                    {payments.length} Payments
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {fees.slice(0, 4).map((fee) => {
+                    const due = Math.max(
+                      Number(fee.amountDue || 0) - Number(fee.amountPaid || 0),
+                      0
+                    );
+                    return (
+                      <div
+                        key={fee.id}
+                        className="flex items-center justify-between rounded-2xl bg-slate-50 p-4"
+                      >
+                        <div>
+                          <p className="font-bold text-slate-900">Due {fee.dueDate}</p>
+                          <p className="text-xs font-medium text-slate-400">
+                            Paid ${fee.amountPaid || 0} of ${fee.amountDue || 0}
+                          </p>
+                        </div>
+                        <div
+                          className={cn(
+                            'rounded-xl px-3 py-2 text-xs font-black uppercase',
+                            due === 0
+                              ? 'bg-emerald-50 text-emerald-600'
+                              : 'bg-orange-50 text-orange-600'
+                          )}
+                        >
+                          {due === 0 ? 'Paid' : `$${due} due`}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {fees.length === 0 && (
+                    <p className="rounded-2xl bg-slate-50 p-5 text-sm font-semibold text-slate-400">
+                      No fee records are available yet.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
             <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm">
               <div className="flex items-center justify-between mb-8">
                 <h3 className="font-black text-slate-900 flex items-center gap-2 text-xl">
