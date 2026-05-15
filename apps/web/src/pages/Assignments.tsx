@@ -15,7 +15,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import {
   ASSIGNMENT_STATUS,
   Assignment,
@@ -175,6 +175,15 @@ export const AssignmentsPage = () => {
     }
   };
 
+  const handleRefresh = useCallback(async () => {
+    await loadAssignments();
+    toast({
+      tone: 'success',
+      title: 'Refreshed',
+      description: 'Assignments synced successfully.',
+    });
+  }, [loadAssignments, toast]);
+
   const filteredAssignments = assignments.filter((assignment) => {
     if (!assignment || !assignment.id) return false;
     const query = search.trim().toLowerCase();
@@ -244,6 +253,17 @@ export const AssignmentsPage = () => {
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
+          {canManageAssignments && (
+            <div className="mb-6 flex items-center justify-between rounded-2xl bg-violet-50 border border-violet-100 px-4 py-3">
+              <p className="text-xs font-bold text-violet-700">
+                Last synced: {formatDistanceToNow(lastSyncTime, { addSuffix: true })}
+              </p>
+              <span className="text-[10px] font-black uppercase tracking-widest text-violet-600">
+                Realtime enabled
+              </span>
+            </div>
+          )}
+    
           {loading ? (
             <div className="flex justify-center py-20">
               <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
