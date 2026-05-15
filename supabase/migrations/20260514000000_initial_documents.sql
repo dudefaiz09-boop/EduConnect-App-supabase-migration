@@ -14,6 +14,10 @@ create index if not exists documents_data_gin_idx on public.documents using gin 
 create index if not exists documents_tenant_idx on public.documents ((data ->> 'tenantId'));
 create index if not exists documents_school_idx on public.documents ((data ->> 'schoolId'));
 
+grant usage on schema public to anon, authenticated, service_role;
+grant select, insert, update, delete on public.documents to service_role;
+grant select on public.documents to authenticated;
+
 do $$
 begin
   if not exists (

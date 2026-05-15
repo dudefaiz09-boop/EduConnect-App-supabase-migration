@@ -39,6 +39,14 @@ Or seed from GitHub Actions:
 3. Run `Seed Supabase Demo Data`.
 4. Use `dry_run=true` first, then run again with `dry_run=false`.
 
+If the write run fails with `permission denied for table documents`, apply the latest Supabase migrations or run this SQL once in Supabase SQL Editor:
+
+```sql
+grant usage on schema public to anon, authenticated, service_role;
+grant select, insert, update, delete on public.documents to service_role;
+grant select on public.documents to authenticated;
+```
+
 Keep `SUPABASE_SERVICE_ROLE_KEY` only in local backend `.env` files or backend hosting secrets. Never add it to the web project.
 
 ## 2. Vercel API
