@@ -15,6 +15,7 @@ import { globalErrorHandler } from './middleware/error.js';
 import studentRoutes from './features/students/student.routes.js';
 import aiRoutes from './features/ai/ai.routes.js';
 import { AiController } from './features/ai/ai.controller.js';
+import { getSupabaseAdmin } from './lib/supabase.js';
 
 // Legacy Routes (Pending Refactor)
 import announcementsRouter from './routes/announcements.js';
@@ -146,15 +147,18 @@ publicRouter.get('/ready', async (req, res) => {
       return res.status(503).json({
         status: 'not_ready',
         message: 'Missing required environment variables',
+        missing: missingVars,
         timestamp: new Date().toISOString(),
       });
     }
 
-    // Check Supabase connectivity (simple ping)
-    const { auth } = await import('./lib/documents.js');
-    await auth.getUser('test-connectivity-check').catch(() => {
-      // Expected to fail, we just want to verify connection works
-    });
+    // Check Supabase connectivity (best-effort, no secrets exposed)
+    const supabaseAdmin = getSupabaseAdmin();
+    const { error } = await supabaseAdmin.from('documents').select('id', { head: true }).limit(1);
+
+    if (error) {
+      throw error;
+    }
 
     res.json({
       status: 'ready',
@@ -165,7 +169,7 @@ publicRouter.get('/ready', async (req, res) => {
       },
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch {
     res.status(503).json({
       status: 'not_ready',
       message: 'Service connectivity check failed',
