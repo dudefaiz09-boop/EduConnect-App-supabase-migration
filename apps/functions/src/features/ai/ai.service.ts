@@ -1,8 +1,14 @@
+import { randomUUID } from 'node:crypto';
 import { generateSafeContent } from '../../lib/ai.js';
 import { db } from '../../lib/documents.js';
 
 export class AiService {
-  static async getChatbotResponse(userId: string, role: string, query: string, mode = 'chat') {
+  static async getChatbotResponse(
+    userId: string,
+    role: string,
+    query: string,
+    mode = 'chat'
+  ) {
     const roleContexts: Record<string, string> = {
       student:
         'You are EduConnect AI for students. Help with homework, study planning, concept explanations, revision notes, and confidence. Be clear, safe, encouraging, and concise.',
@@ -26,18 +32,22 @@ export class AiService {
       'Use markdown. Avoid inventing private records. If data is missing, state what is needed.',
     ].join('\n');
 
-    // Get recent history for context
-    const historySnapshot = await db
-      .collection('chatbotLogs')
-      .where('userId', '==', userId)
-      .orderBy('timestamp', 'desc')
-      .limit(3)
-      .get();
+    let history = '';
+    try {
+      const historySnapshot = await db
+        .collection('chatbotLogs')
+        .where('userId', '==', userId)
+        .orderBy('timestamp', 'desc')
+        .limit(3)
+        .get();
 
-    const history = historySnapshot.docs
-      .reverse()
-      .map((doc: any) => `User: ${doc.data().query}\nAssistant: ${doc.data().response}`)
-      .join('\n\n');
+      history = historySnapshot.docs
+        .reverse()
+        .map((doc: any) => `User: ${doc.data().query}\nAssistant: ${doc.data().response}`)
+        .join('\n\n');
+    } catch (error) {
+      console.error('[AI] Chat history load failed. Continuing without history:', error);
+    }
 
     const fullPrompt = history
       ? `Recent History:\n${history}\n\nCurrent User Query: ${query}`
@@ -45,19 +55,29 @@ export class AiService {
 
     const responseText = await generateSafeContent(systemInstruction, fullPrompt);
 
-    // Sync log to DB to get ID
-    const docRef = await db.collection('chatbotLogs').add({
-      userId,
-      role,
-      query,
-      response: responseText,
-      timestamp: new Date().toISOString(),
-    });
+    try {
+      const docRef = await db.collection('chatbotLogs').add({
+        userId,
+        role,
+        query,
+        response: responseText,
+        timestamp: new Date().toISOString(),
+      });
 
-    return {
-      id: docRef.id,
-      response: responseText,
-    };
+      return {
+        id: docRef.id,
+        response: responseText,
+      };
+    } catch (error) {
+      console.error(
+        '[AI] Chat log save failed. Returning AI response without persisted log:',
+        error
+      );
+      return {
+        id: randomUUID(),
+        response: responseText,
+      };
+    }
   }
 
   static async getPerformanceSuggestions(studentId: string, records: any[]) {
@@ -69,22 +89,27 @@ export class AiService {
   }
 
   static async getHistory(userId: string) {
-    const snapshot = await db
-      .collection('chatbotLogs')
-      .where('userId', '==', userId)
-      .orderBy('timestamp', 'desc')
-      .limit(20)
-      .get();
+    try {
+      const snapshot = await db
+        .collection('chatbotLogs')
+        .where('userId', '==', userId)
+        .orderBy('timestamp', 'desc')
+        .limit(20)
+        .get();
 
-    return snapshot.docs.map((doc) => {
-      const data = doc.data() || {};
-      return {
-        id: doc.id,
-        ...data,
-        timestamp:
-          data.timestamp?.toDate?.()?.toISOString() || data.timestamp || new Date().toISOString(),
-      };
-    });
+      return snapshot.docs.map((doc) => {
+        const data = doc.data() || {};
+        return {
+          id: doc.id,
+          ...data,
+          timestamp:
+            data.timestamp?.toDate?.()?.toISOString() || data.timestamp || new Date().toISOString(),
+        };
+      });
+    } catch (error) {
+      console.error('[AI] Chat history fetch failed. Returning empty history:', error);
+      return [];
+    }
   }
 
   static async saveFeedback(logId: string, feedback: 'helpful' | 'not_helpful') {
