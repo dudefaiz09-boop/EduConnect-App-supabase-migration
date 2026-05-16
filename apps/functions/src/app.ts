@@ -14,6 +14,7 @@ import { globalErrorHandler } from './middleware/error.js';
 // Features (Refactored)
 import studentRoutes from './features/students/student.routes.js';
 import aiRoutes from './features/ai/ai.routes.js';
+import { AiController } from './features/ai/ai.controller.js';
 
 // Legacy Routes (Pending Refactor)
 import announcementsRouter from './routes/announcements.js';
@@ -131,6 +132,9 @@ publicRouter.get('/', (req, res) => {
 publicRouter.get('/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
+
+// Safe public status endpoint. It never exposes the OpenRouter key.
+publicRouter.get('/ai/status', AiController.getStatus);
 
 publicRouter.get('/ready', async (req, res) => {
   try {
