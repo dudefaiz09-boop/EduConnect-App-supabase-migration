@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -13,6 +13,7 @@ import {
   ExternalLink,
   CheckCircle2,
   Clock,
+  RefreshCcw,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -21,7 +22,6 @@ import {
   Assignment,
   AssignmentSubmission as Submission,
 } from '@educonnect/shared-education';
-import { useAssignments, useAssignmentSubmissions } from '@educonnect/shared-api';
 import { assignmentsService } from '../lib/api-client';
 import { FileUpload } from '../components/FileUpload';
 import { EmptyState } from '../components/saas/EmptyState';
@@ -39,18 +39,13 @@ export const AssignmentsPage = () => {
   const [selectedClass, setSelectedClass] = useState(userClassId || '10A');
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [lastSyncTime] = useState(() => Date.now());
+  const [lastSyncTime, setLastSyncTime] = useState<number>(() => Date.now());
 
-  const {
-    data: assignmentsData = [],
-    isLoading: loading,
-    createAssignment,
-  } = useAssignments(assignmentsService, selectedClass);
-
-  // Guard against invalid data
-  const assignments = Array.isArray(assignmentsData)
-    ? assignmentsData.filter((a) => a && a.id)
-    : [];
+  // Local State replacement for shared hooks
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Creation Form State
   const [newAssignment, setNewAssignment] = useState(() => ({
@@ -63,10 +58,6 @@ export const AssignmentsPage = () => {
 
   // Submission/Grading View State
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
-  const { data: submissions = [] } = useAssignmentSubmissions(
-    assignmentsService,
-    selectedAssignment?.id || ''
-  );
 
   const [gradingState, setGradingState] = useState<{
     studentId: string;
@@ -80,29 +71,86 @@ export const AssignmentsPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mySubmissions, setMySubmissions] = useState<Record<string, Submission>>({});
 
-  const loadMyHistory = React.useCallback(async () => {
+  const loadAssignments = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await assignmentsService.getAssignments(selectedClass);
+      setAssignments(Array.isArray(data) ? data.filter((a) => a && a.id) : []);
+      setLastSyncTime(Date.now());
+    } catch (err) {
+      console.error('[Assignments] Load failed:', err);
+      setError('Unable to load assignments for this class. Please check your connection.');
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedClass]);
+
+  const loadSubmissions = useCallback(
+    async (assignmentId: string) => {
+      if (!assignmentId) return;
+      try {
+        const data = await assignmentsService.getSubmissions(assignmentId);
+        setSubmissions(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('[Assignments] Submissions load failed:', err);
+        toast({
+          tone: 'error',
+          title: 'Fetch failed',
+          description: 'Unable to load student submissions.',
+        });
+      }
+    },
+    [toast]
+  );
+
+  const loadMyHistory = useCallback(async () => {
     if (!uid) return;
     try {
       const data = await assignmentsService.getMyHistory(uid);
       const map: Record<string, Submission> = {};
-      data.forEach((s: Submission) => (map[s.assignmentId] = s));
+      (data || []).forEach((s: Submission) => (map[s.assignmentId] = s));
       setMySubmissions(map);
     } catch (err) {
-      console.error(err);
+      console.error('[Assignments] History load failed:', err);
     }
   }, [uid]);
 
   useEffect(() => {
-    if (isStudent) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      loadMyHistory();
-    }
-  }, [loadMyHistory, isStudent]);
+    let mounted = true;
+    const init = async () => {
+      if (mounted) {
+        await loadAssignments();
+        if (isStudent) {
+          await loadMyHistory();
+        }
+      }
+    };
+    void init();
+    return () => {
+      mounted = false;
+    };
+  }, [loadAssignments, loadMyHistory, isStudent]);
+
+  useEffect(() => {
+    let mounted = true;
+    const init = async () => {
+      if (selectedAssignment?.id && !isStudent && mounted) {
+        await loadSubmissions(selectedAssignment.id);
+      } else if (mounted) {
+        setSubmissions([]);
+      }
+    };
+    void init();
+    return () => {
+      mounted = false;
+    };
+  }, [selectedAssignment, isStudent, loadSubmissions]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await createAssignment({
+      await assignmentsService.createAssignment({
         ...newAssignment,
         tenantId: schoolId || undefined,
         status: ASSIGNMENT_STATUS.PUBLISHED,
@@ -113,6 +161,7 @@ export const AssignmentsPage = () => {
       });
       setIsModalOpen(false);
       setNewAssignment({ ...newAssignment, title: '', description: '' });
+      void loadAssignments();
       toast({
         tone: 'success',
         title: 'Assignment created',
@@ -137,6 +186,7 @@ export const AssignmentsPage = () => {
         teacherFeedback: gradingState.feedback,
       });
       setGradingState(null);
+      void loadSubmissions(selectedAssignment.id);
       toast({
         tone: 'success',
         title: 'Grade published',
@@ -162,7 +212,7 @@ export const AssignmentsPage = () => {
       setSubmissionContent('');
       setSubmissionFileUrl('');
       setSelectedAssignment(null);
-      loadMyHistory();
+      void loadMyHistory();
       toast({
         tone: 'success',
         title: 'Submission uploaded',
@@ -191,11 +241,18 @@ export const AssignmentsPage = () => {
   });
 
   const submittedCount = Object.keys(mySubmissions).length;
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
   const dueSoonCount = assignments.filter((assignment) => {
     if (!assignment || !assignment.dueDate) return false;
     try {
       const due = new Date(assignment.dueDate).getTime();
-      return Number.isFinite(due) && due - lastSyncTime <= 7 * 86400000 && due >= lastSyncTime;
+      return Number.isFinite(due) && due - now <= 7 * 86400000 && due >= now;
     } catch {
       return false;
     }
@@ -268,8 +325,8 @@ export const AssignmentsPage = () => {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
           {canManageAssignments && (
-            <div className="mb-6 flex items-center justify-between rounded-2xl bg-violet-50 border border-violet-100 px-4 py-3">
-              <p className="text-xs font-bold text-violet-700">
+            <div className="mb-6 flex items-center justify-between rounded-2xl bg-violet-50 border border-violet-100 px-4 py-3 dark:bg-violet-950/20 dark:border-violet-900/30">
+              <p className="text-xs font-bold text-violet-700 dark:text-violet-400">
                 Last synced: {formatDistanceToNow(lastSyncTime, { addSuffix: true })}
               </p>
               <span className="text-[10px] font-black uppercase tracking-widest text-violet-600">
@@ -281,6 +338,19 @@ export const AssignmentsPage = () => {
           {loading ? (
             <div className="flex justify-center py-20">
               <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : error ? (
+            <div className="bg-red-50 border border-red-100 p-10 rounded-[32px] text-center dark:bg-red-950/10 dark:border-red-900/20">
+              <AlertCircle className="mx-auto text-red-500 mb-4" size={40} />
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">Fetch Error</h3>
+              <p className="text-slate-500 mt-2 mb-6 dark:text-slate-400">{error}</p>
+              <button
+                onClick={() => void loadAssignments()}
+                className="inline-flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold hover:bg-slate-800 transition-all dark:bg-slate-800 dark:hover:bg-slate-700"
+              >
+                <RefreshCcw size={18} />
+                Retry
+              </button>
             </div>
           ) : filteredAssignments.length === 0 ? (
             <EmptyState
@@ -301,7 +371,7 @@ export const AssignmentsPage = () => {
                     className={cn(
                       'bg-white p-6 rounded-3xl border transition-all cursor-pointer group dark:bg-slate-900',
                       selectedAssignment?.id === assignment.id
-                        ? 'border-blue-500 shadow-xl shadow-blue-50'
+                        ? 'border-blue-500 shadow-xl shadow-blue-50 dark:shadow-none'
                         : 'border-slate-100 hover:border-blue-200 shadow-sm dark:border-slate-800'
                     )}
                   >
@@ -351,9 +421,9 @@ export const AssignmentsPage = () => {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="bg-slate-50 border border-slate-100 p-8 rounded-3xl text-center flex flex-col items-center gap-4 h-full min-h-[400px] justify-center"
+                className="bg-slate-50 border border-slate-100 p-8 rounded-3xl text-center flex flex-col items-center gap-4 h-full min-h-[400px] justify-center dark:bg-slate-900/50 dark:border-slate-800"
               >
-                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-slate-200 shadow-sm">
+                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-slate-200 shadow-sm dark:bg-slate-800 dark:text-slate-700">
                   <GraduationCap size={32} />
                 </div>
                 <p className="text-slate-400 font-medium max-w-[200px]">
@@ -366,7 +436,7 @@ export const AssignmentsPage = () => {
                 key={selectedAssignment.id}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-white p-8 rounded-3xl border border-slate-100 shadow-lg space-y-6"
+                className="bg-white p-8 rounded-3xl border border-slate-100 shadow-lg space-y-6 dark:bg-slate-900 dark:border-slate-800 dark:shadow-none"
               >
                 <div className="space-y-2">
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white">
@@ -378,14 +448,14 @@ export const AssignmentsPage = () => {
                 </div>
 
                 {isStudent ? (
-                  <div className="space-y-4 pt-4 border-t border-slate-50">
+                  <div className="space-y-4 pt-4 border-t border-slate-50 dark:border-slate-800">
                     {mySubmissions[selectedAssignment.id] ? (
                       <div className="space-y-4">
-                        <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
+                        <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-900/30">
                           <p className="text-[10px] font-black text-emerald-600 uppercase mb-2">
                             My Submission
                           </p>
-                          <p className="text-sm text-emerald-800">
+                          <p className="text-sm text-emerald-800 dark:text-emerald-300">
                             {mySubmissions[selectedAssignment.id].content}
                           </p>
                           {mySubmissions[selectedAssignment.id].fileUrl && (
@@ -393,7 +463,7 @@ export const AssignmentsPage = () => {
                               href={mySubmissions[selectedAssignment.id].fileUrl!}
                               target="_blank"
                               rel="noreferrer"
-                              className="flex items-center gap-2 text-xs text-blue-600 font-bold mt-2"
+                              className="flex items-center gap-2 text-xs text-blue-600 font-bold mt-2 hover:underline"
                             >
                               <ExternalLink size={12} /> View Attached File
                             </a>
@@ -405,8 +475,8 @@ export const AssignmentsPage = () => {
                             className={cn(
                               'p-6 rounded-2xl border',
                               mySubmissions[selectedAssignment.id].recheckedByTeacher
-                                ? 'bg-indigo-600 text-white border-indigo-700'
-                                : 'bg-blue-600 text-white border-blue-700'
+                                ? 'bg-indigo-600 text-white border-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none'
+                                : 'bg-blue-600 text-white border-blue-700 shadow-lg shadow-blue-200 dark:shadow-none'
                             )}
                           >
                             <div className="flex justify-between items-start mb-4">
@@ -450,7 +520,7 @@ export const AssignmentsPage = () => {
                             value={submissionContent}
                             disabled={isSubmitting}
                             onChange={(e) => setSubmissionContent(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none transition-all disabled:opacity-50"
+                            className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none transition-all disabled:opacity-50 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                           />
                         </div>
 
@@ -467,7 +537,7 @@ export const AssignmentsPage = () => {
                         <button
                           onClick={() => submitAssignment(selectedAssignment.id)}
                           disabled={isSubmitting || !submissionContent}
-                          className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all flex items-center justify-center gap-2 disabled:bg-slate-300 disabled:shadow-none"
+                          className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all flex items-center justify-center gap-2 disabled:bg-slate-300 disabled:shadow-none dark:disabled:bg-slate-800"
                         >
                           {isSubmitting ? (
                             <>
@@ -484,8 +554,8 @@ export const AssignmentsPage = () => {
                     )}
                   </div>
                 ) : (
-                  <div className="space-y-6 pt-4 border-t border-slate-50">
-                    <h4 className="font-bold text-slate-900 flex items-center gap-2">
+                  <div className="space-y-6 pt-4 border-t border-slate-50 dark:border-slate-800">
+                    <h4 className="font-bold text-slate-900 flex items-center gap-2 dark:text-white">
                       <Users size={18} className="text-blue-600" />
                       Submissions ({submissions.length})
                     </h4>
@@ -497,84 +567,82 @@ export const AssignmentsPage = () => {
                         submissions.map((sub) => (
                           <div
                             key={sub.studentId}
-                            className="bg-slate-50 p-4 rounded-2xl space-y-3"
+                            className="bg-slate-50 p-4 rounded-2xl space-y-3 dark:bg-slate-800/50"
                           >
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="font-bold text-slate-900 text-sm">
+                                <p className="font-bold text-slate-900 text-sm dark:text-white">
                                   {sub.studentName}
                                 </p>
                                 <div className="flex gap-1 mt-1">
                                   {sub.checkedByAI && (
-                                    <span className="bg-blue-100 text-blue-600 text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
+                                    <span className="bg-blue-100 text-blue-600 text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md flex items-center gap-0.5 dark:bg-blue-900/30 dark:text-blue-400">
                                       AI Score: {sub.aiScore}
                                     </span>
                                   )}
                                   {sub.recheckedByTeacher && (
-                                    <span className="bg-indigo-100 text-indigo-600 text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md">
+                                    <span className="bg-indigo-100 text-indigo-600 text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md dark:bg-indigo-900/30 dark:text-indigo-400">
                                       Verified
                                     </span>
                                   )}
                                 </div>
                                 <span
                                   className={cn(
-                                    'text-[10px] font-black uppercase px-2 py-0.5 rounded-full',
+                                    'text-[10px] font-black uppercase px-2 py-0.5 rounded-full mt-2 inline-block',
                                     sub.status === 'graded'
-                                      ? 'bg-emerald-50 text-emerald-600'
-                                      : 'bg-blue-50 text-blue-600'
+                                      ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400'
+                                      : 'bg-blue-50 text-blue-600 dark:bg-blue-950/20 dark:text-blue-400'
                                   )}
                                 >
                                   {sub.status}
                                 </span>
                               </div>
-                              <p className="text-xs text-slate-600 line-clamp-2 italic">
+                              <p className="text-xs text-slate-600 line-clamp-2 italic max-w-[150px] dark:text-slate-400">
                                 &quot;{sub.content}&quot;
                               </p>
                             </div>
 
                             {gradingState?.studentId === sub.studentId ? (
-                              <div className="pt-4 space-y-3 border-t border-slate-200 mt-2">
-                                <div className="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                              <div className="pt-4 space-y-3 border-t border-slate-200 mt-2 dark:border-slate-700">
+                                <div className="bg-blue-50 p-3 rounded-xl border border-blue-100 dark:bg-blue-950/20 dark:border-blue-900/30">
                                   <p className="text-[10px] font-black text-blue-600 uppercase mb-1">
                                     AI Draft Analysis
                                   </p>
-                                  <p className="text-sm font-bold text-blue-900">
+                                  <p className="text-sm font-bold text-blue-900 dark:text-blue-200">
                                     Score: {sub.aiScore}
                                   </p>
-                                  <p className="text-xs text-blue-800 mt-1 italic">
+                                  <p className="text-xs text-blue-800 mt-1 italic dark:text-blue-300">
                                     &quot;{sub.aiFeedback}&quot;
                                   </p>
                                 </div>
                                 <div className="space-y-1">
-                                  <label className="text-[10px] font-bold text-slate-500 uppercase">
-                                    Final Grade to Publish
+                                  <label className="text-[10px] font-bold text-slate-500 uppercase px-1">
+                                    Final Grade
                                   </label>
                                   <input
                                     placeholder="e.g. 8.5"
                                     defaultValue={sub.grade || ''}
-                                    className="w-full bg-white border border-slate-200 px-3 py-2 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 font-bold"
+                                    className="w-full bg-white border border-slate-200 px-3 py-2 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 font-bold dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                     onChange={(e) =>
                                       setGradingState({
                                         ...gradingState,
-                                        studentId: sub.studentId,
                                         grade: e.target.value,
                                       })
                                     }
                                   />
                                 </div>
                                 <div className="space-y-1">
-                                  <label className="text-[10px] font-bold text-slate-500 uppercase">
+                                  <label className="text-[10px] font-bold text-slate-500 uppercase px-1">
                                     Final Teacher Feedback
                                   </label>
                                   <textarea
                                     rows={3}
                                     placeholder="Enter final feedback to publish to student..."
                                     defaultValue={sub.feedback || ''}
-                                    className="w-full bg-white border border-slate-200 px-3 py-2 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
+                                    className="w-full bg-white border border-slate-200 px-3 py-2 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                     onChange={(e) =>
                                       setGradingState({
                                         ...gradingState,
-                                        studentId: sub.studentId,
                                         feedback: e.target.value,
                                       })
                                     }
@@ -583,13 +651,13 @@ export const AssignmentsPage = () => {
                                 <div className="flex gap-2 pt-2">
                                   <button
                                     onClick={handleGrade}
-                                    className="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-xs font-bold shadow-md shadow-indigo-200 hover:bg-indigo-700 transition-colors"
+                                    className="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-xs font-bold shadow-md shadow-indigo-200 hover:bg-indigo-700 transition-colors dark:shadow-none"
                                   >
-                                    Publish to Student
+                                    Publish
                                   </button>
                                   <button
                                     onClick={() => setGradingState(null)}
-                                    className="px-4 bg-slate-200 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-300 transition-colors"
+                                    className="px-4 bg-slate-200 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-300 transition-colors dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                                   >
                                     Cancel
                                   </button>
@@ -604,7 +672,7 @@ export const AssignmentsPage = () => {
                                     feedback: sub.feedback || sub.aiFeedback || '',
                                   })
                                 }
-                                className="w-full text-xs font-bold text-indigo-600 hover:text-indigo-700 text-left flex items-center gap-1 group/btn mt-2 bg-indigo-50 p-2 rounded-lg"
+                                className="w-full text-xs font-bold text-indigo-600 hover:text-indigo-700 text-left flex items-center gap-1 group/btn mt-2 bg-indigo-50 p-2 rounded-lg dark:bg-indigo-950/20 dark:text-indigo-400"
                               >
                                 {sub.recheckedByTeacher
                                   ? 'Edit Published Grade'
@@ -638,15 +706,17 @@ export const AssignmentsPage = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsModalOpen(false)}
-              className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/30 backdrop-blur-sm dark:bg-black/60"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl overflow-hidden p-8 space-y-6"
+              className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl overflow-hidden p-8 space-y-6 dark:bg-slate-900 dark:border dark:border-slate-800"
             >
-              <h3 className="text-2xl font-bold text-slate-900">Create Assignment</h3>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
+                Create Assignment
+              </h3>
               <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
@@ -655,7 +725,7 @@ export const AssignmentsPage = () => {
                   <input
                     value={newAssignment.title}
                     onChange={(e) => setNewAssignment({ ...newAssignment, title: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 px-4 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-blue-100"
+                    className="w-full bg-slate-50 border border-slate-200 px-4 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-blue-100 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                   />
                 </div>
                 <div className="space-y-2">
@@ -668,7 +738,7 @@ export const AssignmentsPage = () => {
                     onChange={(e) =>
                       setNewAssignment({ ...newAssignment, description: e.target.value })
                     }
-                    className="w-full bg-slate-50 border border-slate-200 px-4 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-blue-100"
+                    className="w-full bg-slate-50 border border-slate-200 px-4 py-3 rounded-2xl outline-none focus:ring-2 focus:ring-blue-100 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -682,7 +752,7 @@ export const AssignmentsPage = () => {
                       onChange={(e) =>
                         setNewAssignment({ ...newAssignment, dueDate: e.target.value })
                       }
-                      className="w-full bg-slate-50 border border-slate-200 px-4 py-3 rounded-2xl outline-none"
+                      className="w-full bg-slate-50 border border-slate-200 px-4 py-3 rounded-2xl outline-none dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                     />
                   </div>
                   <div className="space-y-2">
@@ -694,7 +764,7 @@ export const AssignmentsPage = () => {
                       onChange={(e) =>
                         setNewAssignment({ ...newAssignment, classId: e.target.value })
                       }
-                      className="w-full bg-slate-50 border border-slate-200 px-4 py-3 rounded-2xl outline-none"
+                      className="w-full bg-slate-50 border border-slate-200 px-4 py-3 rounded-2xl outline-none dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                     >
                       <option value="10A">10A</option>
                       <option value="10B">10B</option>
@@ -705,13 +775,13 @@ export const AssignmentsPage = () => {
               <div className="flex gap-3">
                 <button
                   onClick={handleCreate}
-                  className="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-blue-700 transition-all"
+                  className="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-blue-700 transition-all active:scale-95"
                 >
                   Create Assignment
                 </button>
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className="px-6 bg-slate-100 text-slate-500 py-4 rounded-2xl font-bold hover:bg-slate-200 transition-all"
+                  className="px-6 bg-slate-100 text-slate-500 py-4 rounded-2xl font-bold hover:bg-slate-200 transition-all dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                 >
                   Cancel
                 </button>
