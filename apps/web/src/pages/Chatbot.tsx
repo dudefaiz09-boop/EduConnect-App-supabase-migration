@@ -67,14 +67,14 @@ function getFriendlyAiError(err: any, aiStatus: AiStatus | null) {
   }
 
   if (status === 502 || errorData.error === 'AI_PROVIDER_ERROR') {
-    return 'AI provider request failed. Check educonnect-api Vercel logs for /api/ai/query.';
+    return 'AI provider request failed. This usually means the AI model is overloaded or the provider key is missing. Check server logs.';
   }
 
   if (
     !status &&
     (message.toLowerCase().includes('fetch') || message.toLowerCase().includes('network'))
   ) {
-    return 'AI request failed because the web app could not reach the API. Check VITE_API_BASE_URL on educonnect-web and redeploy.';
+    return 'AI request failed because the web app could not reach the API. Check your connection or the API server status.';
   }
 
   if (status >= 400) {

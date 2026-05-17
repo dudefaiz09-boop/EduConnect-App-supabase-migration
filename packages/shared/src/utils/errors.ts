@@ -17,6 +17,7 @@ export interface AppError {
   message: string;
   status?: number;
   details?: any;
+  data?: any;
 }
 
 export function formatError(error: any): AppError {
@@ -37,6 +38,7 @@ export function formatError(error: any): AppError {
       message: error.message || 'Request failed',
       status: error.status,
       details: error.data,
+      data: error.data, // Preserve original data for detailed diagnostics
     };
   }
 
