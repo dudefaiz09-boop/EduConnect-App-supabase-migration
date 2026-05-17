@@ -54,7 +54,9 @@ export class AiContextService {
             .where('tenantId', '==', tenantId)
             .where('studentId', '==', userId)
             .get();
-          const list = snap.docs.map((d) => `${d.data()?.amountDue} due on ${d.data()?.dueDate}`);
+          const list = snap.docs.map(
+            (d: any) => `${d.data().amountDue} due on ${d.data().dueDate}`
+          );
           contextParts.push(`[Your Fees] ${list.join('; ') || 'No pending fees.'}`);
         }
       }
