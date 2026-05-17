@@ -242,7 +242,7 @@ export function NotificationDropdown() {
                     {unread} unread updates
                   </p>
                 </div>
-<<<<<< fix-chatbot-frontend-10274009452951165076
+
                 <div className="flex items-center gap-2">
   <button
     onClick={() => void reload()}
@@ -291,7 +291,7 @@ export function NotificationDropdown() {
       <p className="text-sm font-medium text-slate-500">All caught up!</p>
     </div>
   )}
->>>>>> main
+
                 {notifications.map((item) => (
                   <div
                     key={item.id}
