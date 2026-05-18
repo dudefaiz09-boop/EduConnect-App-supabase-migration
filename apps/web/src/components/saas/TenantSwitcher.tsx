@@ -14,16 +14,14 @@ export const TenantSwitcher = () => {
   const { isSuperAdmin, managedTenantIds, schoolId } = useAuth();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isSuperAdmin && managedTenantIds.length > 0) {
-      setLoading(true);
       listDocuments<Tenant>('schools') // Legacy name for tenants in documents collection
         .then((data) => {
           setTenants(data.filter((t) => managedTenantIds.includes(t.id)));
         })
-        .finally(() => setLoading(false));
+        .catch((err) => console.error('Failed to load tenants:', err));
     }
   }, [isSuperAdmin, managedTenantIds]);
 

@@ -25,7 +25,6 @@ import {
   Upload,
   User as UserIcon,
   X,
-  FileText,
   Download,
   AlertCircle,
   School,
@@ -153,7 +152,7 @@ export const UsersPage = ({ type }: { type: 'student' | 'teacher' | 'all' }) => 
   const { data: allUsers, loading } = useDocuments<UserProfile>('users');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [importPreview, setImportPreview] = useState<any[]>([]);
+  const [importPreview, setImportPreview] = useState<Record<string, string>[]>([]);
   const [targetTenantId, setTargetTenantId] = useState(schoolId || '');
 
   useMemo(() => {
@@ -290,7 +289,7 @@ export const UsersPage = ({ type }: { type: 'student' | 'teacher' | 'all' }) => 
 
       const parsed = lines.slice(1).map((line) => {
         const values = line.split(',').map((v) => v.trim());
-        const obj: any = {};
+        const obj: Record<string, string> = {};
         headers.forEach((h, i) => {
           obj[h] = values[i];
         });
