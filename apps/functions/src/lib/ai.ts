@@ -17,17 +17,14 @@ export const FREE_OPENROUTER_MODELS = new Set([...FREE_MODEL_PRIORITY, 'openrout
 
 const DEFAULT_FREE_MODEL = FREE_MODEL_PRIORITY[0];
 
-const providers: AiProvider[] = [
-    new OpenRouterAiProvider(),
-    new OfflineAiProvider()
-];
+const providers: AiProvider[] = [new OpenRouterAiProvider(), new OfflineAiProvider()];
 
 export function isAiEnabled() {
-  return providers.some(p => p.name !== 'offline' && p.isEnabled());
+  return providers.some((p) => p.name !== 'offline' && p.isEnabled());
 }
 
 export function getAiRuntimeStatus() {
-  const openRouter = providers.find(p => p.name === 'openrouter') as OpenRouterAiProvider;
+  const openRouter = providers.find((p) => p.name === 'openrouter') as OpenRouterAiProvider;
   const hasOpenRouterKey = openRouter?.isEnabled() || false;
 
   return {
@@ -43,7 +40,7 @@ export function getAiRuntimeStatus() {
 }
 
 export function getOpenRouterModel() {
-    return process.env.OPENROUTER_MODEL || env.OPENROUTER_MODEL || DEFAULT_FREE_MODEL;
+  return process.env.OPENROUTER_MODEL || env.OPENROUTER_MODEL || DEFAULT_FREE_MODEL;
 }
 
 /**
@@ -61,17 +58,17 @@ export async function generateSafeContent(
   }
 
   // Find the first enabled live provider
-  const liveProvider = providers.find(p => p.name !== 'offline' && p.isEnabled());
+  const liveProvider = providers.find((p) => p.name !== 'offline' && p.isEnabled());
 
   if (liveProvider) {
-      try {
-          return await liveProvider.generateContent(systemInstruction, userPrompt, config);
-      } catch (error) {
-          console.error(`[AI] Provider ${liveProvider.name} failed:`, error);
-          // Fallback to offline
-      }
+    try {
+      return await liveProvider.generateContent(systemInstruction, userPrompt, config);
+    } catch (error) {
+      console.error(`[AI] Provider ${liveProvider.name} failed:`, error);
+      // Fallback to offline
+    }
   }
 
-  const offlineProvider = providers.find(p => p.name === 'offline')!;
+  const offlineProvider = providers.find((p) => p.name === 'offline')!;
   return await offlineProvider.generateContent(systemInstruction, userPrompt, config);
 }

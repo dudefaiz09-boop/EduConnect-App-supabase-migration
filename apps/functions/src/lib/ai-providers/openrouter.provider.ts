@@ -30,7 +30,11 @@ export class OpenRouterAiProvider implements AiProvider {
     return !!this.getApiKey();
   }
 
-  async generateContent(systemInstruction: string, userPrompt: string, config: AiGenerationConfig = {}): Promise<string> {
+  async generateContent(
+    systemInstruction: string,
+    userPrompt: string,
+    config: AiGenerationConfig = {}
+  ): Promise<string> {
     const apiKey = this.getApiKey();
     if (!apiKey) throw new Error('OpenRouter API key missing');
 
@@ -57,7 +61,7 @@ export class OpenRouterAiProvider implements AiProvider {
     });
 
     if (!response.ok) {
-        throw new Error(`OpenRouter error: ${response.status}`);
+      throw new Error(`OpenRouter error: ${response.status}`);
     }
 
     const payload = await response.json();

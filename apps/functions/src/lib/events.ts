@@ -7,12 +7,12 @@ export const appEvents = new AppEventEmitter();
 
 // Centralized Event Logging
 appEvents.on('error', (err) => {
-    logger.error({ err }, 'Application event error');
+  logger.error({ err }, 'Application event error');
 });
 
 // Example of generic event listener
 appEvents.on('any', (eventName, data) => {
-    if (process.env.NODE_ENV !== 'production') {
-        console.log(`[Event] ${eventName}:`, data);
-    }
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[Event] ${eventName}:`, data);
+  }
 });

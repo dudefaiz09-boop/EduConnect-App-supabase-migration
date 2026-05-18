@@ -1,16 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 
-<<<<<<< HEAD
-export interface TenantContext {
-  tenantId: string;
-}
-
-export const tenantContextStorage = new AsyncLocalStorage<TenantContext>();
-
-export function getTenantId(): string {
-  const context = tenantContextStorage.getStore();
-  return context?.tenantId || 'default-school';
-=======
 export interface UserContext {
   uid: string;
   email?: string;
@@ -31,6 +20,9 @@ export interface AppContext {
 
 export const contextStorage = new AsyncLocalStorage<AppContext>();
 
+// Backward-compatible alias for older middleware imports.
+export const tenantContextStorage = contextStorage;
+
 export function getContext(): AppContext {
   const context = contextStorage.getStore();
   if (!context) {
@@ -49,5 +41,4 @@ export function getUser(): UserContext | undefined {
 
 export function runWithContext<T>(context: AppContext, fn: () => T): T {
   return contextStorage.run(context, fn);
->>>>>>> origin/main
 }
