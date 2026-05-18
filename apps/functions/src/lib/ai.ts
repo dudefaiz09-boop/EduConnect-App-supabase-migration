@@ -1,6 +1,7 @@
 import { env } from './config.js';
-
-const openRouterUrl = 'https://openrouter.ai/api/v1/chat/completions';
+import { AiProvider, AiGenerationConfig } from './ai-providers/base.provider.js';
+import { OpenRouterAiProvider } from './ai-providers/openrouter.provider.js';
+import { OfflineAiProvider } from './ai-providers/offline.provider.js';
 
 /**
  * Prioritized list of approved free OpenRouter models for fallback.
@@ -16,62 +17,24 @@ export const FREE_OPENROUTER_MODELS = new Set([...FREE_MODEL_PRIORITY, 'openrout
 
 const DEFAULT_FREE_MODEL = FREE_MODEL_PRIORITY[0];
 
-function getOpenRouterApiKey() {
-  return process.env.OPENROUTER_API_KEY || env.OPENROUTER_API_KEY || '';
-}
-
-/**
- * Safe helper to retrieve the OpenRouter model.
- * Enforces use of free models from the allowlist.
- */
-export function getOpenRouterModel() {
-  const configuredModel =
-    process.env.OPENROUTER_MODEL || env.OPENROUTER_MODEL || DEFAULT_FREE_MODEL;
-
-  if (!FREE_OPENROUTER_MODELS.has(configuredModel)) {
-    console.warn('[AI] Blocked non-free OpenRouter model. Falling back to default.', {
-      configuredModel,
-      fallback: DEFAULT_FREE_MODEL,
-    });
-    return DEFAULT_FREE_MODEL;
-  }
-
-  return configuredModel;
-}
-
-function getHttpReferer(): string {
-  const publicUrl = env.PUBLIC_APP_URL || process.env.PUBLIC_APP_URL;
-  if (publicUrl) return publicUrl;
-
-  const vercelUrl = process.env.VERCEL_URL;
-  if (vercelUrl) {
-    return vercelUrl.startsWith('http') ? vercelUrl : `https://${vercelUrl}`;
-  }
-
-  return 'http://localhost:5173';
-}
+const providers: AiProvider[] = [
+    new OpenRouterAiProvider(),
+    new OfflineAiProvider()
+];
 
 export function isAiEnabled() {
-  return !!getOpenRouterApiKey();
+  return providers.some(p => p.name !== 'offline' && p.isEnabled());
 }
 
 export function getAiRuntimeStatus() {
-  const hasOpenRouterKey = !!getOpenRouterApiKey();
-  const model = getOpenRouterModel();
-
-  const keySource = process.env.OPENROUTER_API_KEY
-    ? 'process.env'
-    : env.OPENROUTER_API_KEY
-      ? 'env'
-      : 'missing';
+  const openRouter = providers.find(p => p.name === 'openrouter') as OpenRouterAiProvider;
+  const hasOpenRouterKey = openRouter?.isEnabled() || false;
 
   return {
     enabled: hasOpenRouterKey,
     provider: 'openrouter',
-    model,
     mode: hasOpenRouterKey ? 'live' : 'offline-fallback',
     hasOpenRouterKey,
-    keySource,
     freeModelEnforced: true,
     allowedFreeModels: Array.from(FREE_OPENROUTER_MODELS),
     runtime: process.env.VERCEL_URL ? 'vercel' : 'local',
@@ -79,167 +42,36 @@ export function getAiRuntimeStatus() {
   };
 }
 
-export const AI_HTTP_REFERER = getHttpReferer();
-
-function getTrimmedPrompt(userPrompt: string) {
-  return userPrompt.trim().replace(/\s+/g, ' ').slice(0, 220);
-}
-
-function missingKeyFallback(userPrompt: string) {
-  const trimmed = getTrimmedPrompt(userPrompt);
-  return [
-    'AI is currently running in offline-safe mode because the API AI provider key is not configured.',
-    '',
-    trimmed ? `Practical starting point for "${trimmed}":` : 'Ask a focused question to start:',
-    '- Identify your specific goal.',
-    '- Break the task into 3 small steps.',
-    '- Ask an admin to check the AI configuration if live AI is required.',
-  ].join('\n');
-}
-
-function providerErrorFallback() {
-  return 'AI provider is currently unavailable. Please retry later or ask an admin to check the API provider logs.';
-}
-
-function timeoutFallback() {
-  return 'AI provider request timed out. Please retry later.';
-}
-
-function emptyResponseFallback() {
-  return 'AI provider returned an empty response. Please retry later.';
-}
-
-function getMessageText(payload: any) {
-  const message = payload?.choices?.[0]?.message?.content;
-  if (Array.isArray(message)) {
-    return message
-      .map((part) => (typeof part === 'string' ? part : part?.text || ''))
-      .join('')
-      .trim();
-  }
-  return typeof message === 'string' ? message.trim() : '';
+export function getOpenRouterModel() {
+    return process.env.OPENROUTER_MODEL || env.OPENROUTER_MODEL || DEFAULT_FREE_MODEL;
 }
 
 /**
- * Safe AI Wrapper
- * - Enforces strict free-model usage with automatic fallback.
- * - Blocks premium model requests.
- * - Implements retries across different models.
+ * Strategy-based AI Content Generation
  */
 export async function generateSafeContent(
   systemInstruction: string,
   userPrompt: string,
-  config: any = {},
-  retries = 2,
-  modelIndex = -1
+  config: AiGenerationConfig = {}
 ): Promise<string> {
-  const apiKey = getOpenRouterApiKey();
-
-  if (!apiKey) {
-    return missingKeyFallback(userPrompt);
-  }
-
   const normalizedPrompt = userPrompt.toLowerCase();
   const premiumKeywords = ['gpt-4', 'gpt4', 'claude-3', 'claude 3', 'gemini pro', 'premium model'];
   if (premiumKeywords.some((k) => normalizedPrompt.includes(k))) {
     return 'Only free models are enabled on this platform. Please use your own API key for premium access.';
   }
 
-  let model: string;
-  let activeModelIndex = modelIndex;
-  if (activeModelIndex === -1) {
-    model = getOpenRouterModel();
-    activeModelIndex = FREE_MODEL_PRIORITY.indexOf(model);
-    if (activeModelIndex === -1) activeModelIndex = 0;
-  } else {
-    model = FREE_MODEL_PRIORITY[activeModelIndex] || DEFAULT_FREE_MODEL;
+  // Find the first enabled live provider
+  const liveProvider = providers.find(p => p.name !== 'offline' && p.isEnabled());
+
+  if (liveProvider) {
+      try {
+          return await liveProvider.generateContent(systemInstruction, userPrompt, config);
+      } catch (error) {
+          console.error(`[AI] Provider ${liveProvider.name} failed:`, error);
+          // Fallback to offline
+      }
   }
 
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25000);
-
-    const response = await fetch(openRouterUrl, {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': AI_HTTP_REFERER,
-        'X-Title': 'EduConnect AI',
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: systemInstruction },
-          { role: 'user', content: userPrompt },
-        ],
-        max_tokens: config.maxOutputTokens || 900,
-        temperature: config.temperature ?? 0.35,
-        top_p: config.topP ?? 0.9,
-      }),
-    });
-
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      const body = await response.text().catch(() => '');
-      console.error('[AI] OpenRouter provider failure', {
-        status: response.status,
-        model,
-        retriesRemaining: retries,
-        body: body.slice(0, 200),
-      });
-
-      if (retries > 0) {
-        const nextModelIndex = (activeModelIndex + 1) % FREE_MODEL_PRIORITY.length;
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        return generateSafeContent(
-          systemInstruction,
-          userPrompt,
-          config,
-          retries - 1,
-          nextModelIndex
-        );
-      }
-
-      return 'EduConnect AI is temporarily overloaded. Please try again in a few moments.';
-    }
-
-    const payload = await response.json();
-    const text = getMessageText(payload);
-
-    if (!text) {
-      console.warn('[AI] OpenRouter empty response', { model });
-      if (retries > 0) {
-        return generateSafeContent(
-          systemInstruction,
-          userPrompt,
-          config,
-          retries - 1,
-          (activeModelIndex + 1) % FREE_MODEL_PRIORITY.length
-        );
-      }
-      return emptyResponseFallback();
-    }
-
-    return text;
-  } catch (error: any) {
-    console.error('[AI] Generation failed:', { model, message: error?.message });
-
-    if (retries > 0) {
-      const nextModelIndex = (activeModelIndex + 1) % FREE_MODEL_PRIORITY.length;
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      return generateSafeContent(
-        systemInstruction,
-        userPrompt,
-        config,
-        retries - 1,
-        nextModelIndex
-      );
-    }
-
-    if (error?.name === 'AbortError') return timeoutFallback();
-    return providerErrorFallback();
-  }
+  const offlineProvider = providers.find(p => p.name === 'offline')!;
+  return await offlineProvider.generateContent(systemInstruction, userPrompt, config);
 }
