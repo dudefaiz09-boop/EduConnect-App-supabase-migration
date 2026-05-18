@@ -10,15 +10,25 @@ export class AttendanceProvider implements AiModuleProvider {
     if (['admin', 'principal'].includes(role)) {
       const { data, error } = await supabase
         .from('attendance')
-        .select('*')
+        .select('attendance_date, class_id, status')
         .eq('school_id', tenantId)
         .order('attendance_date', { ascending: false })
-        .limit(10);
+        .limit(100);
 
-      if (error || !data) return '[Attendance] No recent records found.';
+      if (error || !data || data.length === 0) return '[Attendance] No recent records found.';
 
-      const summary = data
-        .map((record) => `${record.attendance_date} (${record.class_id}): ${record.status}`)
+      // Aggregate by date and class
+      const aggregated: Record<string, { present: number; total: number }> = {};
+      data.forEach((r) => {
+        const key = `${r.attendance_date} (${r.class_id})`;
+        if (!aggregated[key]) aggregated[key] = { present: 0, total: 0 };
+        aggregated[key].total++;
+        if (r.status === 'present') aggregated[key].present++;
+      });
+
+      const summary = Object.entries(aggregated)
+        .slice(0, 10) // Show top 10 aggregated class/date entries
+        .map(([key, stats]) => `${key}: ${stats.present}/${stats.total} present`)
         .join('\n');
       return `[Attendance Overview]\n${summary}`;
     }
@@ -29,16 +39,26 @@ export class AttendanceProvider implements AiModuleProvider {
 
       const { data, error } = await supabase
         .from('attendance')
-        .select('*')
+        .select('attendance_date, class_id, status')
         .eq('school_id', tenantId)
         .in('class_id', targetClasses)
         .order('attendance_date', { ascending: false })
-        .limit(10);
+        .limit(100);
 
-      if (error || !data) return '[Attendance] No recent records for your classes.';
+      if (error || !data || data.length === 0) return '[Attendance] No recent records for your classes.';
 
-      const summary = data
-        .map((record) => `${record.attendance_date} (${record.class_id}): ${record.status}`)
+      // Aggregate by date and class
+      const aggregated: Record<string, { present: number; total: number }> = {};
+      data.forEach((r) => {
+        const key = `${r.attendance_date} (${r.class_id})`;
+        if (!aggregated[key]) aggregated[key] = { present: 0, total: 0 };
+        aggregated[key].total++;
+        if (r.status === 'present') aggregated[key].present++;
+      });
+
+      const summary = Object.entries(aggregated)
+        .slice(0, 10)
+        .map(([key, stats]) => `${key}: ${stats.present}/${stats.total} present`)
         .join('\n');
       return `[Your Classes Attendance]\n${summary}`;
     }

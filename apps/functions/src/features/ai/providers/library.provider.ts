@@ -20,7 +20,9 @@ export class LibraryProvider implements AiModuleProvider {
 
     if (data.length === 0) return '[Library] No books currently issued.';
 
-    const list = data.map((d: any) => `${d.library_books?.title || 'Unknown Book'} (Due: ${d.due_at})`);
+    const list = data.map(
+      (d: any) => `${d.library_books?.title || 'Unknown Book'} (Due: ${d.due_at})`
+    );
     return `[Library] Currently issued books:\n${list.join('\n')}`;
   }
 }

@@ -80,7 +80,7 @@ describe('AiContextService Attendance Logic (Supabase)', () => {
     const context = await AiContextService.getModuleContext(adminContext, ['attendance']);
 
     expect(context).toContain('[Attendance Overview]');
-    expect(context).toContain('2024-05-20 (classA): present');
+    expect(context).toContain('2024-05-20 (classA): 1/1 present');
   });
 
   it('handles parent context for linked students', async () => {

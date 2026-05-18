@@ -1,4 +1,5 @@
 import { Request } from 'express';
+import { logger } from '@educonnect/logger';
 import { getContext, UserContext } from '../../lib/context.js';
 import { getSupabaseAdmin } from '../../lib/supabase.js';
 import { AiModuleProvider } from './providers/base.provider.js';
@@ -32,14 +33,17 @@ export class AiContextService {
    * Falls back to request properties if context is not available.
    */
   static async resolveAiUserContext(req?: Request): Promise<UserContext> {
+    let user: any = req?.user;
+
     try {
       const context = getContext();
-      if (context.user) return context.user;
+      if (context.user) {
+        user = context.user;
+      }
     } catch {
       // Fallback
     }
 
-    const user = req?.user;
     const tenantId = req?.tenantId || (req?.headers['x-school-id'] as string) || 'default-school';
 
     if (!user) {
@@ -78,7 +82,7 @@ export class AiContextService {
           context.permissions = profile.permissions || context.permissions;
         }
       } catch (err) {
-        console.error('[AI-Context] Profile resolution failed:', err);
+        logger.error({ uid: user.uid, err }, '[AI-Context] Profile resolution failed');
       }
     }
 
@@ -134,7 +138,7 @@ export class AiContextService {
         }
         return null;
       } catch (error) {
-        console.error(`[AI-Context] Provider ${m} failed:`, error);
+        logger.error({ module: m, error }, `[AI-Context] Provider ${m} failed`);
         return `[${m}] Data temporarily unavailable.`;
       }
     });
