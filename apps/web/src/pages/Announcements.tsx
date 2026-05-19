@@ -411,7 +411,9 @@ export const AnnouncementsPage = () => {
             >
               <div className="mb-6 flex items-center justify-between">
                 <div>
-                  <h2 className="text-3xl font-black text-slate-950 dark:text-white">Create Announcement</h2>
+                  <h2 className="text-3xl font-black text-slate-950 dark:text-white">
+                    Create Announcement
+                  </h2>
                   <p className="text-sm font-medium text-slate-500">
                     Target the right audience with a polished update.
                   </p>

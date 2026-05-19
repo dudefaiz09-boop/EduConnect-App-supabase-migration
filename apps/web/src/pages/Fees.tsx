@@ -448,7 +448,9 @@ export const FeesPage = () => {
                       className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100"
                     >
                       <div>
-                        <p className="font-bold text-slate-900 text-sm">{formatCurrency(p.amount)}</p>
+                        <p className="font-bold text-slate-900 text-sm">
+                          {formatCurrency(p.amount)}
+                        </p>
                         <p className="text-[10px] text-slate-400 font-bold uppercase">
                           {formatDate(p.paidAt)}
                         </p>
@@ -500,7 +502,9 @@ export const FeesPage = () => {
                           Quarterly Tuition Fee
                         </p>
                         <div className="flex items-center gap-3">
-                          <h3 className="text-xl font-bold text-slate-900">{formatCurrency(fee.amountDue)}</h3>
+                          <h3 className="text-xl font-bold text-slate-900">
+                            {formatCurrency(fee.amountDue)}
+                          </h3>
                           <span
                             className={cn(
                               'text-[10px] font-black uppercase px-2 py-0.5 rounded-full',
@@ -584,7 +588,9 @@ export const FeesPage = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-slate-500 font-medium">Collected</span>
-                    <span className="font-bold text-emerald-600">{formatCurrency(report.totalPaid)}</span>
+                    <span className="font-bold text-emerald-600">
+                      {formatCurrency(report.totalPaid)}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-slate-500 font-medium">Pending</span>
@@ -594,7 +600,9 @@ export const FeesPage = () => {
                     <span className="text-sm font-black text-slate-900 uppercase">
                       Total Target
                     </span>
-                    <span className="font-black text-blue-600">{formatCurrency(report.totalDue)}</span>
+                    <span className="font-black text-blue-600">
+                      {formatCurrency(report.totalDue)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -707,7 +715,9 @@ export const FeesPage = () => {
             >
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
-                  <h3 className="text-3xl font-black text-slate-900 dark:text-white">Import Fee Data</h3>
+                  <h3 className="text-3xl font-black text-slate-900 dark:text-white">
+                    Import Fee Data
+                  </h3>
                   <p className="text-slate-500 font-medium leading-relaxed">
                     Bulk upload student fee records for{' '}
                     <span className="text-blue-600 font-bold">Class {selectedClass}</span>.

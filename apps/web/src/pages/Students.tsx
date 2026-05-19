@@ -528,7 +528,9 @@ export const StudentsPage = () => {
               className="relative w-full max-w-2xl bg-white rounded-[48px] shadow-2xl overflow-hidden p-12 dark:bg-slate-900 dark:border dark:border-slate-800 dark:text-slate-50"
             >
               <div className="space-y-2 mb-10">
-                <h3 className="text-3xl font-black text-slate-900 dark:text-white">Bulk Student Import</h3>
+                <h3 className="text-3xl font-black text-slate-900 dark:text-white">
+                  Bulk Student Import
+                </h3>
                 <p className="text-slate-500 font-medium">
                   Paste CSV records to create multiple accounts at once.
                 </p>
@@ -600,7 +602,9 @@ export const StudentsPage = () => {
                     <History size={28} />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-black text-slate-900 dark:text-white">Activity Logs</h3>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white">
+                      Activity Logs
+                    </h3>
                     <p className="text-slate-500 font-medium">
                       Tracking system changes and student lifecycle.
                     </p>

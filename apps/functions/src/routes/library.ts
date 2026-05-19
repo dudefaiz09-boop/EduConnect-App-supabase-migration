@@ -345,19 +345,42 @@ router.put('/resources/:id', checkPermission('manageLibrary'), async (req, res, 
       return res.status(403).json({ error: 'Forbidden', message: 'Tenant access denied' });
     }
 
-    const title = req.body.title !== undefined ? String(req.body.title || '').trim() : resource.title;
-    const description = req.body.description !== undefined ? String(req.body.description || '').trim() : resource.description;
-    const subject = req.body.subject !== undefined ? String(req.body.subject || '').trim() : resource.subject;
-    const grade = req.body.grade !== undefined ? String(req.body.grade || '').trim() : resource.grade;
+    const title =
+      req.body.title !== undefined ? String(req.body.title || '').trim() : resource.title;
+    const description =
+      req.body.description !== undefined
+        ? String(req.body.description || '').trim()
+        : resource.description;
+    const subject =
+      req.body.subject !== undefined ? String(req.body.subject || '').trim() : resource.subject;
+    const grade =
+      req.body.grade !== undefined ? String(req.body.grade || '').trim() : resource.grade;
     const type = req.body.type !== undefined ? req.body.type : resource.type;
-    const fileUrl = req.body.fileUrl !== undefined ? String(req.body.fileUrl || '').trim() : resource.fileUrl;
-    const externalUrl = req.body.externalUrl !== undefined ? String(req.body.externalUrl || '').trim() : resource.externalUrl;
-    const attachmentName = req.body.attachmentName !== undefined ? String(req.body.attachmentName || '').trim() : resource.attachmentName;
-    const attachmentSize = req.body.attachmentSize !== undefined ? Number(req.body.attachmentSize || 0) : resource.attachmentSize;
-    const tags = Array.isArray(req.body.tags) ? req.body.tags.map(String).filter(Boolean) : resource.tags;
-    const visibility = req.body.visibility !== undefined ? req.body.visibility : resource.visibility;
-    const targetRoles = Array.isArray(req.body.targetRoles) ? req.body.targetRoles : resource.targetRoles;
-    const targetClassIds = Array.isArray(req.body.targetClassIds) ? req.body.targetClassIds : resource.targetClassIds;
+    const fileUrl =
+      req.body.fileUrl !== undefined ? String(req.body.fileUrl || '').trim() : resource.fileUrl;
+    const externalUrl =
+      req.body.externalUrl !== undefined
+        ? String(req.body.externalUrl || '').trim()
+        : resource.externalUrl;
+    const attachmentName =
+      req.body.attachmentName !== undefined
+        ? String(req.body.attachmentName || '').trim()
+        : resource.attachmentName;
+    const attachmentSize =
+      req.body.attachmentSize !== undefined
+        ? Number(req.body.attachmentSize || 0)
+        : resource.attachmentSize;
+    const tags = Array.isArray(req.body.tags)
+      ? req.body.tags.map(String).filter(Boolean)
+      : resource.tags;
+    const visibility =
+      req.body.visibility !== undefined ? req.body.visibility : resource.visibility;
+    const targetRoles = Array.isArray(req.body.targetRoles)
+      ? req.body.targetRoles
+      : resource.targetRoles;
+    const targetClassIds = Array.isArray(req.body.targetClassIds)
+      ? req.body.targetClassIds
+      : resource.targetClassIds;
     const classIds = Array.isArray(req.body.classIds) ? req.body.classIds : resource.classIds;
 
     const now = new Date().toISOString();
@@ -377,7 +400,10 @@ router.put('/resources/:id', checkPermission('manageLibrary'), async (req, res, 
       visibility,
       targetRoles,
       targetClassIds,
-      availableCopies: req.body.availableCopies !== undefined ? Number(req.body.availableCopies || 1) : (resource.availableCopies || 1),
+      availableCopies:
+        req.body.availableCopies !== undefined
+          ? Number(req.body.availableCopies || 1)
+          : resource.availableCopies || 1,
       updatedAt: now,
       updatedBy: user.uid,
     };

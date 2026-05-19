@@ -667,7 +667,9 @@ export const PerformancePage = () => {
             >
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
-                  <h3 className="text-3xl font-black text-slate-900 dark:text-white">Batch Score Import</h3>
+                  <h3 className="text-3xl font-black text-slate-900 dark:text-white">
+                    Batch Score Import
+                  </h3>
                   <p className="text-slate-500 font-medium">
                     Uploading data for{' '}
                     <span className="text-indigo-600 font-bold">Class {selectedClass}</span>.

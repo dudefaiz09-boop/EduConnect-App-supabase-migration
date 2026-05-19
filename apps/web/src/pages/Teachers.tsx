@@ -573,7 +573,9 @@ export const TeachersPage = () => {
               className="relative w-full max-w-2xl bg-white rounded-[48px] shadow-2xl overflow-hidden p-12 dark:bg-slate-900 dark:border dark:border-slate-800 dark:text-slate-50"
             >
               <div className="space-y-2 mb-10">
-                <h3 className="text-3xl font-black text-slate-900 dark:text-white">Bulk Faculty Import</h3>
+                <h3 className="text-3xl font-black text-slate-900 dark:text-white">
+                  Bulk Faculty Import
+                </h3>
                 <p className="text-slate-500 font-medium">
                   Import large batches of staff using standardized CSV data.
                 </p>
@@ -693,10 +695,14 @@ export const TeachersPage = () => {
                           {formatAuditTimestamp(log.timestamp)}
                         </span>
                       </div>
-                      <p className="text-slate-900 font-bold text-lg leading-snug dark:text-slate-100">{log.details}</p>
+                      <p className="text-slate-900 font-bold text-lg leading-snug dark:text-slate-100">
+                        {log.details}
+                      </p>
                       <p className="text-xs text-slate-500 mt-2 font-medium flex items-center gap-2 dark:text-slate-400">
                         <UserIcon size={12} /> Executor UID:{' '}
-                        <span className="text-slate-900 font-bold dark:text-slate-200">{log.performedBy}</span>
+                        <span className="text-slate-900 font-bold dark:text-slate-200">
+                          {log.performedBy}
+                        </span>
                       </p>
                     </div>
                   </div>

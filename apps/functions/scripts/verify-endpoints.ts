@@ -27,7 +27,7 @@ async function runTests() {
 
   for (const user of testUsers) {
     console.log(`Testing login for: ${user.name} (${user.email})...`);
-    
+
     // 1. Authenticate via Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email: user.email,
@@ -35,7 +35,10 @@ async function runTests() {
     });
 
     if (authError || !authData.session) {
-      console.error(`❌ Login failed for ${user.email}:`, authError?.message || 'No session returned');
+      console.error(
+        `❌ Login failed for ${user.email}:`,
+        authError?.message || 'No session returned'
+      );
       continue;
     }
 
@@ -44,7 +47,7 @@ async function runTests() {
     console.log(`✅ Login successful! schoolId (JWT app_metadata): ${schoolId}`);
 
     const headers = {
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     };
 
@@ -81,7 +84,7 @@ async function runTests() {
         } else {
           itemCount = String(data);
         }
-        
+
         console.log(`✅ ${endpoint.name} loaded successfully! Format: ${itemCount}`);
       } catch (err: any) {
         console.error(`❌ Failed to fetch ${endpoint.name}:`, err.message);
@@ -154,7 +157,7 @@ async function runTests() {
   console.log('=== Verification Finished ===');
 }
 
-runTests().catch(err => {
+runTests().catch((err) => {
   console.error('Test execution failed:', err);
   process.exit(1);
 });

@@ -17,7 +17,7 @@ import {
   Key,
   UserPlus,
   Server,
-  Database
+  Database,
 } from 'lucide-react';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -55,7 +55,7 @@ export const AdminApp = () => {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
-  
+
   // Auth Form State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -78,7 +78,7 @@ export const AdminApp = () => {
   const [newSchoolId, setNewSchoolId] = useState('');
   const [newSchoolName, setNewSchoolName] = useState('');
   const [newSchoolSlug, setNewSchoolSlug] = useState('');
-  
+
   // Admin Provisioning State
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [newAdminName, setNewAdminName] = useState('');
@@ -107,7 +107,8 @@ export const AdminApp = () => {
         .maybeSingle();
 
       const profile = profileDoc?.data || {};
-      const isSuperAdmin = !!profile.isSuperAdmin || !!profile.is_super_admin || !!appMetadata.isSuperAdmin;
+      const isSuperAdmin =
+        !!profile.isSuperAdmin || !!profile.is_super_admin || !!appMetadata.isSuperAdmin;
 
       if (!isSuperAdmin) {
         setAuthError('Access Denied: Only Global Super Administrators are authorized.');
@@ -132,7 +133,9 @@ export const AdminApp = () => {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       validateSession(session);
     });
 
@@ -143,7 +146,7 @@ export const AdminApp = () => {
     e.preventDefault();
     setAuthLoading(true);
     setAuthError('');
-    
+
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
@@ -171,13 +174,13 @@ export const AdminApp = () => {
         .eq('collection', 'schools');
 
       if (schoolErr) throw schoolErr;
-      
-      const loadedSchools = (docSchools || []).map(row => ({
+
+      const loadedSchools = (docSchools || []).map((row) => ({
         id: row.id,
         name: String(row.data?.name || ''),
         slug: String(row.data?.slug || ''),
         status: (row.data?.status === 'inactive' ? 'inactive' : 'active') as 'active' | 'inactive',
-        createdAt: String(row.data?.createdAt || '')
+        createdAt: String(row.data?.createdAt || ''),
       }));
 
       setSchools(loadedSchools);
@@ -190,7 +193,7 @@ export const AdminApp = () => {
 
       if (userErr) throw userErr;
 
-      const loadedUsers = (docUsers || []).map(row => ({
+      const loadedUsers = (docUsers || []).map((row) => ({
         id: row.id,
         email: String(row.data?.email || ''),
         displayName: String(row.data?.displayName || ''),
@@ -198,7 +201,7 @@ export const AdminApp = () => {
         roles: Array.isArray(row.data?.roles) ? row.data.roles : [],
         schoolId: String(row.data?.schoolId || row.data?.tenantId || ''),
         status: String(row.data?.status || 'active'),
-        assignedModules: Array.isArray(row.data?.assignedModules) ? row.data.assignedModules : []
+        assignedModules: Array.isArray(row.data?.assignedModules) ? row.data.assignedModules : [],
       }));
 
       setUsers(loadedUsers);
@@ -224,32 +227,28 @@ export const AdminApp = () => {
 
     try {
       // 1. Register tenant in legacy documents table
-      const { error: docError } = await supabase
-        .from('documents')
-        .insert({
-          collection: 'schools',
-          id: newSchoolId,
-          data: {
-            id: newSchoolId,
-            name: newSchoolName,
-            slug: newSchoolSlug,
-            status: 'active',
-            createdAt: new Date().toISOString()
-          }
-        });
-
-      if (docError) throw docError;
-
-      // 2. Register tenant in public.tenants schema table
-      const { error: tenantError } = await supabase
-        .from('tenants')
-        .insert({
+      const { error: docError } = await supabase.from('documents').insert({
+        collection: 'schools',
+        id: newSchoolId,
+        data: {
           id: newSchoolId,
           name: newSchoolName,
           slug: newSchoolSlug,
           status: 'active',
-          metadata: {}
-        });
+          createdAt: new Date().toISOString(),
+        },
+      });
+
+      if (docError) throw docError;
+
+      // 2. Register tenant in public.tenants schema table
+      const { error: tenantError } = await supabase.from('tenants').insert({
+        id: newSchoolId,
+        name: newSchoolName,
+        slug: newSchoolSlug,
+        status: 'active',
+        metadata: {},
+      });
 
       if (tenantError) {
         console.warn('Tenants table insert warning:', tenantError.message);
@@ -260,8 +259,8 @@ export const AdminApp = () => {
       const res = await fetch('/api/users/create', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           email: newAdminEmail,
@@ -277,9 +276,9 @@ export const AdminApp = () => {
             manageLibrary: true,
             manageFees: true,
             managePerformance: true,
-            viewReports: true
-          }
-        })
+            viewReports: true,
+          },
+        }),
       });
 
       if (!res.ok) {
@@ -288,7 +287,7 @@ export const AdminApp = () => {
       }
 
       setOnboardSuccess(true);
-      
+
       // Clear forms
       setNewSchoolId('');
       setNewSchoolName('');
@@ -330,7 +329,9 @@ export const AdminApp = () => {
               <ShieldCheck className="text-blue-500" size={32} />
             </div>
             <h1 className="text-2xl font-black tracking-tight text-white mb-1">Operator Console</h1>
-            <p className="text-slate-400 text-sm text-center">EduConnect Global Administration Portal</p>
+            <p className="text-slate-400 text-sm text-center">
+              EduConnect Global Administration Portal
+            </p>
           </div>
 
           {authError && (
@@ -342,9 +343,14 @@ export const AdminApp = () => {
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label className="block text-xs font-black uppercase tracking-wider text-slate-400 mb-2">Operator Email</label>
+              <label className="block text-xs font-black uppercase tracking-wider text-slate-400 mb-2">
+                Operator Email
+              </label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                <Mail
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
+                  size={18}
+                />
                 <input
                   type="email"
                   required
@@ -357,9 +363,14 @@ export const AdminApp = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-black uppercase tracking-wider text-slate-400 mb-2">Secure Password</label>
+              <label className="block text-xs font-black uppercase tracking-wider text-slate-400 mb-2">
+                Secure Password
+              </label>
               <div className="relative">
-                <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                <Key
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
+                  size={18}
+                />
                 <input
                   type="password"
                   required
@@ -376,11 +387,7 @@ export const AdminApp = () => {
               disabled={authLoading}
               className="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-500 active:scale-98 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
             >
-              {authLoading ? (
-                <Loader2 className="animate-spin" size={18} />
-              ) : (
-                'Sign In to Console'
-              )}
+              {authLoading ? <Loader2 className="animate-spin" size={18} /> : 'Sign In to Console'}
             </button>
           </form>
         </div>
@@ -389,12 +396,13 @@ export const AdminApp = () => {
   }
 
   // Filter Logic
-  const filteredSchools = schools.filter(s =>
-    s.name.toLowerCase().includes(schoolSearch.toLowerCase()) ||
-    s.id.toLowerCase().includes(schoolSearch.toLowerCase())
+  const filteredSchools = schools.filter(
+    (s) =>
+      s.name.toLowerCase().includes(schoolSearch.toLowerCase()) ||
+      s.id.toLowerCase().includes(schoolSearch.toLowerCase())
   );
 
-  const filteredUsers = users.filter(u => {
+  const filteredUsers = users.filter((u) => {
     const matchesSearch =
       u.displayName.toLowerCase().includes(userSearch.toLowerCase()) ||
       u.email.toLowerCase().includes(userSearch.toLowerCase());
@@ -413,8 +421,12 @@ export const AdminApp = () => {
               <ShieldCheck size={20} />
             </div>
             <div>
-              <h2 className="font-display font-black text-sm tracking-tight text-white leading-none">EduConnect</h2>
-              <span className="text-[10px] uppercase font-black tracking-widest text-blue-500">Operator</span>
+              <h2 className="font-display font-black text-sm tracking-tight text-white leading-none">
+                EduConnect
+              </h2>
+              <span className="text-[10px] uppercase font-black tracking-widest text-blue-500">
+                Operator
+              </span>
             </div>
           </div>
 
@@ -471,7 +483,9 @@ export const AdminApp = () => {
         {/* Header bar */}
         <header className="flex justify-between items-center mb-10 pb-6 border-b border-slate-850">
           <div>
-            <h1 className="text-3xl font-black tracking-tight text-white capitalize">{activeTab}</h1>
+            <h1 className="text-3xl font-black tracking-tight text-white capitalize">
+              {activeTab}
+            </h1>
             <p className="text-slate-400 text-xs mt-1">Platform administration control plane</p>
           </div>
           <div className="flex items-center gap-4">
@@ -496,7 +510,9 @@ export const AdminApp = () => {
                 <div className="p-3 bg-blue-500/10 border border-blue-500/20 text-blue-500 rounded-2xl w-fit mb-4">
                   <School size={20} />
                 </div>
-                <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider">Onboarded Schools</h3>
+                <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider">
+                  Onboarded Schools
+                </h3>
                 <p className="text-3xl font-black text-white mt-2">{schools.length}</p>
               </div>
 
@@ -504,7 +520,9 @@ export const AdminApp = () => {
                 <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 text-indigo-500 rounded-2xl w-fit mb-4">
                   <Users size={20} />
                 </div>
-                <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider">Cross-Tenant Users</h3>
+                <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider">
+                  Cross-Tenant Users
+                </h3>
                 <p className="text-3xl font-black text-white mt-2">{users.length}</p>
               </div>
 
@@ -512,7 +530,9 @@ export const AdminApp = () => {
                 <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-2xl w-fit mb-4">
                   <Activity size={20} />
                 </div>
-                <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider">System Status</h3>
+                <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider">
+                  System Status
+                </h3>
                 <p className="text-3xl font-black text-emerald-400 mt-2">Optimal</p>
               </div>
             </div>
@@ -522,16 +542,21 @@ export const AdminApp = () => {
               <h2 className="text-lg font-black text-white mb-6">Quick Actions Control Control</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 <button
-                  onClick={() => { setActiveTab('schools'); setShowOnboardModal(true); }}
+                  onClick={() => {
+                    setActiveTab('schools');
+                    setShowOnboardModal(true);
+                  }}
                   className="flex items-center gap-3 p-4 bg-slate-950/40 hover:bg-blue-600 border border-slate-800/80 hover:border-blue-500 rounded-2xl text-sm font-bold text-left group transition-all"
                 >
                   <Plus className="text-blue-500 group-hover:text-white" size={20} />
                   <div>
                     <p className="text-white">Onboard New School</p>
-                    <span className="text-[10px] text-slate-400 group-hover:text-blue-200">Register tenant & admin</span>
+                    <span className="text-[10px] text-slate-400 group-hover:text-blue-200">
+                      Register tenant & admin
+                    </span>
                   </div>
                 </button>
-                
+
                 <button
                   onClick={() => setActiveTab('users')}
                   className="flex items-center gap-3 p-4 bg-slate-950/40 hover:bg-blue-600 border border-slate-800/80 hover:border-blue-500 rounded-2xl text-sm font-bold text-left group transition-all"
@@ -539,7 +564,9 @@ export const AdminApp = () => {
                   <Users className="text-blue-500 group-hover:text-white" size={20} />
                   <div>
                     <p className="text-white">Manage Users</p>
-                    <span className="text-[10px] text-slate-400 group-hover:text-blue-200">View user directory</span>
+                    <span className="text-[10px] text-slate-400 group-hover:text-blue-200">
+                      View user directory
+                    </span>
                   </div>
                 </button>
               </div>
@@ -551,7 +578,10 @@ export const AdminApp = () => {
           <div className="space-y-6">
             <div className="flex justify-between items-center gap-4">
               <div className="relative max-w-sm flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                <Search
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
+                  size={16}
+                />
                 <input
                   type="text"
                   placeholder="Search schools..."
@@ -561,7 +591,11 @@ export const AdminApp = () => {
                 />
               </div>
               <button
-                onClick={() => { setShowOnboardModal(true); setOnboardSuccess(false); setOnboardError(''); }}
+                onClick={() => {
+                  setShowOnboardModal(true);
+                  setOnboardSuccess(false);
+                  setOnboardError('');
+                }}
                 className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl text-sm shadow-md transition-all active:scale-98 cursor-pointer"
               >
                 <Plus size={16} />
@@ -576,27 +610,36 @@ export const AdminApp = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredSchools.map((school) => (
-                  <div key={school.id} className="bg-slate-900/40 border border-slate-800 p-6 rounded-3xl flex flex-col justify-between shadow-sm relative overflow-hidden">
+                  <div
+                    key={school.id}
+                    className="bg-slate-900/40 border border-slate-800 p-6 rounded-3xl flex flex-col justify-between shadow-sm relative overflow-hidden"
+                  >
                     <div>
                       <div className="flex justify-between items-start mb-4">
                         <div className="p-3 bg-blue-500/10 border border-blue-500/20 text-blue-500 rounded-xl">
                           <Building size={20} />
                         </div>
-                        <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg ${
-                          school.status === 'active'
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                            : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                        }`}>
+                        <span
+                          className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg ${
+                            school.status === 'active'
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                              : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                          }`}
+                        >
                           {school.status}
                         </span>
                       </div>
                       <h3 className="text-lg font-black text-white">{school.name}</h3>
-                      <p className="text-slate-400 text-xs mt-1">Tenant ID: <span className="font-mono text-blue-400">{school.id}</span></p>
+                      <p className="text-slate-400 text-xs mt-1">
+                        Tenant ID: <span className="font-mono text-blue-400">{school.id}</span>
+                      </p>
                       <p className="text-slate-500 text-xs">Slug: {school.slug}</p>
                     </div>
 
                     <div className="mt-6 pt-4 border-t border-slate-850 flex justify-between items-center text-xs">
-                      <span className="text-slate-400">Users: {users.filter(u => u.schoolId === school.id).length}</span>
+                      <span className="text-slate-400">
+                        Users: {users.filter((u) => u.schoolId === school.id).length}
+                      </span>
                       <span className="text-slate-500">
                         {school.createdAt ? new Date(school.createdAt).toLocaleDateString() : 'N/A'}
                       </span>
@@ -632,7 +675,9 @@ export const AdminApp = () => {
                       <div className="flex flex-col items-center justify-center p-6 bg-emerald-500/10 border border-emerald-500/20 text-emerald-200 rounded-2xl text-center">
                         <Check size={32} className="text-emerald-400 mb-2" />
                         <h4 className="font-bold text-white">Onboarding Complete!</h4>
-                        <p className="text-xs mt-1">Tenant school created and admin user provisioned successfully.</p>
+                        <p className="text-xs mt-1">
+                          Tenant school created and admin user provisioned successfully.
+                        </p>
                         <button
                           type="button"
                           onClick={() => setOnboardSuccess(false)}
@@ -645,7 +690,9 @@ export const AdminApp = () => {
                       <>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                           <div>
-                            <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">School ID</label>
+                            <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">
+                              School ID
+                            </label>
                             <input
                               type="text"
                               required
@@ -656,7 +703,9 @@ export const AdminApp = () => {
                             />
                           </div>
                           <div className="sm:col-span-2">
-                            <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">School Name</label>
+                            <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">
+                              School Name
+                            </label>
                             <input
                               type="text"
                               required
@@ -669,7 +718,9 @@ export const AdminApp = () => {
                         </div>
 
                         <div>
-                          <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">School Slug</label>
+                          <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">
+                            School Slug
+                          </label>
                           <input
                             type="text"
                             required
@@ -685,10 +736,12 @@ export const AdminApp = () => {
                             <UserPlus size={16} className="text-blue-500" />
                             Primary Admin Credentials
                           </h4>
-                          
+
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">Admin Full Name</label>
+                              <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">
+                                Admin Full Name
+                              </label>
                               <input
                                 type="text"
                                 required
@@ -699,7 +752,9 @@ export const AdminApp = () => {
                               />
                             </div>
                             <div>
-                              <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">Admin Email</label>
+                              <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">
+                                Admin Email
+                              </label>
                               <input
                                 type="email"
                                 required
@@ -712,7 +767,9 @@ export const AdminApp = () => {
                           </div>
 
                           <div className="mt-4">
-                            <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">Temporary Password</label>
+                            <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">
+                              Temporary Password
+                            </label>
                             <input
                               type="password"
                               required
@@ -748,7 +805,10 @@ export const AdminApp = () => {
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
               <div className="relative w-full sm:max-w-xs">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                <Search
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
+                  size={16}
+                />
                 <input
                   type="text"
                   placeholder="Search user profile..."
@@ -767,8 +827,10 @@ export const AdminApp = () => {
                     className="bg-transparent border-0 text-xs font-bold text-slate-300 focus:ring-0 cursor-pointer"
                   >
                     <option value="all">All Schools</option>
-                    {schools.map(s => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
+                    {schools.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -797,10 +859,15 @@ export const AdminApp = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredUsers.map((user) => (
-                  <div key={user.id} className="bg-slate-900/40 border border-slate-800 p-6 rounded-3xl relative overflow-hidden shadow-sm">
+                  <div
+                    key={user.id}
+                    className="bg-slate-900/40 border border-slate-800 p-6 rounded-3xl relative overflow-hidden shadow-sm"
+                  >
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <h4 className="font-bold text-white text-base leading-tight">{user.displayName || 'No Name'}</h4>
+                        <h4 className="font-bold text-white text-base leading-tight">
+                          {user.displayName || 'No Name'}
+                        </h4>
                         <p className="text-xs text-slate-400 mt-1">{user.email}</p>
                       </div>
                       <span className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
@@ -811,14 +878,19 @@ export const AdminApp = () => {
                     <div className="mt-6 pt-4 border-t border-slate-850 flex flex-col gap-2 text-xs">
                       <div className="flex justify-between">
                         <span className="text-slate-500">School ID:</span>
-                        <span className="font-bold text-slate-300 font-mono">{user.schoolId || 'N/A'}</span>
+                        <span className="font-bold text-slate-300 font-mono">
+                          {user.schoolId || 'N/A'}
+                        </span>
                       </div>
                       {user.assignedModules.length > 0 && (
                         <div className="flex flex-col gap-1 mt-1">
                           <span className="text-slate-500">Modules:</span>
                           <div className="flex flex-wrap gap-1">
                             {user.assignedModules.map((mod) => (
-                              <span key={mod} className="px-1.5 py-0.5 bg-slate-800 rounded text-[9px] font-medium text-slate-300">
+                              <span
+                                key={mod}
+                                className="px-1.5 py-0.5 bg-slate-800 rounded text-[9px] font-medium text-slate-300"
+                              >
                                 {mod}
                               </span>
                             ))}

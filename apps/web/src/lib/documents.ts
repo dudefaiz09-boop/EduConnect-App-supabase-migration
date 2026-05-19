@@ -135,7 +135,9 @@ export async function listDocuments<T>(
 
   const activeTenantId = getStoredTenantId();
   if (activeTenantId && collectionName !== 'schools') {
-    dbQuery = dbQuery.or(`data->>tenantId.eq.${activeTenantId},data->>schoolId.eq.${activeTenantId}`);
+    dbQuery = dbQuery.or(
+      `data->>tenantId.eq.${activeTenantId},data->>schoolId.eq.${activeTenantId}`
+    );
   }
 
   const { data, error } = await dbQuery;

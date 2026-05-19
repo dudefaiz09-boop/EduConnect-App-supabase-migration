@@ -533,7 +533,8 @@ export const AssignmentsPage = () => {
                           rel="noreferrer"
                           className="inline-flex items-center gap-2 text-xs text-blue-600 font-bold hover:underline"
                         >
-                          <ExternalLink size={12} /> Download Reference File {selectedAssignment.attachments.length > 1 ? i + 1 : ''}
+                          <ExternalLink size={12} /> Download Reference File{' '}
+                          {selectedAssignment.attachments.length > 1 ? i + 1 : ''}
                         </a>
                       ))}
                     </div>

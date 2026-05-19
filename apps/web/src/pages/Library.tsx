@@ -164,9 +164,13 @@ export const LibraryPage = () => {
     try {
       const payload = {
         ...uploadData,
-        tags: typeof uploadData.tags === 'string'
-          ? uploadData.tags.split(',').map((t) => t.trim()).filter(Boolean)
-          : uploadData.tags,
+        tags:
+          typeof uploadData.tags === 'string'
+            ? uploadData.tags
+                .split(',')
+                .map((t) => t.trim())
+                .filter(Boolean)
+            : uploadData.tags,
       };
 
       if (editingResource) {
