@@ -1,13 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
+import { env } from './env';
+import type { Database } from '../types/database';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('[Supabase] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY.');
-}
-
-export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '', {
+export const supabase = createClient<Database>(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
@@ -15,7 +10,7 @@ export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '', {
   },
 });
 
-export const uploadsBucket = import.meta.env.VITE_SUPABASE_UPLOADS_BUCKET || 'educonnect-uploads';
+export const uploadsBucket = env.VITE_SUPABASE_UPLOADS_BUCKET;
 
 export async function getSupabaseAccessToken() {
   const { data } = await supabase.auth.getSession();

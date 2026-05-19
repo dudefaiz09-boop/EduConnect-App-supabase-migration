@@ -7,8 +7,9 @@ import {
 } from '@educonnect/shared-api';
 import { getSupabaseAccessToken, supabase } from './supabase';
 import { getStoredTenantId } from './tenant';
+import { env } from './env';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const BASE_URL = env.VITE_API_BASE_URL;
 
 function getActiveTenantId() {
   return getStoredTenantId();

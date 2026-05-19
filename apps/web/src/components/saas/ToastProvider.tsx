@@ -11,7 +11,7 @@ interface Toast {
   tone: ToastTone;
 }
 
-interface ToastInput {
+export interface ToastInput {
   title: string;
   description?: string;
   tone?: ToastTone;

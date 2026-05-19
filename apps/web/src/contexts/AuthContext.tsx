@@ -3,6 +3,8 @@ import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { UserRole, ROLES, getUserRole, hasPermission } from '@educonnect/shared';
 import { supabase } from '../lib/supabase';
 import { clearStoredTenantId, resolveActiveTenantId, setStoredTenantId } from '../lib/tenant';
+import { getAuthErrorMessage } from '../lib/auth-errors';
+import { useToast } from '../components/saas/ToastProvider';
 
 export enum OperationType {
   CREATE = 'create',
@@ -76,6 +78,11 @@ interface AuthContextType {
   canManageLibrary: boolean;
   canManageFees: boolean;
   canManagePerformance: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (args: { email: string; password: string; displayName: string }) => Promise<void>;
+  signOut: () => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
+  updatePassword: (password: string) => Promise<void>;
 }
 
 type UserProfileData = {
@@ -121,6 +128,11 @@ const AuthContext = createContext<AuthContextType>({
   canManageLibrary: false,
   canManageFees: false,
   canManagePerformance: false,
+  signIn: async () => {},
+  signUp: async () => {},
+  signOut: async () => {},
+  sendPasswordReset: async () => {},
+  updatePassword: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -151,6 +163,7 @@ async function getProfile(uid: string) {
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { toast } = useToast();
   const [user, setUser] = useState<AuthenticatedUser | null>(null);
   const [roles, setRoles] = useState<string[]>([]);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
@@ -256,6 +269,88 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
+  const signIn = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      throw new Error(getAuthErrorMessage(error));
+    }
+    if (!data.session) {
+      throw new Error('Sign in did not return a valid session. Please try again.');
+    }
+    toast({ tone: 'success', title: 'Signed in', description: 'Welcome back to EduConnect.' });
+  };
+
+  const signUp = async ({
+    email,
+    password,
+    displayName,
+  }: {
+    email: string;
+    password: string;
+    displayName: string;
+  }) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
+        data: {
+          display_name: displayName,
+        },
+      },
+    });
+
+    if (error) {
+      throw new Error(getAuthErrorMessage(error));
+    }
+
+    if (data.user && !data.session) {
+      toast({
+        tone: 'success',
+        title: 'Check your email',
+        description: 'Confirm your email address before signing in.',
+      });
+      return;
+    }
+
+    toast({ tone: 'success', title: 'Account created', description: 'Your account is ready.' });
+  };
+
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      throw new Error(getAuthErrorMessage(error));
+    }
+    clearStoredTenantId();
+    toast({ tone: 'success', title: 'Signed out', description: 'Your session has ended.' });
+  };
+
+  const sendPasswordReset = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
+    if (error) {
+      throw new Error(getAuthErrorMessage(error));
+    }
+    toast({
+      tone: 'success',
+      title: 'Reset email sent',
+      description: 'Check your inbox for the password reset link.',
+    });
+  };
+
+  const updatePassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) {
+      throw new Error(getAuthErrorMessage(error));
+    }
+    toast({
+      tone: 'success',
+      title: 'Password updated',
+      description: 'You can continue using your account securely.',
+    });
+  };
+
   const role = getUserRole(roles);
   const permissionUser = {
     uid: user?.uid || '',
@@ -293,6 +388,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     canManageFees: hasPermission(permissionUser, 'manageFees'),
     canManagePerformance:
       hasPermission(permissionUser, 'viewReports') || !!permissions.managePerformance,
+    signIn,
+    signUp,
+    signOut,
+    sendPasswordReset,
+    updatePassword,
   };
 
   return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;

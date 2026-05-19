@@ -118,7 +118,6 @@ export const AssignmentsPage = () => {
         setSelectedAssignment(null);
       } else if (exists !== selectedAssignment) {
         // Refresh the selected assignment object to keep it in sync
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSelectedAssignment(exists);
       }
     }

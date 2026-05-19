@@ -21,7 +21,9 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('[ErrorBoundary] Uncaught error:', error, errorInfo);
+    if (import.meta.env.DEV) {
+      console.error('[ErrorBoundary] Uncaught error:', error, errorInfo);
+    }
   }
 
   public render() {
@@ -40,7 +42,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </p>
             </div>
 
-            {process.env.NODE_ENV === 'development' && (
+            {import.meta.env.DEV && (
               <div className="p-4 bg-slate-900 rounded-2xl text-left overflow-auto max-h-40">
                 <code className="text-xs text-pink-400 font-mono">
                   {this.state.error?.toString()}

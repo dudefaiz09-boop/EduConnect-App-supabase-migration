@@ -1,7 +1,13 @@
 import React, { useState, Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link,
+  useLocation,
+  Navigate,
+} from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { supabase } from './lib/supabase';
 import {
   LayoutDashboard,
   Users,
@@ -14,7 +20,6 @@ import {
   BarChart3,
   LogOut,
   Menu,
-  X,
   GraduationCap,
   Bot,
   Baby,
@@ -30,6 +35,11 @@ import { CommandPalette } from './components/saas/CommandPalette';
 import { NotificationDropdown } from './components/saas/NotificationDropdown';
 import { ThemeToggle } from './components/saas/ThemeToggle';
 import { DashboardPage } from './pages/Dashboard';
+import { LoadingSpinner } from './components/ui/LoadingSpinner';
+import { LoginPage } from './pages/auth/LoginPage';
+import { RegisterPage } from './pages/auth/RegisterPage';
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 
 // --- Lazy loaded pages ---
 const AnnouncementsPage = lazy(() =>
@@ -66,14 +76,17 @@ const SidebarLink = ({
   icon: Icon,
   label,
   active,
+  onNavigate,
 }: {
   to: string;
   icon: React.ElementType;
   label: string;
   active: boolean;
+  onNavigate?: () => void;
 }) => (
   <Link
     to={to}
+    onClick={onNavigate}
     className={cn(
       'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
       active
@@ -87,9 +100,10 @@ const SidebarLink = ({
 );
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
-  const { user, role, assignedModules } = useAuth();
+  const { user, role, assignedModules, signOut } = useAuth();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const menuItems: Array<{
     to: string;
@@ -157,7 +171,14 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     { to: '/all-users', icon: Shield, label: 'All Users', module: 'allUsers' },
   ];
 
-  const handleLogout = () => supabase.auth.signOut();
+  const handleLogout = async () => {
+    setIsSigningOut(true);
+    try {
+      await signOut();
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex text-slate-950 dark:bg-slate-950 dark:text-slate-100">
@@ -201,17 +222,23 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           {menuItems
             .filter((item) => role && canAccessModule(role, item.module, assignedModules))
             .map((item) => (
-              <SidebarLink key={item.to} {...item} active={location.pathname === item.to} />
+              <SidebarLink
+                key={item.to}
+                {...item}
+                active={location.pathname === item.to}
+                onNavigate={() => setIsSidebarOpen(false)}
+              />
             ))}
         </nav>
 
         <div className="pt-4 shrink-0">
           <button
             onClick={handleLogout}
+            disabled={isSigningOut}
             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-slate-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200 dark:text-slate-300 dark:hover:bg-red-950/40"
           >
-            <LogOut size={20} />
-            <span className="font-medium">Sign Out</span>
+            {isSigningOut ? <LoadingSpinner className="text-red-600" /> : <LogOut size={20} />}
+            <span className="font-medium">{isSigningOut ? 'Signing out...' : 'Sign Out'}</span>
           </button>
         </div>
       </aside>
@@ -259,102 +286,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [signingIn, setSigningIn] = useState(false);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSigningIn(true);
-    setError('');
-    try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-    } catch (err: unknown) {
-      console.error('Login error:', err);
-      const errorObj = err as { code?: string; message?: string };
-      if (errorObj.message?.toLowerCase().includes('invalid login credentials')) {
-        setError('Invalid email or password. Please try again.');
-      } else {
-        setError(errorObj.message || 'An unexpected error occurred.');
-      }
-    } finally {
-      setSigningIn(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-10 text-center"
-      >
-        <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-6 shadow-lg rotate-3">
-          <GraduationCap size={32} />
-        </div>
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">EduConnect Portal</h1>
-        <p className="text-slate-500 mb-8 leading-relaxed">
-          Sign in to your account to access the EduConnect system.
-        </p>
-
-        <form onSubmit={handleLogin} className="space-y-4 text-left">
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-400 uppercase ml-1">Email</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm"
-              placeholder="user@educonnect.app"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-400 uppercase ml-1">Password</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm"
-              placeholder="••••••••"
-            />
-          </div>
-
-          {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-xl text-xs font-medium flex items-center gap-2">
-              <X size={14} />
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={signingIn}
-            className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all active:scale-[0.98] mt-4 disabled:opacity-50"
-          >
-            {signingIn ? 'Authenticating...' : 'Sign In'}
-          </button>
-        </form>
-
-        <div className="mt-8 pt-8 border-t border-slate-50">
-          <p className="text-[10px] text-slate-400 uppercase leading-relaxed font-bold tracking-widest">
-            &copy; 2026 EduConnect Academy <br />
-            Secure Academic Management System
-          </p>
-        </div>
-      </motion.div>
-    </div>
-  );
-};
-
 // --- App Container ---
 
 const AppContent = () => {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading)
     return (
@@ -369,7 +305,21 @@ const AppContent = () => {
       </div>
     );
 
-  if (!user) return <LoginPage />;
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/auth/login" element={<LoginPage />} />
+        <Route path="/auth/register" element={<RegisterPage />} />
+        <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+        <Route path="*" element={<Navigate to="/auth/login" replace />} />
+      </Routes>
+    );
+  }
+
+  if (location.pathname.startsWith('/auth/')) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <Layout>

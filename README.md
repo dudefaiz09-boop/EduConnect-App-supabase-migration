@@ -39,6 +39,8 @@ pnpm install
 
 3. Configure environment variables. Use `.env.example` in the repository root and each app as templates.
 
+For the web app, `apps/web/src/lib/env.ts` validates required Vite variables at startup. The app fails fast if `VITE_SUPABASE_URL` or `VITE_SUPABASE_ANON_KEY` is missing instead of creating an unsafe empty Supabase client.
+
 ### Development
 
 Run all apps in dev mode:
@@ -98,6 +100,10 @@ pnpm exec playwright test
 - API hardening uses Helmet, compression, validation, and rate limits.
 - Secure authentication is handled by Supabase Auth.
 - Role-based access control protects app routes and API actions.
+- Frontend auth forms use Zod and React Hook Form validation with friendly error messages.
+- Password reset is available at `/auth/forgot-password` and `/auth/reset-password`.
+- Client-side route guards are paired with backend token and tenant validation; do not treat browser-only routing as the authorization boundary.
+- Future auth rate limiting should be added at the API/auth edge with Upstash, Vercel Firewall, or Supabase-side controls.
 
 ## License
 
