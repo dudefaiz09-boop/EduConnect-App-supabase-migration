@@ -8,7 +8,7 @@ describe('Vercel Entrypoint Verification', () => {
   it('api/index.ts imports the source Express app, not dist or listener bundles', () => {
     const entrypoint = readFileSync(join(process.cwd(), 'api/index.ts'), 'utf8');
 
-    expect(entrypoint).toContain('../apps/functions/src/app');
+    expect(entrypoint).toContain('../apps/functions/src/app.ts');
     expect(entrypoint).not.toContain('../apps/functions/src/index');
     expect(entrypoint).not.toContain('../apps/functions/dist/index.js');
     expect(entrypoint).not.toContain('../apps/functions/dist/app.js');
