@@ -25,7 +25,7 @@ type SeedUser = {
   staffId?: string;
 };
 
-const _dryRun = process.argv.includes('--dry-run');
+const dryRun = process.argv.includes('--dry-run');
 const now = new Date().toISOString();
 
 const tenants = [
@@ -716,8 +716,9 @@ async function seedFees(supabase: SupabaseClient, idsByEmail: Map<string, string
 }
 
 async function main() {
-  if (_dryRun) {
+  if (dryRun) {
     console.log('Dry run enabled. Skipping actual database writes.');
+    return;
   }
 
   const supabase = getSupabase();
