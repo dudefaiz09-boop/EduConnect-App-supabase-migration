@@ -93,7 +93,7 @@ The `apps/mobile/ios` directory has been **restored**. You can now compile the i
 Since macOS is required to build iOS apps, we have provided a GitHub Actions workflow (`ios-distribute.yml`).
 This workflow automatically provisions a Mac runner, installs Xcode dependencies, and compiles the app.
 
-**Important Note for Windows Users:** 
+**Important Note for Windows Users:**
 The GitHub Action compiles an **unsigned Simulator Build (`.app` file zipped)**. It does not produce an `.ipa` for physical devices because building a release `.ipa` requires a paid Apple Developer Account and valid signing certificates injected into the CI pipeline.
 You can download the generated `ios-simulator-app` from the Artifacts tab of the latest successful GitHub Action run.
 
