@@ -15,6 +15,7 @@ import { useAnnouncements } from '@educonnect/shared-api';
 import { announcementsService } from './lib/api-client';
 import { AssignmentsScreen } from './screens/AssignmentsScreen';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { supabaseConfigured } from './lib/supabase';
 
 const AnnouncementsList = () => {
   const { data: announcements = [], isLoading } = useAnnouncements(announcementsService);
@@ -61,6 +62,22 @@ const AppContent = () => {
     logout();
   };
 
+  if (!supabaseConfigured) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centered}>
+          <Text style={[styles.title, { color: '#dc2626' }]}>⚠️ App Not Configured</Text>
+          <Text style={[styles.subtitle, { textAlign: 'center', marginTop: 12 }]}>
+            This APK was built without Supabase credentials.{'\n\n'}
+            Ask the developer to add{'\n'}
+            SUPABASE_URL and SUPABASE_ANON_KEY{'\n'}
+            as GitHub Repository Secrets and rebuild.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -68,6 +85,7 @@ const AppContent = () => {
       </View>
     );
   }
+
 
   if (!user) {
     return (
