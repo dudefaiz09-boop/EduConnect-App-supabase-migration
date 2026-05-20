@@ -94,7 +94,6 @@ const AppContent = () => {
     );
   }
 
-
   if (!user) {
     return (
       <SafeAreaView style={styles.container}>
