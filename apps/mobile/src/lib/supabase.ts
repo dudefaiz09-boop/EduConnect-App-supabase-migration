@@ -1,24 +1,26 @@
 import { createClient } from '@supabase/supabase-js';
-import { ENV } from '../config/env';
+import { ENV, mobileConfigReady } from '../config/env';
 
-const PLACEHOLDER_URL = 'https://your-project.supabase.co';
-const PLACEHOLDER_KEY = 'your_supabase_anon_key';
+const FALLBACK_URL = 'https://invalid.supabase.co';
+const FALLBACK_KEY = 'invalid-anon-key';
 
 const isConfigured =
-  ENV.SUPABASE_URL !== PLACEHOLDER_URL && ENV.SUPABASE_ANON_KEY !== PLACEHOLDER_KEY;
+  Boolean(ENV.SUPABASE_URL) &&
+  Boolean(ENV.SUPABASE_ANON_KEY) &&
+  ENV.SUPABASE_URL !== FALLBACK_URL &&
+  ENV.SUPABASE_ANON_KEY !== FALLBACK_KEY;
 
 if (!isConfigured) {
   console.error(
-    '[EduConnect] FATAL: Supabase is not configured. ' +
-      'Add SUPABASE_URL and SUPABASE_ANON_KEY as GitHub Repository Secrets, then rebuild the APK.'
+    '[EduConnect] Supabase is not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY, then rebuild the APK.'
   );
 }
 
-// createClient is safe to call with placeholder values — it won't throw.
-// All auth calls will fail gracefully and the AuthContext .catch() will handle them.
+// createClient is safe to call with placeholder values; the app-level
+// configuration screen prevents auth/API calls until required config exists.
 export const supabase = createClient(
-  isConfigured ? ENV.SUPABASE_URL : PLACEHOLDER_URL,
-  isConfigured ? ENV.SUPABASE_ANON_KEY : PLACEHOLDER_KEY,
+  isConfigured ? ENV.SUPABASE_URL : FALLBACK_URL,
+  isConfigured ? ENV.SUPABASE_ANON_KEY : FALLBACK_KEY,
   {
     auth: {
       autoRefreshToken: true,
@@ -27,11 +29,10 @@ export const supabase = createClient(
   }
 );
 
-export const supabaseConfigured = isConfigured;
+export const supabaseConfigured = isConfigured && mobileConfigReady;
 
 export async function getSupabaseAccessToken() {
   if (!isConfigured) return null;
   const { data } = await supabase.auth.getSession();
   return data.session?.access_token || null;
 }
-
