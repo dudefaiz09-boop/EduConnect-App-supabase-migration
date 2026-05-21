@@ -1,6 +1,5 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
-import type React from 'react';
 import { Link } from 'react-router-dom';
 
 interface QuickActionCardProps {

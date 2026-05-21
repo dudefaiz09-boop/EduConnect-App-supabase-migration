@@ -22,6 +22,20 @@ describe('CORS Integration Tests', () => {
     });
   });
 
+  describe('OPTIONS /api/assignments', () => {
+    it('should return 204 before auth middleware runs', async () => {
+      const res = await request(app)
+        .options('/api/assignments')
+        .set('Origin', origin)
+        .set('Access-Control-Request-Method', 'GET')
+        .set('Access-Control-Request-Headers', 'authorization,x-school-id,content-type');
+
+      expect(res.status).toBe(204);
+      expect(res.header['access-control-allow-origin']).toBe(origin);
+      expect(res.body).toEqual({});
+    });
+  });
+
   describe('GET /api/notifications', () => {
     it('should return 401 and include Access-Control-Allow-Origin header', async () => {
       const res = await request(app).get('/api/notifications').set('Origin', origin);

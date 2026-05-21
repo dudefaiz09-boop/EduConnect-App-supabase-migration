@@ -41,6 +41,8 @@ pnpm install
 
 For the web app, `apps/web/src/lib/env.ts` validates required Vite variables at startup. The app fails fast if `VITE_SUPABASE_URL` or `VITE_SUPABASE_ANON_KEY` is missing instead of creating an unsafe empty Supabase client.
 
+For production web deployments on Vercel, set `VITE_API_BASE_URL` on the web project to the deployed API URL ending in `/api`, for example `https://educonnect-api-sigma.vercel.app/api`. Do not leave production at `/api` unless the API is served from the same origin as the web app. Local development can use `/api` because `apps/web/vite.config.ts` proxies it to the local API. Redeploy the web app after changing any `VITE_*` variable because Vite embeds them at build time.
+
 For mobile, copy `apps/mobile/.env.example` to `apps/mobile/.env` and set `API_BASE_URL`, `SUPABASE_URL`, and `SUPABASE_ANON_KEY` before building. The mobile app also accepts the `VITE_*` aliases used by the web migration, but it must never receive `SUPABASE_SERVICE_ROLE_KEY`. After changing `.env`, rebuild and reinstall the app because React Native env values are bundled at build time.
 
 Windows Android build:

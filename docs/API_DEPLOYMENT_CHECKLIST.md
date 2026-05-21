@@ -29,9 +29,19 @@ Do not expose `SUPABASE_SERVICE_ROLE_KEY` to the web project.
 
 ## Web Environment
 
-Set this variable on the web Vercel project:
+Set these variables on the web Vercel project:
 
 - `VITE_API_BASE_URL=https://educonnect-api-sigma.vercel.app/api`
+- `VITE_SUPABASE_URL=<Supabase project URL>`
+- `VITE_SUPABASE_ANON_KEY=<Supabase anon key>`
+
+`VITE_API_BASE_URL` must point to the deployed API Vercel URL and must end in `/api`.
+Do not leave production web deployments at `/api` unless the Express API is served from
+the exact same origin as the web app. The local Vite dev server can use `/api` because
+`apps/web/vite.config.ts` proxies `/api` to `http://localhost:3000`.
+
+Vite embeds `VITE_*` variables at build time. After changing `VITE_API_BASE_URL` or any
+other `VITE_*` variable in Vercel, redeploy the web project; a runtime restart is not enough.
 
 ## Serverless Startup Rules
 

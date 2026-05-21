@@ -22,7 +22,9 @@ import {
   Assignment,
   AssignmentSubmission as Submission,
 } from '@educonnect/shared-education';
+import { ApiRequestError } from '@educonnect/shared-api';
 import { assignmentsService } from '../lib/api-client';
+import { getApiBaseUrlDiagnostic } from '../lib/env';
 import { getActiveTenantId, getDefaultClassId, getDemoClassesForTenant } from '../lib/tenant';
 import { FileUpload } from '../components/FileUpload';
 import { EmptyState } from '../components/saas/EmptyState';
@@ -43,6 +45,26 @@ type AssignmentDisplay = Assignment & {
   classIds?: string[];
 };
 
+type AssignmentErrorState = {
+  message: string;
+  kind?: string;
+};
+
+function toAssignmentErrorState(error: unknown): AssignmentErrorState {
+  if (error instanceof ApiRequestError) {
+    return {
+      message: error.message,
+      kind: error.kind,
+    };
+  }
+
+  const maybeApiError = error as { message?: string; kind?: string } | null;
+  return {
+    message: maybeApiError?.message || 'Unable to load assignments for this class.',
+    kind: maybeApiError?.kind,
+  };
+}
+
 export const AssignmentsPage = () => {
   const { user, isStudent, canManageAssignments, classId: userClassId, schoolId } = useAuth();
   const { toast } = useToast();
@@ -60,7 +82,7 @@ export const AssignmentsPage = () => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(false);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<AssignmentErrorState | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
 
   const loadAssignments = useCallback(async () => {
@@ -75,11 +97,7 @@ export const AssignmentsPage = () => {
       setLastSyncTime(Date.now());
     } catch (err) {
       setAssignmentsData([]);
-      setError(
-        err instanceof Error && err.message
-          ? err.message
-          : 'Unable to load assignments for this class.'
-      );
+      setError(toAssignmentErrorState(err));
     } finally {
       setLoading(false);
     }
@@ -315,6 +333,11 @@ export const AssignmentsPage = () => {
     }).length;
   }, [assignments, lastSyncTime]);
 
+  const isNetworkError = error?.kind === 'network';
+  const assignmentErrorMessage = isNetworkError
+    ? 'API server unreachable. Check VITE_API_BASE_URL and API deployment.'
+    : error?.message;
+
   return (
     <PageShell maxWidth="max-w-6xl">
       <PageHeader
@@ -399,11 +422,17 @@ export const AssignmentsPage = () => {
               <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : error ? (
-            <div className="bg-red-50 border border-red-100 p-8 rounded-3xl text-center flex flex-col items-center gap-4">
-              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-red-500 shadow-sm">
+            <div className="bg-red-50 border border-red-100 p-8 rounded-3xl text-center flex flex-col items-center gap-4 dark:border-red-900/60 dark:bg-red-950/30">
+              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-red-500 shadow-sm dark:bg-slate-950">
                 <AlertCircle size={32} />
               </div>
-              <p className="text-red-700 font-medium dark:text-red-200">{error}</p>
+              <p className="text-red-700 font-medium dark:text-red-200">{assignmentErrorMessage}</p>
+              {isNetworkError && (
+                <p className="max-w-md rounded-xl bg-white/70 px-3 py-2 text-xs font-medium text-red-700 dark:bg-slate-950/70 dark:text-red-200">
+                  Configured API base URL:{' '}
+                  <code className="break-all font-mono">{getApiBaseUrlDiagnostic()}</code>
+                </p>
+              )}
               <p className="max-w-md text-sm text-red-500 dark:text-red-300">
                 The assignment list is still safe to retry. Empty classes will show an empty state
                 instead of crashing.
