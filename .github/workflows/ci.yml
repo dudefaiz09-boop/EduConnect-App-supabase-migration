@@ -23,8 +23,10 @@ jobs:
           filters: |
             mobile:
               - 'apps/mobile/**'
+              - 'apps/functions/**'
               - 'packages/**'
               - '.github/workflows/android-distribute.yml'
+              - '.github/workflows/ci.yml'
 
   web-api-test-build:
     runs-on: ubuntu-latest
