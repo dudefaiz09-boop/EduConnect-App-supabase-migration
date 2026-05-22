@@ -107,7 +107,6 @@ export function ChatScreen() {
       setSelected(conversation);
       setContactMode(false);
       await conversationsQuery.refetch();
-      await messagesQuery.refetch();
     } catch (error) {
       setLocalError(errorMessage(error, 'Could not start chat.'));
     }
