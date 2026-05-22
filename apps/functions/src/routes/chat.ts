@@ -38,8 +38,12 @@ type MessageRecord = {
 };
 
 type UserRecord = {
+  uid?: string;
+  email?: string;
+  displayName?: string;
   role?: string;
   roles?: string[];
+  status?: 'active' | 'inactive';
   classId?: string;
   classIds?: string[];
   linkedStudentIds?: string[];
@@ -197,9 +201,93 @@ router.get('/rooms', async (req, res, next) => {
         id: doc.id,
         ...(doc.data() as ConversationRecord),
       }))
-      .filter((room) => room.participants?.includes(user.uid));
+      .filter((room) => room.participants?.includes(user.uid))
+      .sort((left, right) => {
+        const leftTime = new Date(left.updatedAt || left.lastMessageAt || 0).getTime();
+        const rightTime = new Date(right.updatedAt || right.lastMessageAt || 0).getTime();
+        return rightTime - leftTime;
+      });
 
     res.json(rooms);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/contacts', async (req, res, next) => {
+  try {
+    const user = req.user!;
+    const snapshot = await db.collection('users').where('tenantId', '==', req.tenantId).get();
+
+    const contacts = await Promise.all(
+      snapshot.docs.map(async (doc) => {
+        if (doc.id === user.uid) return null;
+
+        const profile = (doc.data() || {}) as UserRecord;
+        if (profile.status === 'inactive') return null;
+
+        const eligibility = await canMessageUser(user, doc.id, req.tenantId);
+        if (!eligibility.allowed) return null;
+
+        return {
+          id: doc.id,
+          uid: profile.uid || doc.id,
+          email: profile.email,
+          displayName: profile.displayName,
+          role: profile.role,
+          roles: profile.roles,
+          status: profile.status,
+          classId: profile.classId,
+          classIds: profile.classIds,
+          linkedStudentIds: profile.linkedStudentIds,
+        };
+      })
+    );
+
+    res.json(
+      contacts
+        .filter(Boolean)
+        .sort((left, right) =>
+          String(left?.displayName || left?.email || '').localeCompare(
+            String(right?.displayName || right?.email || '')
+          )
+        )
+    );
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/rooms/:id/messages', async (req, res, next) => {
+  try {
+    const user = req.user!;
+    const { id } = chatRoomParamsSchema.parse(req.params);
+    const roomSnapshot = await db.collection('conversations').doc(id).get();
+
+    if (!roomSnapshot.exists) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    const conversation = (roomSnapshot.data() || {}) as ConversationRecord;
+    const access = assertConversationAccess(conversation, user, req.tenantId);
+
+    if (!access.allowed) {
+      return res.status(403).json({ error: access.error });
+    }
+
+    const snapshot = await db
+      .collection(`conversations/${id}/messages`)
+      .orderBy('sentAt', 'asc')
+      .limit(200)
+      .get();
+
+    const messages = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      conversationId: id,
+      ...(doc.data() as MessageRecord),
+    }));
+
+    res.json(messages);
   } catch (error) {
     next(error);
   }
