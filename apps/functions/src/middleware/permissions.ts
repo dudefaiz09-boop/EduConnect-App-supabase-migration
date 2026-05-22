@@ -79,11 +79,7 @@ export const requireModuleAccess =
     try {
       const user = requireUser(req);
 
-      if (
-        user.isAdmin ||
-        user.isSuperAdmin ||
-        user.assignedModules?.includes(module)
-      ) {
+      if (user.isAdmin || user.isSuperAdmin || user.assignedModules?.includes(module)) {
         return next();
       }
 
@@ -123,11 +119,7 @@ export const requireClassAccess =
       const user = requireUser(req);
       const classId = req.params[classIdParam];
 
-      if (
-        user.isAdmin ||
-        user.isSuperAdmin ||
-        user.classIds?.includes(classId)
-      ) {
+      if (user.isAdmin || user.isSuperAdmin || user.classIds?.includes(classId)) {
         return next();
       }
 

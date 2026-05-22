@@ -2,10 +2,7 @@ import { Router } from 'express';
 import { db } from '../lib/documents.js';
 import { createNotification } from '../lib/notifications.js';
 import { logger } from '@educonnect/logger';
-import {
-  requireAnyPermission,
-  requirePermission,
-} from '../middleware/permissions.js';
+import { requireAnyPermission, requirePermission } from '../middleware/permissions.js';
 import {
   classReportParamsSchema,
   feePaymentSchema,

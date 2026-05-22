@@ -11,8 +11,10 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const variantStyles = {
   default: 'bg-white border border-slate-100 shadow-sm dark:bg-[#16162a] dark:border-[#1e1e3a]',
-  glass: 'bg-white/80 border border-white/70 backdrop-blur-lg shadow-sm dark:bg-[#16162a]/80 dark:border-white/[0.06]',
-  gradient: 'bg-gradient-to-br from-violet-50 via-white to-blue-50 border border-violet-100/50 dark:from-violet-950/30 dark:via-[#16162a] dark:to-blue-950/30 dark:border-violet-900/20',
+  glass:
+    'bg-white/80 border border-white/70 backdrop-blur-lg shadow-sm dark:bg-[#16162a]/80 dark:border-white/[0.06]',
+  gradient:
+    'bg-gradient-to-br from-violet-50 via-white to-blue-50 border border-violet-100/50 dark:from-violet-950/30 dark:via-[#16162a] dark:to-blue-950/30 dark:border-violet-900/20',
 };
 
 const accentBorders: Record<string, string> = {
@@ -24,7 +26,14 @@ const accentBorders: Record<string, string> = {
   rose: 'border-l-[3px] border-l-rose-500',
 };
 
-export const Card = ({ children, variant = 'default', accent, hover, className, ...props }: CardProps) => {
+export const Card = ({
+  children,
+  variant = 'default',
+  accent,
+  hover,
+  className,
+  ...props
+}: CardProps) => {
   const Comp = hover ? motion.div : 'div';
   const motionProps = hover
     ? {
@@ -49,19 +58,31 @@ export const Card = ({ children, variant = 'default', accent, hover, className, 
   );
 };
 
-export const CardHeader = ({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) => (
+export const CardHeader = ({
+  children,
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) => (
   <div className={cn('p-6 pb-0', className)} {...props}>
     {children}
   </div>
 );
 
-export const CardContent = ({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) => (
+export const CardContent = ({
+  children,
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) => (
   <div className={cn('p-6', className)} {...props}>
     {children}
   </div>
 );
 
-export const CardFooter = ({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) => (
+export const CardFooter = ({
+  children,
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement> & { children: React.ReactNode }) => (
   <div className={cn('p-6 pt-0', className)} {...props}>
     {children}
   </div>

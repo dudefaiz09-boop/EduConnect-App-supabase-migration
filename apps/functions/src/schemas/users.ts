@@ -1,9 +1,5 @@
 import { z } from 'zod';
-import {
-  ALL_MODULES,
-  ALL_PERMISSIONS,
-  ALL_ROLES,
-} from '@educonnect/shared';
+import { ALL_MODULES, ALL_PERMISSIONS, ALL_ROLES } from '@educonnect/shared';
 
 const nonEmptyString = z.string().trim().min(1);
 const optionalNonEmptyString = nonEmptyString.optional();
@@ -12,16 +8,11 @@ const roleSchema = z.enum(ALL_ROLES);
 const moduleSchema = z.enum(ALL_MODULES);
 const permissionSchema = z.enum(ALL_PERMISSIONS);
 
-const stringArraySchema = z
-  .array(z.string().trim().min(1))
-  .default([]);
+const stringArraySchema = z.array(z.string().trim().min(1)).default([]);
 
 const permissionMapSchema = z.record(z.string(), z.boolean());
 
-const permissionsSchema = z.union([
-  z.array(permissionSchema),
-  permissionMapSchema,
-]);
+const permissionsSchema = z.union([z.array(permissionSchema), permissionMapSchema]);
 
 export const updateOwnProfileSchema = z
   .object({

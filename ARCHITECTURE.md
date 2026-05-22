@@ -1,10 +1,6 @@
 # EduConnect Full-Stack Architecture
 
-
-
 ## Apps
-
-
 
 - `apps/web`: React/Vite web dashboard.
 
@@ -16,11 +12,7 @@
 
 - `packages/*`: Shared types, API contracts, logging, analytics, notifications, and education domain logic.
 
-
-
 ## Backend Infrastructure
-
-
 
 Supabase provides:
 
@@ -34,27 +26,15 @@ Supabase provides:
 
 - Tenant-scoped records
 
-
-
 ## Request Flow
-
-
 
 Web/Mobile → `@educonnect/shared-api` → `apps/functions` API → Supabase
 
-
-
 Direct Supabase client access is allowed only for safe user-level operations protected by RLS.
-
-
 
 Sensitive actions must go through `apps/functions`.
 
-
-
 ## Sensitive API Actions
-
-
 
 Use backend API for:
 
@@ -80,11 +60,7 @@ Use backend API for:
 
 - Any service-role-key operation
 
-
-
 ## Security Rules
-
-
 
 - Service role key only exists in `apps/functions`.
 
@@ -97,5 +73,3 @@ Use backend API for:
 - Sensitive routes require role checks.
 
 - Tenant data must never leak across schools.
-
-

@@ -32,7 +32,8 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
               'disabled:cursor-not-allowed disabled:opacity-60',
               'dark:border-[#1e1e3a] dark:bg-[#12121e] dark:text-slate-50 dark:placeholder:text-slate-500',
               'dark:focus:border-violet-500 dark:focus:ring-violet-950/50',
-              error && 'border-rose-300 focus:ring-rose-100 dark:border-rose-500 dark:focus:ring-rose-950/50',
+              error &&
+                'border-rose-300 focus:ring-rose-100 dark:border-rose-500 dark:focus:ring-rose-950/50',
               leftIcon && 'pl-11',
               rightIcon && 'pr-11',
               className

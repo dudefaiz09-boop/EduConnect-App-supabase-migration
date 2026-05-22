@@ -313,9 +313,11 @@ router.post('/conversations', async (req, res, next) => {
 router.post('/send', async (req, res, next) => {
   try {
     const user = req.user!;
-    const { conversationId: parsedConversationId, recipientId, text } = sendMessageSchema.parse(
-      req.body
-    );
+    const {
+      conversationId: parsedConversationId,
+      recipientId,
+      text,
+    } = sendMessageSchema.parse(req.body);
 
     const now = new Date().toISOString();
     let conversationId = parsedConversationId || '';

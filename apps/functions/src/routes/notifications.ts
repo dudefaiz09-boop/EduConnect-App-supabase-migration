@@ -3,10 +3,7 @@ import type { Request } from 'express';
 import { db } from '../lib/documents.js';
 import { requireAnyRole } from '../middleware/permissions.js';
 import { createNotification } from '../lib/notifications.js';
-import {
-  createNotificationSchema,
-  notificationIdParamsSchema,
-} from '../schemas/notifications.js';
+import { createNotificationSchema, notificationIdParamsSchema } from '../schemas/notifications.js';
 
 const router: Router = Router();
 

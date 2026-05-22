@@ -3,10 +3,7 @@ import { db } from '../lib/documents.js';
 import { requirePermission } from '../middleware/permissions.js';
 import { createNotification } from '../lib/notifications.js';
 import { logger } from '@educonnect/logger';
-import {
-  announcementIdParamsSchema,
-  createAnnouncementSchema,
-} from '../schemas/announcements.js';
+import { announcementIdParamsSchema, createAnnouncementSchema } from '../schemas/announcements.js';
 
 const router: Router = Router();
 
@@ -32,25 +29,16 @@ type AnnouncementRecord = {
   views?: string[];
 };
 
-function canSeeAnnouncement(
-  announcement: AnnouncementRecord,
-  role: string,
-  classIds: string[]
-) {
+function canSeeAnnouncement(announcement: AnnouncementRecord, role: string, classIds: string[]) {
   if (announcement.status === 'archived') return false;
 
-  const targetRoles = announcement.targetRoles?.length
-    ? announcement.targetRoles
-    : ['all'];
+  const targetRoles = announcement.targetRoles?.length ? announcement.targetRoles : ['all'];
 
-  const targetClasses = announcement.targetClasses?.length
-    ? announcement.targetClasses
-    : ['all'];
+  const targetClasses = announcement.targetClasses?.length ? announcement.targetClasses : ['all'];
 
   const roleMatch = targetRoles.includes('all') || targetRoles.includes(role);
   const classMatch =
-    targetClasses.includes('all') ||
-    classIds.some((classId) => targetClasses.includes(classId));
+    targetClasses.includes('all') || classIds.some((classId) => targetClasses.includes(classId));
 
   return roleMatch && classMatch;
 }

@@ -5,19 +5,9 @@ const optionalString = z.string().trim().optional();
 
 const stringArraySchema = z.array(z.string().trim().min(1));
 
-export const libraryResourceTypeSchema = z.enum([
-  'pdf',
-  'ebook',
-  'web_link',
-  'video',
-  'document',
-]);
+export const libraryResourceTypeSchema = z.enum(['pdf', 'ebook', 'web_link', 'video', 'document']);
 
-export const libraryVisibilitySchema = z.enum([
-  'all',
-  'roles',
-  'classes',
-]);
+export const libraryVisibilitySchema = z.enum(['all', 'roles', 'classes']);
 
 export const resourceIdParamsSchema = z
   .object({

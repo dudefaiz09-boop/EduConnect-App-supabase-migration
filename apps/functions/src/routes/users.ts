@@ -1,14 +1,7 @@
 import { Router, type Request } from 'express';
-import {
-  createManagedUser,
-  updateManagedUser,
-  writeAuditLog,
-} from '../lib/user-management.js';
+import { createManagedUser, updateManagedUser, writeAuditLog } from '../lib/user-management.js';
 import { auth, db } from '../lib/documents.js';
-import {
-  requireAnyRole,
-  requirePermission,
-} from '../middleware/permissions.js';
+import { requireAnyRole, requirePermission } from '../middleware/permissions.js';
 import {
   bulkManagedUsersSchema,
   createManagedUserSchema,
@@ -171,35 +164,31 @@ router.patch('/:uid/deactivate', requirePermission('manageUsers'), async (req, r
   }
 });
 
-router.delete(
-  '/:uid',
-  requireAnyRole(['admin', 'super_admin']),
-  async (req, res, next) => {
-    try {
-      const { uid } = userParamsSchema.parse(req.params);
+router.delete('/:uid', requireAnyRole(['admin', 'super_admin']), async (req, res, next) => {
+  try {
+    const { uid } = userParamsSchema.parse(req.params);
 
-      const profile = await updateManagedUser(
-        uid,
-        { status: 'inactive' },
-        actorFromRequest(req),
-        'user_deactivated'
-      );
+    const profile = await updateManagedUser(
+      uid,
+      { status: 'inactive' },
+      actorFromRequest(req),
+      'user_deactivated'
+    );
 
-      await writeAuditLog({
-        action: 'user_delete_requested',
-        targetUid: uid,
-        performedBy: req.user!.uid,
-        details: `Delete requested; ${profile.email || uid} was deactivated instead`,
-        before: profile,
-        after: profile,
-        schoolId: profile.schoolId,
-      });
+    await writeAuditLog({
+      action: 'user_delete_requested',
+      targetUid: uid,
+      performedBy: req.user!.uid,
+      details: `Delete requested; ${profile.email || uid} was deactivated instead`,
+      before: profile,
+      after: profile,
+      schoolId: profile.schoolId,
+    });
 
-      res.json({ success: true, profile });
-    } catch (error) {
-      next(error);
-    }
+    res.json({ success: true, profile });
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 export default router;

@@ -83,7 +83,10 @@ function canSeeResource(resource: LibraryResourceWithId, user: Express.Request['
   return false;
 }
 
-function isTenantResource(resource: Pick<LibraryResource, 'tenantId' | 'schoolId'>, tenantId?: string) {
+function isTenantResource(
+  resource: Pick<LibraryResource, 'tenantId' | 'schoolId'>,
+  tenantId?: string
+) {
   return resource.tenantId === tenantId || resource.schoolId === tenantId;
 }
 
@@ -194,7 +197,12 @@ router.post('/upload', requirePermission('manageLibrary'), async (req, res, next
       schoolId: req.tenantId,
       tenantId: req.tenantId,
       actorId: user.uid,
-      metadata: { resourceId: ref.id, subject: resource.subject, grade: resource.grade, type: resource.type },
+      metadata: {
+        resourceId: ref.id,
+        subject: resource.subject,
+        grade: resource.grade,
+        type: resource.type,
+      },
     });
 
     res.status(201).json({ id: ref.id, ...resource });
