@@ -1,42 +1,42 @@
-\# EduConnect Full-Stack Architecture
+# EduConnect Full-Stack Architecture
 
 
 
-\## Apps
+## Apps
 
 
 
-\- `apps/web`: React/Vite web dashboard.
+- `apps/web`: React/Vite web dashboard.
 
-\- `apps/mobile`: React Native Android/iOS app.
+- `apps/mobile`: React Native Android/iOS app.
 
-\- `apps/functions`: Express backend API.
+- `apps/functions`: Express backend API.
 
-\- `apps/admin-console`: Admin console.
+- `apps/admin-console`: Admin console.
 
-\- `packages/\*`: Shared types, API contracts, logging, analytics, notifications, and education domain logic.
+- `packages/*`: Shared types, API contracts, logging, analytics, notifications, and education domain logic.
 
 
 
-\## Backend Infrastructure
+## Backend Infrastructure
 
 
 
 Supabase provides:
 
-\- Database
+- Database
 
-\- Auth
+- Auth
 
-\- Storage
+- Storage
 
-\- Row Level Security
+- Row Level Security
 
-\- Tenant-scoped records
+- Tenant-scoped records
 
 
 
-\## Request Flow
+## Request Flow
 
 
 
@@ -52,49 +52,50 @@ Sensitive actions must go through `apps/functions`.
 
 
 
-\## Sensitive API Actions
+## Sensitive API Actions
 
 
 
 Use backend API for:
 
-\- User creation/deletion
+- User creation/deletion
 
-\- Role changes
+- Role changes
 
-\- Tenant switching
+- Tenant switching
 
-\- Imports/exports
+- Imports/exports
 
-\- Fee operations
+- Fee operations
 
-\- Performance imports
+- Performance imports
 
-\- Library issue/return
+- Library issue/return
 
-\- Audit logs
+- Audit logs
 
-\- Notifications
+- Notifications
 
-\- AI assistant context
+- AI assistant context
 
-\- Any service-role-key operation
-
-
-
-\## Security Rules
+- Any service-role-key operation
 
 
 
-\- Service role key only exists in `apps/functions`.
+## Security Rules
 
-\- Web/mobile only use anon/publishable Supabase keys.
 
-\- All protected API routes require authentication.
 
-\- All protected API routes require tenant context.
+- Service role key only exists in `apps/functions`.
 
-\- Sensitive routes require role checks.
+- Web/mobile only use anon/publishable Supabase keys.
 
-\- Tenant data must never leak across schools.
+- All protected API routes require authentication.
+
+- All protected API routes require tenant context.
+
+- Sensitive routes require role checks.
+
+- Tenant data must never leak across schools.
+
 
