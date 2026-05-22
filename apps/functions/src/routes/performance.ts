@@ -1,8 +1,13 @@
 import { Router } from 'express';
 import { db } from '../lib/documents.js';
-import { checkPermission } from '../middleware/auth.js';
+import { requireAnyPermission, requirePermission } from '../middleware/permissions.js';
 import { createNotification } from '../lib/notifications.js';
 import { logger } from '@educonnect/logger';
+import {
+  performanceReportParamsSchema,
+  performanceUploadSchema,
+  studentPerformanceParamsSchema,
+} from '../schemas/performance.js';
 
 const router: Router = Router();
 
@@ -20,10 +25,10 @@ type PerformanceRecord = {
 function canViewPerformance(user: NonNullable<Express.Request['user']>) {
   return (
     user.isAdmin ||
-    user.permissions.viewPerformance ||
-    user.permissions.managePerformance ||
-    user.permissions.viewReports ||
-    user.roles.some((role) => ['principal', 'teacher'].includes(role))
+    user.permissions?.viewPerformance ||
+    user.permissions?.managePerformance ||
+    user.permissions?.viewReports ||
+    user.roles?.some((role) => ['principal', 'teacher'].includes(role))
   );
 }
 
@@ -31,7 +36,7 @@ function canViewStudentPerformance(user: NonNullable<Express.Request['user']>, s
   return (
     studentId === user.uid ||
     canViewPerformance(user) ||
-    (user.permissions.viewOwnRecords && user.linkedStudentIds.includes(studentId))
+    (user.permissions?.viewOwnRecords && user.linkedStudentIds?.includes(studentId))
   );
 }
 
@@ -68,23 +73,27 @@ async function safePerformanceNotification(input: Parameters<typeof createNotifi
   }
 }
 
-router.get('/report/:classId', async (req, res, next) => {
+const requirePerformanceViewer = requireAnyPermission([
+  'viewPerformance',
+  'managePerformance',
+  'viewReports',
+]);
+
+router.get('/report/:classId', requirePerformanceViewer, async (req, res, next) => {
   try {
-    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
-    if (!canViewPerformance(req.user)) {
-      return res.status(403).json({ error: 'Forbidden', message: 'Performance access required' });
-    }
+    const { classId } = performanceReportParamsSchema.parse(req.params);
 
     const snapshot = await db
       .collection('performance')
       .where('tenantId', '==', req.tenantId)
-      .where('classId', '==', req.params.classId)
+      .where('classId', '==', classId)
       .get();
 
     const records = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...(doc.data() as PerformanceRecord),
     }));
+
     const classAverage = records.length
       ? Math.round(
           records.reduce((sum, record) => sum + Number(record.score || 0), 0) / records.length
@@ -102,32 +111,17 @@ router.get('/report/:classId', async (req, res, next) => {
   }
 });
 
-router.post('/upload', checkPermission('managePerformance'), async (req, res, next) => {
+router.post('/upload', requirePermission('managePerformance'), async (req, res, next) => {
   try {
-    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
-    const records = Array.isArray(req.body.records) ? req.body.records : [];
-    if (records.length === 0) return res.status(400).json({ error: 'records array is required' });
+    const { records } = performanceUploadSchema.parse(req.body);
 
     const now = new Date().toISOString();
+
     const imported = await Promise.all(
-      records.map(async (record: Partial<PerformanceRecord>) => {
-        const studentId = String(record.studentId || '').trim();
-        const classId = String(record.classId || '').trim();
-        const subject = String(record.subject || '').trim();
-        const term = String(record.term || '').trim();
-        const grade = String(record.grade || '').trim();
-        const score = Number(record.score);
-
-        if (!studentId || !classId || !subject || !term || !grade || !Number.isFinite(score)) {
-          throw Object.assign(
-            new Error(
-              'Each performance record requires studentId, classId, subject, term, score, and grade'
-            ),
-            { statusCode: 400 }
-          );
-        }
-
+      records.map(async (record) => {
+        const { studentId, classId, subject, term, score, grade } = record;
         const id = stablePerformanceId(classId, studentId, subject, term);
+
         const payload: PerformanceRecord & Record<string, unknown> = {
           tenantId: req.tenantId,
           schoolId: req.tenantId,
@@ -139,10 +133,11 @@ router.post('/upload', checkPermission('managePerformance'), async (req, res, ne
           grade,
           uploadedAt: now,
           updatedAt: now,
-          updatedBy: req.user?.uid,
+          updatedBy: req.user!.uid,
         };
 
         await db.collection('performance').doc(id).set(payload);
+
         await safePerformanceNotification({
           title: `New score posted: ${subject}`,
           message: `${term} score: ${score}% (${grade}).`,
@@ -151,7 +146,7 @@ router.post('/upload', checkPermission('managePerformance'), async (req, res, ne
           targetUserIds: [studentId],
           schoolId: req.tenantId,
           tenantId: req.tenantId,
-          actorId: req.user?.uid,
+          actorId: req.user!.uid,
           metadata: { performanceId: id, classId, subject, term, score, grade },
         });
 
@@ -167,16 +162,18 @@ router.post('/upload', checkPermission('managePerformance'), async (req, res, ne
 
 router.get('/:studentId', async (req, res, next) => {
   try {
-    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
-    if (!canViewStudentPerformance(req.user, req.params.studentId)) {
+    const { studentId } = studentPerformanceParamsSchema.parse(req.params);
+
+    if (!canViewStudentPerformance(req.user!, studentId)) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
     const snapshot = await db
       .collection('performance')
       .where('tenantId', '==', req.tenantId)
-      .where('studentId', '==', req.params.studentId)
+      .where('studentId', '==', studentId)
       .get();
+
     res.json(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
   } catch (error) {
     next(error);
