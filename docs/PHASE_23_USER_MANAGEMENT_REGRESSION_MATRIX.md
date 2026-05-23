@@ -6,23 +6,24 @@ This matrix defines the minimum user-management checks that should pass before t
 
 ## Role access matrix
 
-| Actor role | List users | Create user | Update user | Change role | Delete request | View audit logs |
-| --- | --- | --- | --- | --- | --- | --- |
-| Super admin | Yes, managed tenants | Yes | Yes | Yes | Yes | Yes |
-| Admin | Yes, active tenant | Yes | Yes | Yes | Yes | Yes |
-| Principal | Read-only if allowed | No | No | No | No | No |
-| Teacher | No | No | No | No | No | No |
-| Student | No | No | No | No | No | No |
-| Parent | No | No | No | No | No | No |
-| Librarian | No | No | No | No | No | No |
-| Accountant | No | No | No | No | No | No |
-| Staff | No | No | No | No | No | No |
+| Actor role  | List users          | Create user | Update user | Change role | Delete request | View audit logs |
+| ----------- | ------------------- | ----------- | ----------- | ----------- | -------------- | --------------- |
+| Super admin | Yes, managed tenants | Yes         | Yes         | Yes         | Yes            | Yes             |
+| Admin       | Yes, active tenant  | Yes         | Yes         | Yes         | Yes            | Yes             |
+| Principal   | Read-only if allowed | No          | No          | No          | No             | No              |
+| Teacher     | No                  | No          | No          | No          | No             | No              |
+| Student     | No                  | No          | No          | No          | No             | No              |
+| Parent      | No                  | No          | No          | No          | No             | No              |
+| Librarian   | No                  | No          | No          | No          | No             | No              |
+| Accountant  | No                  | No          | No          | No          | No             | No              |
+| Staff       | No                  | No          | No          | No          | No             | No              |
 
 ## Tenant checks
 
 - Admin list results must be limited to the active tenant.
 - Super admin list results must be limited to the selected managed tenant.
-- Create, update, role-change, and delete-request actions must reject users outside the caller's active or managed tenant scope.
+- Create, update, role-change, and delete-request actions must reject users outside the caller's
+  active or managed tenant scope.
 - Tenant selector changes should reset role, status, and module filters.
 
 ## Create user checks
@@ -31,13 +32,15 @@ This matrix defines the minimum user-management checks that should pass before t
 - Missing display name should fail.
 - Missing role should fail.
 - Missing password for a new user should fail.
-- Duplicate email should return a clear error or deterministic update behavior if intentionally supported.
+- Duplicate email should return a clear error or deterministic update behavior if intentionally
+  supported.
 - Parent users should support linked student IDs.
 - Teacher users should support assigned class IDs and subject IDs.
 
 ## Update user checks
 
-- Admin can update display name, status, role, modules, permissions, class IDs, subject IDs, section IDs, and linked student IDs.
+- Admin can update display name, status, role, modules, permissions, class IDs, subject IDs,
+  section IDs, and linked student IDs.
 - Email should not be edited from the manage modal unless the backend explicitly supports it.
 - Role changes should update both primary role and roles array consistently.
 - Permission changes should be persisted as a boolean permission map.
