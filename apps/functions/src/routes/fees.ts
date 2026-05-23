@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { db } from '../lib/documents.js';
 import { createNotification } from '../lib/notifications.js';
 import { logger } from '@educonnect/logger';
-import { requireAnyPermission, requirePermission } from '../middleware/permissions.js';
+import { requirePermission } from '../middleware/permissions.js';
 import {
   classReportParamsSchema,
   feePaymentSchema,
@@ -39,6 +39,10 @@ function canViewStudentFees(user: NonNullable<Express.Request['user']>, studentI
   );
 }
 
+function isTenantFee(fee: Pick<FeeRecord, 'tenantId' | 'schoolId'>, tenantId?: string) {
+  return fee.tenantId === tenantId || fee.schoolId === tenantId;
+}
+
 function feeStatus(amountDue: number, amountPaid = 0): FeeRecord['status'] {
   if (amountPaid >= amountDue) return 'paid';
   if (amountPaid > 0) return 'partial';
@@ -57,47 +61,43 @@ async function safeFeeNotification(input: Parameters<typeof createNotification>[
   }
 }
 
-router.get(
-  '/report/:classId',
-  requireAnyPermission(['manageFees', 'viewReports']),
-  async (req, res, next) => {
-    try {
-      const { classId } = classReportParamsSchema.parse(req.params);
+router.get('/report/:classId', requirePermission('manageFees'), async (req, res, next) => {
+  try {
+    const { classId } = classReportParamsSchema.parse(req.params);
 
-      const snapshot = await db
-        .collection('fees')
-        .where('tenantId', '==', req.tenantId)
-        .where('classId', '==', classId)
-        .get();
+    const snapshot = await db
+      .collection('fees')
+      .where('tenantId', '==', req.tenantId)
+      .where('classId', '==', classId)
+      .get();
 
-      const records = snapshot.docs.map((doc) => {
-        const fee = doc.data() as FeeRecord;
-        const amountDue = Number(fee.amountDue || 0);
-        const amountPaid = Number(fee.amountPaid || 0);
+    const records = snapshot.docs.map((doc) => {
+      const fee = doc.data() as FeeRecord;
+      const amountDue = Number(fee.amountDue || 0);
+      const amountPaid = Number(fee.amountPaid || 0);
 
-        return {
-          id: doc.id,
-          studentId: fee.studentId,
-          amountDue,
-          amountPaid,
-          dueDate: fee.dueDate,
-          status: feeStatus(amountDue, amountPaid),
-        };
-      });
+      return {
+        id: doc.id,
+        studentId: fee.studentId,
+        amountDue,
+        amountPaid,
+        dueDate: fee.dueDate,
+        status: feeStatus(amountDue, amountPaid),
+      };
+    });
 
-      const totalDue = records.reduce((sum, record) => sum + record.amountDue, 0);
-      const totalPaid = records.reduce((sum, record) => sum + record.amountPaid, 0);
-      const pending = records.reduce(
-        (sum, record) => sum + Math.max(record.amountDue - record.amountPaid, 0),
-        0
-      );
+    const totalDue = records.reduce((sum, record) => sum + record.amountDue, 0);
+    const totalPaid = records.reduce((sum, record) => sum + record.amountPaid, 0);
+    const pending = records.reduce(
+      (sum, record) => sum + Math.max(record.amountDue - record.amountPaid, 0),
+      0
+    );
 
-      res.json({ totalPaid, pending, totalDue, records });
-    } catch (error) {
-      next(error);
-    }
+    res.json({ totalPaid, pending, totalDue, records });
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 router.post('/upload', requirePermission('manageFees'), async (req, res, next) => {
   try {
@@ -113,6 +113,12 @@ router.post('/upload', requirePermission('manageFees'), async (req, res, next) =
         const existing = await ref.get();
         const existingFee = existing.exists ? (existing.data() as FeeRecord) : null;
         const amountPaid = Number(existingFee?.amountPaid || 0);
+
+        if (existingFee && !isTenantFee(existingFee, req.tenantId)) {
+          throw Object.assign(new Error('Tenant access denied for existing fee record'), {
+            statusCode: 403,
+          });
+        }
 
         const payload: FeeRecord & Record<string, unknown> = {
           tenantId: req.tenantId,
@@ -148,6 +154,7 @@ router.post('/upload', requirePermission('manageFees'), async (req, res, next) =
         try {
           const usersSnapshot = await db
             .collection('users')
+            .where('tenantId', '==', req.tenantId)
             .where('linkedStudentIds', 'array-contains', studentId)
             .get();
 
@@ -192,6 +199,10 @@ router.post('/pay', async (req, res, next) => {
     }
 
     const fee = feeSnapshot.data() as FeeRecord;
+
+    if (!isTenantFee(fee, req.tenantId)) {
+      return res.status(403).json({ error: 'Forbidden', message: 'Tenant access denied' });
+    }
 
     if (!canViewStudentFees(req.user!, fee.studentId)) {
       return res.status(403).json({ error: 'Forbidden' });
