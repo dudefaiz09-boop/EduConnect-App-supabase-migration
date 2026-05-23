@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import type { AttendanceRecord, Assignment, Submission } from '@educonnect/shared';
+import type { AttendanceRecord } from '@educonnect/shared';
 import {
   assignmentsService,
   attendanceService,
@@ -109,6 +109,18 @@ type StudentProfile = {
   email?: string;
   classId?: string;
   section?: string;
+};
+
+type ParentAssignmentSummary = {
+  id: string;
+  title: string;
+  dueDate?: string;
+};
+
+type ParentSubmissionSummary = {
+  id: string;
+  assignmentId?: string;
+  status?: string;
 };
 
 function errorMessage(error: unknown, fallback: string) {
@@ -595,9 +607,9 @@ export function ParentPortalScreen() {
         feesService.getStudentAccount(selectedStudentId) as Promise<FeeAccountResponse>,
         performanceService.student(selectedStudentId) as Promise<PerformanceRecord[]>,
         profile.classId
-          ? (assignmentsService.getAssignments(profile.classId) as Promise<Assignment[]>)
-          : Promise.resolve([]),
-        assignmentsService.getMyHistory(selectedStudentId) as Promise<Submission[]>,
+          ? (assignmentsService.getAssignments(profile.classId) as Promise<ParentAssignmentSummary[]>)
+          : Promise.resolve<ParentAssignmentSummary[]>([]),
+        assignmentsService.getMyHistory(selectedStudentId) as Promise<ParentSubmissionSummary[]>,
       ]);
       return { profile, attendance, fees, performance, assignments, submissions };
     },
