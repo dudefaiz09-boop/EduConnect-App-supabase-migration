@@ -5,7 +5,14 @@ config({ path: '../../.env', quiet: true });
 config({ quiet: true });
 
 type DemoTenant = 'tenant-a' | 'tenant-b';
-type DemoRole = 'admin' | 'teacher' | 'student' | 'parent' | 'librarian' | 'accountant' | 'principal';
+type DemoRole =
+  | 'admin'
+  | 'teacher'
+  | 'student'
+  | 'parent'
+  | 'librarian'
+  | 'accountant'
+  | 'principal';
 
 type DemoUser = {
   tenant: DemoTenant;
@@ -31,7 +38,9 @@ type SmokeResult = {
 };
 
 const apiBaseUrl =
-  process.env.DEMO_API_SMOKE_BASE_URL || process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_URL;
+  process.env.DEMO_API_SMOKE_BASE_URL ||
+  process.env.API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL;
 const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey =
   process.env.SUPABASE_ANON_KEY ||
@@ -69,7 +78,9 @@ function requireEnv(name: string, value: string | undefined) {
 }
 
 function asStringArray(value: unknown) {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string')
+    : [];
 }
 
 function firstClassId(context: SmokeContext) {
@@ -221,9 +232,13 @@ async function runRoleSmoke(context: SmokeContext): Promise<SmokeResult[]> {
   results.push(await checkEndpoint(context, 'library resources', '/api/library/resources'));
 
   if (context.role === 'student') {
-    results.push(await checkEndpoint(context, 'attendance history', `/api/attendance/history/${context.uid}`));
+    results.push(
+      await checkEndpoint(context, 'attendance history', `/api/attendance/history/${context.uid}`)
+    );
     results.push(await checkEndpoint(context, 'fees account', `/api/fees/${context.uid}`));
-    results.push(await checkEndpoint(context, 'performance records', `/api/performance/${context.uid}`));
+    results.push(
+      await checkEndpoint(context, 'performance records', `/api/performance/${context.uid}`)
+    );
   }
 
   if (context.role === 'parent') {
@@ -232,19 +247,31 @@ async function runRoleSmoke(context: SmokeContext): Promise<SmokeResult[]> {
     } else {
       results.push(pass(context, 'parent portal', `linked student ${linkedStudentId}`));
       results.push(
-        await checkEndpoint(context, 'parent attendance', `/api/attendance/history/${linkedStudentId}`)
+        await checkEndpoint(
+          context,
+          'parent attendance',
+          `/api/attendance/history/${linkedStudentId}`
+        )
       );
       results.push(
-        await checkEndpoint(context, 'parent assignments', `/api/assignments/history/${linkedStudentId}`)
+        await checkEndpoint(
+          context,
+          'parent assignments',
+          `/api/assignments/history/${linkedStudentId}`
+        )
       );
       results.push(await checkEndpoint(context, 'parent fees', `/api/fees/${linkedStudentId}`));
-      results.push(await checkEndpoint(context, 'parent performance', `/api/performance/${linkedStudentId}`));
+      results.push(
+        await checkEndpoint(context, 'parent performance', `/api/performance/${linkedStudentId}`)
+      );
     }
   }
 
   if (['admin', 'teacher', 'principal'].includes(context.role)) {
     results.push(await checkEndpoint(context, 'attendance', `/api/attendance?classId=${classId}`));
-    results.push(await checkEndpoint(context, 'performance report', `/api/performance/report/${classId}`));
+    results.push(
+      await checkEndpoint(context, 'performance report', `/api/performance/report/${classId}`)
+    );
   }
 
   if (['admin', 'accountant', 'principal'].includes(context.role)) {
