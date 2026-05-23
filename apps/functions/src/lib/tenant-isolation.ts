@@ -23,7 +23,10 @@ function hasPermission(user: TenantPolicyUser, permission: string) {
   return user.permissions?.[permission] === true;
 }
 
-export function isTenantScopedRecord(record: TenantScopedRecord | null | undefined, tenantId?: string | null) {
+export function isTenantScopedRecord(
+  record: TenantScopedRecord | null | undefined,
+  tenantId?: string | null
+) {
   if (!record || !tenantId) return false;
   return record.tenantId === tenantId || record.schoolId === tenantId;
 }
