@@ -165,6 +165,16 @@ function getBorrowDueState(record?: BorrowRecord): BorrowDueState | null {
   return { label: `Due in ${daysUntilDue} days`, tone: 'green' };
 }
 
+function loadParentAssignments(classId: string) {
+  const assignments = assignmentsService.getAssignments(classId);
+  return assignments as unknown as Promise<ParentAssignmentSummary[]>;
+}
+
+function loadParentSubmissions(studentId: string) {
+  const submissions = assignmentsService.getMyHistory(studentId);
+  return submissions as unknown as Promise<ParentSubmissionSummary[]>;
+}
+
 function useApiData<T>(key: unknown[], loader: () => Promise<T>, enabled = true) {
   return useQuery({
     queryKey: key,
@@ -602,14 +612,16 @@ export function ParentPortalScreen() {
       const profile = (
         'data' in profileResponse && profileResponse.data ? profileResponse.data : profileResponse
       ) as StudentProfile;
+      const assignmentRequest = profile.classId
+        ? loadParentAssignments(profile.classId)
+        : Promise.resolve<ParentAssignmentSummary[]>([]);
+
       const [attendance, fees, performance, assignments, submissions] = await Promise.all([
         attendanceService.history(selectedStudentId) as Promise<AttendanceRecord[]>,
         feesService.getStudentAccount(selectedStudentId) as Promise<FeeAccountResponse>,
         performanceService.student(selectedStudentId) as Promise<PerformanceRecord[]>,
-        profile.classId
-          ? (assignmentsService.getAssignments(profile.classId) as Promise<ParentAssignmentSummary[]>)
-          : Promise.resolve<ParentAssignmentSummary[]>([]),
-        assignmentsService.getMyHistory(selectedStudentId) as Promise<ParentSubmissionSummary[]>,
+        assignmentRequest,
+        loadParentSubmissions(selectedStudentId),
       ]);
       return { profile, attendance, fees, performance, assignments, submissions };
     },
