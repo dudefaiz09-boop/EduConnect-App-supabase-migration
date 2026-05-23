@@ -138,8 +138,10 @@ export function DashboardPage() {
 
   const { studentCount, teacherCount } = React.useMemo(
     () => ({
-      studentCount: users.filter((u) => u.role === 'student' || u.roles?.includes('student')).length,
-      teacherCount: users.filter((u) => u.role === 'teacher' || u.roles?.includes('teacher')).length,
+      studentCount: users.filter((u) => u.role === 'student' || u.roles?.includes('student'))
+        .length,
+      teacherCount: users.filter((u) => u.role === 'teacher' || u.roles?.includes('teacher'))
+        .length,
     }),
     [users]
   );

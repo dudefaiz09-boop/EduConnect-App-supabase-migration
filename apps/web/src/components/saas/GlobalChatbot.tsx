@@ -56,7 +56,11 @@ const modes = [
 ] as const;
 
 function getFriendlyAiError(err: unknown, aiStatus: AiStatus | null) {
-  const error = err as { status?: number; message?: string; data?: { error?: string; message?: string } };
+  const error = err as {
+    status?: number;
+    message?: string;
+    data?: { error?: string; message?: string };
+  };
   const status = error?.status;
   const message = error?.message || error?.data?.message || String(err || '');
   const errorData = error?.data || {};

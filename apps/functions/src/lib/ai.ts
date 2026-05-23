@@ -43,7 +43,9 @@ function getGeminiModel(): string {
 }
 
 function getHttpReferer(): string {
-  return process.env.PUBLIC_APP_URL || process.env.CORS_ORIGINS?.split(',')[0] || 'http://localhost:5173';
+  return (
+    process.env.PUBLIC_APP_URL || process.env.CORS_ORIGINS?.split(',')[0] || 'http://localhost:5173'
+  );
 }
 
 function sanitizeFreeModel(model?: string): string {
