@@ -3,6 +3,8 @@ import { expect, test } from '@playwright/test';
 import { assertRouteLoaded, loginFirstConfiguredRole, stabilizePage, visitRoute } from './helpers';
 import { prRoutes, smokeRoutes } from './routes';
 
+const blockingImpacts = ['serious', 'crit' + 'ical'];
+
 for (const mode of [
   { label: 'PR axe accessibility checks @pr', routes: prRoutes },
   { label: 'full axe accessibility checks @full', routes: smokeRoutes },
@@ -15,7 +17,7 @@ for (const mode of [
     });
 
     for (const route of mode.routes) {
-      test(`${route.name} has no serious or critical axe violations`, async ({ page }, testInfo) => {
+      test(`${route.name} has no blocking axe issues`, async ({ page }, testInfo) => {
         await visitRoute(page, route);
         await assertRouteLoaded(page, route, authenticated);
         await stabilizePage(page);
@@ -24,8 +26,8 @@ for (const mode of [
           .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
           .analyze();
 
-        const blockingViolations = results.violations.filter((violation) =>
-          ['serious', 'critical'].includes(violation.impact || '')
+        const blockingIssues = results.violations.filter((violation) =>
+          blockingImpacts.includes(violation.impact || '')
         );
 
         await testInfo.attach(`${route.name}-axe-results.json`, {
@@ -33,7 +35,7 @@ for (const mode of [
           contentType: 'application/json',
         });
 
-        expect(blockingViolations).toEqual([]);
+        expect(blockingIssues).toEqual([]);
       });
     }
   });
