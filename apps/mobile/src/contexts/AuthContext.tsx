@@ -159,7 +159,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const nextRoles = profile.roles || appMetadata.roles || (profile.role ? [profile.role] : []);
       const profileClassIds = profile.classIds || appMetadata.classIds || [];
       const nextClassId = profile.classId || appMetadata.classId || profileClassIds[0] || null;
-      const nextClassIds = profileClassIds.length > 0 ? profileClassIds : nextClassId ? [nextClassId] : [];
+      const nextClassIds =
+        profileClassIds.length > 0 ? profileClassIds : nextClassId ? [nextClassId] : [];
       setSchoolId(nextSchoolId);
       setMobileTenantId(nextSchoolId);
       setClassId(nextClassId);
