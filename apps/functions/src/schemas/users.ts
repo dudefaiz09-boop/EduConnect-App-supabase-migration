@@ -24,9 +24,12 @@ export const updateOwnProfileSchema = z
     photoURL: optionalUrlString,
   })
   .strict()
-  .refine((value) => Object.keys(value).some((key) => value[key as keyof typeof value] !== undefined), {
-    message: 'At least one profile field is required.',
-  });
+  .refine(
+    (value) => Object.keys(value).some((key) => value[key as keyof typeof value] !== undefined),
+    {
+      message: 'At least one profile field is required.',
+    }
+  );
 
 export const createManagedUserSchema = z
   .object({
