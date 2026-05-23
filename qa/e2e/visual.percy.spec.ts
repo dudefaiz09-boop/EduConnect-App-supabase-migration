@@ -1,4 +1,3 @@
-import percySnapshot from '@percy/playwright';
 import { test } from '@playwright/test';
 import { assertRouteLoaded, loginFirstConfiguredRole, stabilizePage, visitRoute } from './helpers';
 import { prRoutes, screenshotRoutes } from './routes';
@@ -14,6 +13,8 @@ test.describe('Percy visual checks @visual', () => {
 
   for (const route of visualRoutes) {
     test(`${route.name} visual check`, async ({ page }, testInfo) => {
+      const { default: percySnapshot } = await import('@percy/playwright');
+
       await visitRoute(page, route);
       await assertRouteLoaded(page, route, authenticated);
       await stabilizePage(page);
