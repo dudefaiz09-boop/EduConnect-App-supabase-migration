@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../lib/api-client';
 import { FileUpload } from '../FileUpload';
@@ -11,13 +11,30 @@ interface ProfileModalProps {
   onClose: () => void;
 }
 
+function getProfileErrorMessage(err: unknown) {
+  if (err instanceof Error && err.message) return err.message;
+  if (err && typeof err === 'object' && 'data' in err) {
+    const data = (err as { data?: { message?: string; error?: string } }).data;
+    return data?.message || data?.error || 'Failed to update profile. Please try again.';
+  }
+  return 'Failed to update profile. Please try again.';
+}
+
 export const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => {
-  const { user, role } = useAuth();
+  const { user, role, refreshProfile } = useAuth();
   const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [photoURL, setPhotoURL] = useState(user?.photoURL || '');
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setDisplayName(user?.displayName || '');
+    setPhotoURL(user?.photoURL || '');
+    setSuccess(false);
+    setError(null);
+  }, [open, user?.displayName, user?.photoURL]);
 
   const handleUploadComplete = (url: string) => {
     setPhotoURL(url);
@@ -38,6 +55,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => 
         }),
       });
 
+      await refreshProfile();
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);
@@ -45,7 +63,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ open, onClose }) => 
       }, 1000);
     } catch (err) {
       console.error('[Profile Update Error]', err);
-      setError('Failed to update profile. Please try again.');
+      setError(getProfileErrorMessage(err));
     } finally {
       setSaving(false);
     }
