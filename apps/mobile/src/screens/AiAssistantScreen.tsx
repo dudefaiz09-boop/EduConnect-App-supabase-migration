@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -9,12 +9,12 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from "react-native";
-import { ErrorState, ModuleHeader } from "../components/ModuleUi";
-import { useAuth } from "../contexts/AuthContext";
-import { useNetworkStatus } from "../hooks/useNetworkStatus";
-import { apiClient } from "../lib/api-client";
-import { colors } from "../theme";
+} from 'react-native';
+import { ErrorState, ModuleHeader } from '../components/ModuleUi';
+import { useAuth } from '../contexts/AuthContext';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import { apiClient } from '../lib/api-client';
+import { colors } from '../theme';
 
 type AiStatus = {
   enabled: boolean;
@@ -35,7 +35,15 @@ type ChatLog = {
 };
 
 function getAiResponseText(data: AiResponse) {
-  return data.response || data.answer || data.content || "No response.";
+  return data.response || data.answer || data.content || 'No response.';
+}
+
+async function fetchAiStatus(): Promise<AiStatus> {
+  try {
+    return await apiClient.request<AiStatus>('/api/ai/status');
+  } catch {
+    return { enabled: false };
+  }
 }
 
 export function AiAssistantScreen() {
@@ -43,35 +51,40 @@ export function AiAssistantScreen() {
   const { isOffline } = useNetworkStatus();
   const [status, setStatus] = useState<AiStatus | null>(null);
   const [statusLoaded, setStatusLoaded] = useState(false);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const [logs, setLogs] = useState<ChatLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const contextModules = useMemo(
-    () => ["fees", "attendance", "assignments", "performance", "library"],
-    [],
+    () => ['fees', 'attendance', 'assignments', 'performance', 'library'],
+    []
   );
 
-  const loadStatus = useCallback(async () => {
+  const refreshStatus = useCallback(async () => {
     setStatusLoaded(false);
     setError(null);
-    try {
-      const data = await apiClient.request<AiStatus>("/api/ai/status");
-      setStatus(data);
-    } catch {
-      setStatus({ enabled: false });
-    } finally {
-      setStatusLoaded(true);
-    }
+    const data = await fetchAiStatus();
+    setStatus(data);
+    setStatusLoaded(true);
   }, []);
 
   useEffect(() => {
-    void loadStatus();
-  }, [loadStatus, schoolId]);
+    let cancelled = false;
+
+    void fetchAiStatus().then((data) => {
+      if (cancelled) return;
+      setStatus(data);
+      setStatusLoaded(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [schoolId]);
 
   const hasAssignedAiModule =
-    assignedModules.length === 0 || assignedModules.includes("aiAssistant");
+    assignedModules.length === 0 || assignedModules.includes('aiAssistant');
   const aiEnabled = Boolean(status?.enabled && hasAssignedAiModule);
   const aiAvailable = aiEnabled && !isOffline;
 
@@ -80,22 +93,22 @@ export function AiAssistantScreen() {
     if (!trimmed || loading || !aiAvailable) return;
 
     const logId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    setLogs((previous) => [...previous, { id: logId, query: trimmed, response: "" }]);
-    setQuery("");
+    setLogs((previous) => [...previous, { id: logId, query: trimmed, response: '' }]);
+    setQuery('');
     setLoading(true);
     setError(null);
 
     try {
       let data: AiResponse;
       try {
-        data = await apiClient.request<AiResponse>("/api/ai/context-query", {
-          method: "POST",
-          body: JSON.stringify({ query: trimmed, mode: "chat", modules: contextModules }),
+        data = await apiClient.request<AiResponse>('/api/ai/context-query', {
+          method: 'POST',
+          body: JSON.stringify({ query: trimmed, mode: 'chat', modules: contextModules }),
         });
       } catch {
-        data = await apiClient.request<AiResponse>("/api/ai/query", {
-          method: "POST",
-          body: JSON.stringify({ query: trimmed, mode: "chat" }),
+        data = await apiClient.request<AiResponse>('/api/ai/query', {
+          method: 'POST',
+          body: JSON.stringify({ query: trimmed, mode: 'chat' }),
         });
       }
 
@@ -103,12 +116,12 @@ export function AiAssistantScreen() {
         previous.map((log) =>
           log.id === logId
             ? { ...log, id: data.id || logId, response: getAiResponseText(data) }
-            : log,
-        ),
+            : log
+        )
       );
     } catch (err: unknown) {
       setLogs((previous) => previous.filter((log) => log.id !== logId));
-      setError((err as Error).message || "Failed to get AI response.");
+      setError((err as Error).message || 'Failed to get AI response.');
     } finally {
       setLoading(false);
     }
@@ -136,7 +149,7 @@ export function AiAssistantScreen() {
             AI services are not configured for this tenant or your account. Please contact your
             administrator.
           </Text>
-          <TouchableOpacity onPress={loadStatus} style={styles.retryButton}>
+          <TouchableOpacity onPress={refreshStatus} style={styles.retryButton}>
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
@@ -146,13 +159,15 @@ export function AiAssistantScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
       style={styles.flex}
     >
       <ModuleHeader
         title="AI Assistant"
-        subtitle={isOffline ? "Reconnect to ask AI questions." : "Ask questions about your work or studies."}
+        subtitle={
+          isOffline ? 'Reconnect to ask AI questions.' : 'Ask questions about your work or studies.'
+        }
       />
       {error ? <ErrorState message={error} onRetry={sendQuery} /> : null}
       <FlatList
@@ -188,7 +203,7 @@ export function AiAssistantScreen() {
           editable={!loading && aiAvailable}
           onChangeText={setQuery}
           onSubmitEditing={sendQuery}
-          placeholder={isOffline ? "AI is offline" : "Ask a question..."}
+          placeholder={isOffline ? 'AI is offline' : 'Ask a question...'}
           placeholderTextColor={colors.muted}
           returnKeyType="send"
           style={styles.input}
@@ -197,9 +212,12 @@ export function AiAssistantScreen() {
         <TouchableOpacity
           disabled={loading || !query.trim() || !aiAvailable}
           onPress={sendQuery}
-          style={[styles.sendButton, (loading || !query.trim() || !aiAvailable) && styles.sendButtonDisabled]}
+          style={[
+            styles.sendButton,
+            (loading || !query.trim() || !aiAvailable) && styles.sendButtonDisabled,
+          ]}
         >
-          <Text style={styles.sendButtonText}>{loading ? "..." : "Send"}</Text>
+          <Text style={styles.sendButtonText}>{loading ? '...' : 'Send'}</Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -208,7 +226,7 @@ export function AiAssistantScreen() {
 
 const styles = StyleSheet.create({
   aiBubble: {
-    alignSelf: "flex-start",
+    alignSelf: 'flex-start',
     backgroundColor: colors.card,
     borderColor: colors.border,
     borderWidth: 1,
@@ -221,14 +239,14 @@ const styles = StyleSheet.create({
   },
   bubble: {
     borderRadius: 18,
-    maxWidth: "84%",
+    maxWidth: '84%',
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
   centered: {
-    alignItems: "center",
+    alignItems: 'center',
     flex: 1,
-    justifyContent: "center",
+    justifyContent: 'center',
     padding: 20,
   },
   chatList: {
@@ -238,10 +256,10 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   composer: {
-    alignItems: "center",
+    alignItems: 'center',
     borderTopColor: colors.line,
     borderTopWidth: 1,
-    flexDirection: "row",
+    flexDirection: 'row',
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
@@ -250,10 +268,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     marginTop: 6,
-    textAlign: "center",
+    textAlign: 'center',
   },
   emptyCard: {
-    alignItems: "center",
+    alignItems: 'center',
     backgroundColor: colors.card,
     borderColor: colors.border,
     borderRadius: 20,
@@ -263,7 +281,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     color: colors.text,
     fontSize: 18,
-    fontWeight: "900",
+    fontWeight: '900',
   },
   flex: {
     backgroundColor: colors.background,
@@ -293,7 +311,7 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: colors.text,
     fontSize: 14,
-    fontWeight: "900",
+    fontWeight: '900',
   },
   sendButton: {
     backgroundColor: colors.primary,
@@ -307,7 +325,7 @@ const styles = StyleSheet.create({
   sendButtonText: {
     color: colors.text,
     fontSize: 14,
-    fontWeight: "900",
+    fontWeight: '900',
   },
   statusText: {
     color: colors.muted,
@@ -317,22 +335,22 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 14,
     lineHeight: 20,
-    textAlign: "center",
+    textAlign: 'center',
   },
   unavailableTitle: {
     color: colors.danger,
     fontSize: 22,
-    fontWeight: "900",
+    fontWeight: '900',
     marginBottom: 8,
   },
   userBubble: {
-    alignSelf: "flex-end",
+    alignSelf: 'flex-end',
     backgroundColor: colors.primary,
   },
   userText: {
     color: colors.text,
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: '700',
   },
 });
 

@@ -1,4 +1,4 @@
-import React, { Component, useEffect, useMemo, useState, type ErrorInfo } from "react";
+import React, { Component, useEffect, useMemo, useState, type ErrorInfo } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -10,150 +10,150 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from "react-native";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { canAccessModule, type ModuleKey } from "@educonnect/shared";
-import { mobileConfigIssues } from "./config/env";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import { useNetworkStatus } from "./hooks/useNetworkStatus";
-import { queryClient } from "./lib/query-client";
-import { supabase, supabaseConfigured } from "./lib/supabase";
-import { AiAssistantScreen } from "./screens/AiAssistantScreen";
-import { ChatScreen } from "./screens/ChatScreen";
+} from 'react-native';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { canAccessModule, type ModuleKey } from '@educonnect/shared';
+import { mobileConfigIssues } from './config/env';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { useNetworkStatus } from './hooks/useNetworkStatus';
+import { queryClient } from './lib/query-client';
+import { supabase, supabaseConfigured } from './lib/supabase';
+import { AiAssistantScreen } from './screens/AiAssistantScreen';
+import { ChatScreen } from './screens/ChatScreen';
 import {
   AnnouncementsScreen,
   AssignmentsModuleScreen,
   DashboardScreen,
   DirectoryScreen,
-} from "./screens/HomeScreens";
+} from './screens/HomeScreens';
 import {
   AttendanceScreen,
   FeesScreen,
   LibraryScreen,
   ParentPortalScreen,
   PerformanceScreen,
-} from "./screens/OperationalScreens";
-import { colors, formatDate } from "./theme";
+} from './screens/OperationalScreens';
+import { colors, formatDate } from './theme';
 
 type ModuleDefinition = {
   key: ModuleKey;
   label: string;
   shortLabel: string;
   description: string;
-  group: "primary" | "academic" | "operations" | "admin";
+  group: 'primary' | 'academic' | 'operations' | 'admin';
 };
 
 const modules: ModuleDefinition[] = [
   {
-    key: "dashboard",
-    label: "Dashboard",
-    shortLabel: "Home",
-    description: "Role-specific overview and quick actions.",
-    group: "primary",
+    key: 'dashboard',
+    label: 'Dashboard',
+    shortLabel: 'Home',
+    description: 'Role-specific overview and quick actions.',
+    group: 'primary',
   },
   {
-    key: "announcements",
-    label: "Announcements",
-    shortLabel: "News",
-    description: "School updates and targeted broadcasts.",
-    group: "primary",
+    key: 'announcements',
+    label: 'Announcements',
+    shortLabel: 'News',
+    description: 'School updates and targeted broadcasts.',
+    group: 'primary',
   },
   {
-    key: "attendance",
-    label: "Attendance",
-    shortLabel: "Attend",
-    description: "Daily records, history, and class summaries.",
-    group: "operations",
+    key: 'attendance',
+    label: 'Attendance',
+    shortLabel: 'Attend',
+    description: 'Daily records, history, and class summaries.',
+    group: 'operations',
   },
   {
-    key: "assignments",
-    label: "Assignments",
-    shortLabel: "Work",
-    description: "Class work, due dates, and submissions.",
-    group: "primary",
+    key: 'assignments',
+    label: 'Assignments',
+    shortLabel: 'Work',
+    description: 'Class work, due dates, and submissions.',
+    group: 'primary',
   },
   {
-    key: "aiAssistant",
-    label: "AI Assistant",
-    shortLabel: "AI",
-    description: "Role-aware assistant and academic support.",
-    group: "primary",
+    key: 'aiAssistant',
+    label: 'AI Assistant',
+    shortLabel: 'AI',
+    description: 'Role-aware assistant and academic support.',
+    group: 'primary',
   },
   {
-    key: "chat",
-    label: "Chat",
-    shortLabel: "Chat",
-    description: "Role-aware school conversations.",
-    group: "primary",
+    key: 'chat',
+    label: 'Chat',
+    shortLabel: 'Chat',
+    description: 'Role-aware school conversations.',
+    group: 'primary',
   },
   {
-    key: "library",
-    label: "Library",
-    shortLabel: "Library",
-    description: "Digital resources and borrowing status.",
-    group: "academic",
+    key: 'library',
+    label: 'Library',
+    shortLabel: 'Library',
+    description: 'Digital resources and borrowing status.',
+    group: 'academic',
   },
   {
-    key: "fees",
-    label: "Fees",
-    shortLabel: "Fees",
-    description: "Fee summaries and payment status.",
-    group: "operations",
+    key: 'fees',
+    label: 'Fees',
+    shortLabel: 'Fees',
+    description: 'Fee summaries and payment status.',
+    group: 'operations',
   },
   {
-    key: "performance",
-    label: "Performance",
-    shortLabel: "Scores",
-    description: "Academic analytics and records.",
-    group: "academic",
+    key: 'performance',
+    label: 'Performance',
+    shortLabel: 'Scores',
+    description: 'Academic analytics and records.',
+    group: 'academic',
   },
   {
-    key: "parentPortal",
-    label: "Parent Portal",
-    shortLabel: "Parent",
-    description: "Linked child summaries.",
-    group: "operations",
+    key: 'parentPortal',
+    label: 'Parent Portal',
+    shortLabel: 'Parent',
+    description: 'Linked child summaries.',
+    group: 'operations',
   },
   {
-    key: "students",
-    label: "Students",
-    shortLabel: "Students",
-    description: "Student registry and classes.",
-    group: "admin",
+    key: 'students',
+    label: 'Students',
+    shortLabel: 'Students',
+    description: 'Student registry and classes.',
+    group: 'admin',
   },
   {
-    key: "teachers",
-    label: "Teachers",
-    shortLabel: "Teachers",
-    description: "Faculty registry and assignments.",
-    group: "admin",
+    key: 'teachers',
+    label: 'Teachers',
+    shortLabel: 'Teachers',
+    description: 'Faculty registry and assignments.',
+    group: 'admin',
   },
   {
-    key: "allUsers",
-    label: "All Users",
-    shortLabel: "Users",
-    description: "Roles, status, and module access.",
-    group: "admin",
+    key: 'allUsers',
+    label: 'All Users',
+    shortLabel: 'Users',
+    description: 'Roles, status, and module access.',
+    group: 'admin',
   },
 ];
 
-const moduleGroupLabels: Record<ModuleDefinition["group"], string> = {
-  primary: "Primary",
-  academic: "Academic",
-  operations: "Operations",
-  admin: "Administration",
+const moduleGroupLabels: Record<ModuleDefinition['group'], string> = {
+  primary: 'Primary',
+  academic: 'Academic',
+  operations: 'Operations',
+  admin: 'Administration',
 };
 
-type AuthMode = "login" | "register" | "forgot" | "reset";
+type AuthMode = 'login' | 'register' | 'forgot' | 'reset';
 
 function parseAuthLink(url: string) {
-  const [base, fragment = ""] = url.split("#");
-  const query = base.split("?")[1] || "";
+  const [base, fragment = ''] = url.split('#');
+  const query = base.split('?')[1] || '';
   const params = new URLSearchParams(fragment || query);
   return {
-    isReset: url.includes("/auth/reset-password") || url.includes("type=recovery"),
-    accessToken: params.get("access_token"),
-    refreshToken: params.get("refresh_token"),
+    isReset: url.includes('/auth/reset-password') || url.includes('type=recovery'),
+    accessToken: params.get('access_token'),
+    refreshToken: params.get('refresh_token'),
   };
 }
 
@@ -169,7 +169,7 @@ class MobileErrorBoundary extends Component<
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     if (__DEV__) {
-      console.error("[MobileErrorBoundary]", error, info.componentStack);
+      console.error('[MobileErrorBoundary]', error, info.componentStack);
     }
   }
 
@@ -237,56 +237,56 @@ const AuthScreen = ({
 }) => {
   const { login, register, sendPasswordReset, updatePassword } = useAuth();
   const { isOffline, lastCheckedAt } = useNetworkStatus();
-  const [displayName, setDisplayName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const [displayName, setDisplayName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const titles: Record<AuthMode, { title: string; subtitle: string; action: string }> = {
     login: {
-      title: "Welcome Back",
-      subtitle: "Sign in to access your EduConnect workspace.",
-      action: "Sign In",
+      title: 'Welcome Back',
+      subtitle: 'Sign in to access your EduConnect workspace.',
+      action: 'Sign In',
     },
     register: {
-      title: "Create Account",
-      subtitle: "Register with your school-provided email address.",
-      action: "Create Account",
+      title: 'Create Account',
+      subtitle: 'Register with your school-provided email address.',
+      action: 'Create Account',
     },
     forgot: {
-      title: "Reset Password",
-      subtitle: "Enter your account email and we will send a secure reset link.",
-      action: "Send Reset Link",
+      title: 'Reset Password',
+      subtitle: 'Enter your account email and we will send a secure reset link.',
+      action: 'Send Reset Link',
     },
     reset: {
-      title: "Set New Password",
-      subtitle: "Choose a new password for this EduConnect account.",
-      action: "Update Password",
+      title: 'Set New Password',
+      subtitle: 'Choose a new password for this EduConnect account.',
+      action: 'Update Password',
     },
   };
 
   const validate = () => {
-    if (mode !== "reset" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      return "Enter a valid email address.";
+    if (mode !== 'reset' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return 'Enter a valid email address.';
     }
-    if (mode === "register" && displayName.trim().length < 2) {
-      return "Enter your full name.";
+    if (mode === 'register' && displayName.trim().length < 2) {
+      return 'Enter your full name.';
     }
-    if (mode !== "forgot" && password.length < 6) {
-      return "Password must be at least 6 characters.";
+    if (mode !== 'forgot' && password.length < 6) {
+      return 'Password must be at least 6 characters.';
     }
-    if ((mode === "register" || mode === "reset") && password !== confirmPassword) {
-      return "Passwords do not match.";
+    if ((mode === 'register' || mode === 'reset') && password !== confirmPassword) {
+      return 'Passwords do not match.';
     }
-    return "";
+    return '';
   };
 
   const handleSubmit = async () => {
-    setError("");
-    setMessage("");
+    setError('');
+    setMessage('');
     const validationError = validate();
     if (validationError) {
       setError(validationError);
@@ -294,22 +294,22 @@ const AuthScreen = ({
     }
     setSubmitting(true);
     try {
-      if (mode === "login") {
+      if (mode === 'login') {
         await login(email.trim(), password);
-      } else if (mode === "register") {
+      } else if (mode === 'register') {
         await register({ displayName: displayName.trim(), email: email.trim(), password });
-        setMessage("Account created. Check your inbox if your school requires email confirmation.");
-        onModeChange("login");
-      } else if (mode === "forgot") {
+        setMessage('Account created. Check your inbox if your school requires email confirmation.');
+        onModeChange('login');
+      } else if (mode === 'forgot') {
         await sendPasswordReset(email.trim());
-        setMessage("Reset email sent. Open the link on this device to continue.");
+        setMessage('Reset email sent. Open the link on this device to continue.');
       } else {
         await updatePassword(password);
-        setMessage("Password updated. You can continue using EduConnect.");
-        onModeChange("login");
+        setMessage('Password updated. You can continue using EduConnect.');
+        onModeChange('login');
       }
     } catch (err: unknown) {
-      setError((err as Error).message || "Unable to sign in.");
+      setError((err as Error).message || 'Unable to sign in.');
     } finally {
       setSubmitting(false);
     }
@@ -325,7 +325,7 @@ const AuthScreen = ({
         <Text style={styles.subtitle}>{titles[mode].subtitle}</Text>
 
         <View style={styles.loginPanel}>
-          {mode === "register" && (
+          {mode === 'register' && (
             <TextInput
               autoComplete="name"
               onChangeText={setDisplayName}
@@ -335,7 +335,7 @@ const AuthScreen = ({
               value={displayName}
             />
           )}
-          {mode !== "reset" && (
+          {mode !== 'reset' && (
             <TextInput
               autoCapitalize="none"
               autoComplete="email"
@@ -347,18 +347,18 @@ const AuthScreen = ({
               value={email}
             />
           )}
-          {mode !== "forgot" && (
+          {mode !== 'forgot' && (
             <TextInput
-              autoComplete={mode === "login" ? "current-password" : "new-password"}
+              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               onChangeText={setPassword}
-              placeholder={mode === "reset" ? "New password" : "Password"}
+              placeholder={mode === 'reset' ? 'New password' : 'Password'}
               placeholderTextColor={colors.muted}
               secureTextEntry
               style={styles.input}
               value={password}
             />
           )}
-          {(mode === "register" || mode === "reset") && (
+          {(mode === 'register' || mode === 'reset') && (
             <TextInput
               autoComplete="new-password"
               onChangeText={setConfirmPassword}
@@ -386,17 +386,17 @@ const AuthScreen = ({
             )}
           </TouchableOpacity>
           <View style={styles.authLinks}>
-            {mode !== "login" && (
-              <TouchableOpacity onPress={() => onModeChange("login")}>
+            {mode !== 'login' && (
+              <TouchableOpacity onPress={() => onModeChange('login')}>
                 <Text style={styles.authLinkText}>Back to sign in</Text>
               </TouchableOpacity>
             )}
-            {mode === "login" && (
+            {mode === 'login' && (
               <>
-                <TouchableOpacity onPress={() => onModeChange("forgot")}>
+                <TouchableOpacity onPress={() => onModeChange('forgot')}>
                   <Text style={styles.authLinkText}>Forgot password?</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => onModeChange("register")}>
+                <TouchableOpacity onPress={() => onModeChange('register')}>
                   <Text style={styles.authLinkText}>Create account</Text>
                 </TouchableOpacity>
               </>
@@ -425,13 +425,13 @@ const MoreScreen = ({
 }) => {
   const grouped = useMemo(
     () =>
-      (["primary", "academic", "operations", "admin"] as ModuleDefinition["group"][]).map(
+      (['primary', 'academic', 'operations', 'admin'] as ModuleDefinition['group'][]).map(
         (group) => ({
           group,
           items: modulesForUser.filter((item) => item.group === group),
-        }),
+        })
       ),
-    [modulesForUser],
+    [modulesForUser]
   );
 
   return (
@@ -477,7 +477,9 @@ const MoreScreen = ({
           </View>
           <View style={styles.moduleRowText}>
             <Text style={styles.moduleTitle}>Settings</Text>
-            <Text style={styles.moduleDescription}>Theme preference and app build information.</Text>
+            <Text style={styles.moduleDescription}>
+              Theme preference and app build information.
+            </Text>
           </View>
         </TouchableOpacity>
         <TouchableOpacity onPress={onSignOut} disabled={signingOut} style={styles.moduleRow}>
@@ -485,7 +487,7 @@ const MoreScreen = ({
             <Text style={styles.signOutIconText}>X</Text>
           </View>
           <View style={styles.moduleRowText}>
-            <Text style={styles.moduleTitle}>{signingOut ? "Signing out..." : "Sign out"}</Text>
+            <Text style={styles.moduleTitle}>{signingOut ? 'Signing out...' : 'Sign out'}</Text>
             <Text style={styles.moduleDescription}>End this session on the device.</Text>
           </View>
         </TouchableOpacity>
@@ -503,12 +505,12 @@ const ProfileScreen = () => {
       <Text style={styles.sectionSubtitle}>Account and tenant context currently loaded.</Text>
       <View style={styles.profileAvatar}>
         <Text style={styles.profileAvatarText}>
-          {(user?.displayName || user?.email || "EduConnect").slice(0, 2).toUpperCase()}
+          {(user?.displayName || user?.email || 'EduConnect').slice(0, 2).toUpperCase()}
         </Text>
       </View>
       <View style={styles.profilePanel}>
-        <Text style={styles.profileName}>{user?.displayName || "EduConnect user"}</Text>
-        <Text style={styles.profileEmail}>{user?.email || "No email on profile"}</Text>
+        <Text style={styles.profileName}>{user?.displayName || 'EduConnect user'}</Text>
+        <Text style={styles.profileEmail}>{user?.email || 'No email on profile'}</Text>
         <View style={styles.metaGrid}>
           <View style={styles.metaBox}>
             <Text style={styles.metaLabel}>Role</Text>
@@ -516,13 +518,13 @@ const ProfileScreen = () => {
           </View>
           <View style={styles.metaBox}>
             <Text style={styles.metaLabel}>School</Text>
-            <Text style={styles.metaValue}>{schoolId || "Not selected"}</Text>
+            <Text style={styles.metaValue}>{schoolId || 'Not selected'}</Text>
           </View>
         </View>
         <View style={styles.metaGrid}>
           <View style={styles.metaBox}>
             <Text style={styles.metaLabel}>Class</Text>
-            <Text style={styles.metaValue}>{classId || "N/A"}</Text>
+            <Text style={styles.metaValue}>{classId || 'N/A'}</Text>
           </View>
           <View style={styles.metaBox}>
             <Text style={styles.metaLabel}>Children</Text>
@@ -530,8 +532,8 @@ const ProfileScreen = () => {
           </View>
         </View>
         <Text style={styles.profileCaption}>
-          Roles: {roles.length ? roles.join(", ") : "Default"} | Modules:{" "}
-          {assignedModules.length ? assignedModules.length : "Default"}
+          Roles: {roles.length ? roles.join(', ') : 'Default'} | Modules:{' '}
+          {assignedModules.length ? assignedModules.length : 'Default'}
         </Text>
       </View>
     </ScrollView>
@@ -546,7 +548,9 @@ const SettingsScreen = () => (
       <View style={styles.settingsRow}>
         <View>
           <Text style={styles.moduleTitle}>Theme</Text>
-          <Text style={styles.moduleDescription}>Follows the current EduConnect dark interface.</Text>
+          <Text style={styles.moduleDescription}>
+            Follows the current EduConnect dark interface.
+          </Text>
         </View>
         <View style={styles.settingsBadge}>
           <Text style={styles.settingsBadgeText}>Dark</Text>
@@ -579,7 +583,7 @@ const ModuleContent = ({
   onSignOut,
   signingOut,
 }: {
-  activeModule: ModuleKey | "more" | "profile" | "settings";
+  activeModule: ModuleKey | 'more' | 'profile' | 'settings';
   onOpenModule: (module: ModuleKey) => void;
   modulesForUser: ModuleDefinition[];
   onOpenProfile: () => void;
@@ -588,37 +592,37 @@ const ModuleContent = ({
   signingOut: boolean;
 }) => {
   switch (activeModule) {
-    case "dashboard":
+    case 'dashboard':
       return <DashboardScreen onOpenModule={onOpenModule} />;
-    case "announcements":
+    case 'announcements':
       return <AnnouncementsScreen />;
-    case "attendance":
+    case 'attendance':
       return <AttendanceScreen />;
-    case "assignments":
+    case 'assignments':
       return <AssignmentsModuleScreen />;
-    case "aiAssistant":
+    case 'aiAssistant':
       return <AiAssistantScreen />;
-    case "chat":
+    case 'chat':
       return <ChatScreen />;
-    case "library":
+    case 'library':
       return <LibraryScreen />;
-    case "fees":
+    case 'fees':
       return <FeesScreen />;
-    case "performance":
+    case 'performance':
       return <PerformanceScreen />;
-    case "parentPortal":
+    case 'parentPortal':
       return <ParentPortalScreen />;
-    case "students":
+    case 'students':
       return <DirectoryScreen type="student" />;
-    case "teachers":
+    case 'teachers':
       return <DirectoryScreen type="teacher" />;
-    case "allUsers":
+    case 'allUsers':
       return <DirectoryScreen type="all" />;
-    case "profile":
+    case 'profile':
       return <ProfileScreen />;
-    case "settings":
+    case 'settings':
       return <SettingsScreen />;
-    case "more":
+    case 'more':
       return (
         <MoreScreen
           modulesForUser={modulesForUser}
@@ -637,10 +641,10 @@ const ModuleContent = ({
 const AppContent = () => {
   const { user, loading, logout, role, roles, schoolId, assignedModules } = useAuth();
   const { isOffline, lastCheckedAt } = useNetworkStatus();
-  const [activeModule, setActiveModule] = useState<ModuleKey | "more" | "profile" | "settings">(
-    "dashboard",
+  const [activeModule, setActiveModule] = useState<ModuleKey | 'more' | 'profile' | 'settings'>(
+    'dashboard'
   );
-  const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
@@ -653,28 +657,28 @@ const AppContent = () => {
           refresh_token: link.refreshToken,
         });
       }
-      if (link.isReset) setAuthMode("reset");
+      if (link.isReset) setAuthMode('reset');
     };
 
     Linking.getInitialURL()
       .then(handleUrl)
       .catch(() => undefined);
-    const subscription = Linking.addEventListener("url", ({ url }) => handleUrl(url));
+    const subscription = Linking.addEventListener('url', ({ url }) => handleUrl(url));
     return () => subscription.remove();
   }, []);
 
   const modulesForUser = useMemo(
     () => modules.filter((item) => canAccessModule(role, item.key, assignedModules)),
-    [assignedModules, role],
+    [assignedModules, role]
   );
 
   const resolvedActiveModule =
-    activeModule === "more" ||
-    activeModule === "profile" ||
-    activeModule === "settings" ||
+    activeModule === 'more' ||
+    activeModule === 'profile' ||
+    activeModule === 'settings' ||
     modulesForUser.some((item) => item.key === activeModule)
       ? activeModule
-      : modulesForUser[0]?.key || "dashboard";
+      : modulesForUser[0]?.key || 'dashboard';
 
   if (!supabaseConfigured) return <ConfigScreen />;
 
@@ -692,18 +696,18 @@ const AppContent = () => {
   if (!user) return <AuthScreen mode={authMode} onModeChange={setAuthMode} />;
 
   const primaryTabOrder: ModuleKey[] = [
-    "dashboard",
-    "announcements",
-    "assignments",
-    "aiAssistant",
-    "chat",
+    'dashboard',
+    'announcements',
+    'assignments',
+    'aiAssistant',
+    'chat',
   ];
   const primaryTabs = primaryTabOrder
     .map((key) => modulesForUser.find((item) => item.key === key))
     .filter((item): item is ModuleDefinition => Boolean(item));
-  const bottomTabs: Array<ModuleDefinition | { key: "more"; shortLabel: string; label: string }> = [
+  const bottomTabs: Array<ModuleDefinition | { key: 'more'; shortLabel: string; label: string }> = [
     ...primaryTabs,
-    { key: "more", shortLabel: "More", label: "More" },
+    { key: 'more', shortLabel: 'More', label: 'More' },
   ];
 
   const handleLogout = async () => {
@@ -722,20 +726,20 @@ const AppContent = () => {
         <View style={styles.brandBlock}>
           <Text style={styles.brandTitle}>EduConnect</Text>
           <Text style={styles.brandSubtitle}>
-            {schoolId ? `School ${schoolId}` : "AI ERP"} - {role}
+            {schoolId ? `School ${schoolId}` : 'AI ERP'} - {role}
           </Text>
         </View>
         <View style={styles.userPill}>
           <View style={styles.userTextBlock}>
             <Text style={styles.userName}>{user.displayName || user.email}</Text>
-            <Text style={styles.roleText}>{roles.length ? roles.join(" / ") : role}</Text>
+            <Text style={styles.roleText}>{roles.length ? roles.join(' / ') : role}</Text>
           </View>
           <TouchableOpacity
             disabled={signingOut}
             onPress={handleLogout}
             style={styles.logoutButton}
           >
-            <Text style={styles.logoutText}>{signingOut ? "..." : "Sign out"}</Text>
+            <Text style={styles.logoutText}>{signingOut ? '...' : 'Sign out'}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -745,8 +749,8 @@ const AppContent = () => {
           activeModule={resolvedActiveModule}
           modulesForUser={modulesForUser}
           onOpenModule={setActiveModule}
-          onOpenProfile={() => setActiveModule("profile")}
-          onOpenSettings={() => setActiveModule("settings")}
+          onOpenProfile={() => setActiveModule('profile')}
+          onOpenSettings={() => setActiveModule('settings')}
           onSignOut={handleLogout}
           signingOut={signingOut}
         />
@@ -762,7 +766,7 @@ const AppContent = () => {
             const isActive = resolvedActiveModule === item.key;
             return (
               <TouchableOpacity
-                onPress={() => setActiveModule(item.key as ModuleKey | "more")}
+                onPress={() => setActiveModule(item.key as ModuleKey | 'more')}
                 style={[styles.bottomTab, isActive && styles.activeBottomTab]}
               >
                 <Text style={[styles.bottomTabText, isActive && styles.activeBottomTabText]}>
@@ -792,39 +796,39 @@ const styles = StyleSheet.create({
   activeBottomTab: { backgroundColor: colors.primary },
   activeBottomTabText: { color: colors.text },
   authLinks: {
-    alignItems: "center",
-    flexDirection: "row",
-    flexWrap: "wrap",
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 16,
-    justifyContent: "center",
+    justifyContent: 'center',
     marginTop: 18,
   },
-  authLinkText: { color: "#8bb7ff", fontSize: 13, fontWeight: "900" },
+  authLinkText: { color: '#8bb7ff', fontSize: 13, fontWeight: '900' },
   bottomTab: {
-    alignItems: "center",
+    alignItems: 'center',
     backgroundColor: colors.card,
     borderColor: colors.border,
     borderRadius: 14,
     borderWidth: 1,
-    justifyContent: "center",
+    justifyContent: 'center',
     marginRight: 8,
     minHeight: 46,
     minWidth: 82,
     paddingHorizontal: 12,
   },
   bottomTabList: { paddingHorizontal: 14 },
-  bottomTabText: { color: colors.muted, fontSize: 12, fontWeight: "900" },
+  bottomTabText: { color: colors.muted, fontSize: 12, fontWeight: '900' },
   bottomTabs: {
-    backgroundColor: "#07101f",
+    backgroundColor: '#07101f',
     borderTopColor: colors.line,
     borderTopWidth: 1,
     paddingVertical: 10,
   },
   brandBadge: {
-    alignItems: "center",
-    alignSelf: "center",
+    alignItems: 'center',
+    alignSelf: 'center',
     backgroundColor: colors.primarySoft,
-    borderColor: "#29418a",
+    borderColor: '#29418a',
     borderRadius: 999,
     borderWidth: 1,
     marginBottom: 16,
@@ -834,41 +838,41 @@ const styles = StyleSheet.create({
   brandBadgeText: {
     color: colors.ai,
     fontSize: 11,
-    fontWeight: "900",
+    fontWeight: '900',
     letterSpacing: 1.2,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
   },
   brandBlock: { flex: 1, minWidth: 0 },
   brandSubtitle: {
-    color: "#4f8cff",
+    color: '#4f8cff',
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: '800',
     marginTop: 2,
-    textTransform: "capitalize",
+    textTransform: 'capitalize',
   },
-  brandTitle: { color: colors.text, fontSize: 26, fontWeight: "900" },
+  brandTitle: { color: colors.text, fontSize: 26, fontWeight: '900' },
   button: {
-    alignItems: "center",
+    alignItems: 'center',
     backgroundColor: colors.primary,
     borderRadius: 16,
-    justifyContent: "center",
+    justifyContent: 'center',
     marginTop: 12,
     minHeight: 54,
     paddingHorizontal: 20,
   },
-  buttonText: { color: colors.text, fontSize: 16, fontWeight: "900" },
-  centered: { alignItems: "center", flex: 1, justifyContent: "center", padding: 28 },
+  buttonText: { color: colors.text, fontSize: 16, fontWeight: '900' },
+  centered: { alignItems: 'center', flex: 1, justifyContent: 'center', padding: 28 },
   configBody: {
     color: colors.muted,
     fontSize: 15,
     lineHeight: 22,
-    textAlign: "center",
+    textAlign: 'center',
   },
-  configItem: { color: "#fecaca", fontSize: 13, lineHeight: 19, marginBottom: 8 },
+  configItem: { color: '#fecaca', fontSize: 13, lineHeight: 19, marginBottom: 8 },
   configList: {
-    alignSelf: "stretch",
+    alignSelf: 'stretch',
     backgroundColor: colors.dangerSoft,
-    borderColor: "#7f1d1d",
+    borderColor: '#7f1d1d',
     borderRadius: 18,
     borderWidth: 1,
     marginVertical: 18,
@@ -877,24 +881,24 @@ const styles = StyleSheet.create({
   configTitle: {
     color: colors.danger,
     fontSize: 28,
-    fontWeight: "900",
+    fontWeight: '900',
     marginBottom: 12,
-    textAlign: "center",
+    textAlign: 'center',
   },
   container: { backgroundColor: colors.background, flex: 1 },
   content: { flex: 1, paddingHorizontal: 16, paddingTop: 14 },
   disabledButton: { opacity: 0.55 },
-  error: { color: colors.danger, marginTop: 10, textAlign: "center" },
+  error: { color: colors.danger, marginTop: 10, textAlign: 'center' },
   groupLabel: {
     color: colors.ai,
     fontSize: 11,
-    fontWeight: "900",
+    fontWeight: '900',
     letterSpacing: 1.2,
     marginBottom: 8,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
   },
   input: {
-    backgroundColor: "#091226",
+    backgroundColor: '#091226',
     borderColor: colors.border,
     borderRadius: 16,
     borderWidth: 1,
@@ -905,7 +909,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   loadingText: { color: colors.muted, marginTop: 12 },
-  loginContainer: { flex: 1, justifyContent: "center", padding: 24 },
+  loginContainer: { flex: 1, justifyContent: 'center', padding: 24 },
   loginPanel: {
     backgroundColor: colors.card,
     borderColor: colors.border,
@@ -915,14 +919,14 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   logoutButton: {
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderColor: "rgba(255,255,255,0.12)",
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderColor: 'rgba(255,255,255,0.12)',
     borderRadius: 12,
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 9,
   },
-  logoutText: { color: "#fda4af", fontSize: 12, fontWeight: "900" },
+  logoutText: { color: '#fda4af', fontSize: 12, fontWeight: '900' },
   metaBox: {
     backgroundColor: colors.cardSoft,
     borderColor: colors.border,
@@ -931,68 +935,68 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
   },
-  metaGrid: { flexDirection: "row", gap: 10, marginTop: 14 },
+  metaGrid: { flexDirection: 'row', gap: 10, marginTop: 14 },
   metaLabel: {
     color: colors.muted,
     fontSize: 10,
-    fontWeight: "900",
-    textTransform: "uppercase",
+    fontWeight: '900',
+    textTransform: 'uppercase',
   },
-  metaValue: { color: colors.text, fontSize: 13, fontWeight: "800", marginTop: 4 },
+  metaValue: { color: colors.text, fontSize: 13, fontWeight: '800', marginTop: 4 },
   moduleDescription: { color: colors.muted, fontSize: 13, lineHeight: 18, marginTop: 3 },
   moduleGroup: { marginTop: 22 },
   moduleIcon: {
-    alignItems: "center",
+    alignItems: 'center',
     backgroundColor: colors.primarySoft,
     borderRadius: 16,
     height: 42,
-    justifyContent: "center",
+    justifyContent: 'center',
     width: 42,
   },
-  moduleIconText: { color: colors.ai, fontSize: 16, fontWeight: "900" },
+  moduleIconText: { color: colors.ai, fontSize: 16, fontWeight: '900' },
   moduleRow: {
-    alignItems: "center",
+    alignItems: 'center',
     backgroundColor: colors.card,
     borderColor: colors.border,
     borderRadius: 20,
     borderWidth: 1,
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 12,
     marginBottom: 10,
     padding: 14,
   },
   moduleRowText: { flex: 1 },
-  moduleTitle: { color: colors.text, fontSize: 16, fontWeight: "900" },
+  moduleTitle: { color: colors.text, fontSize: 16, fontWeight: '900' },
   moreContent: { paddingBottom: 30 },
   offlineBanner: {
     backgroundColor: colors.warningSoft,
-    borderBottomColor: "#7c5a12",
+    borderBottomColor: '#7c5a12',
     borderBottomWidth: 1,
     paddingHorizontal: 18,
     paddingVertical: 10,
   },
   offlineBody: { color: colors.warning, fontSize: 12 },
-  offlineTitle: { color: colors.warning, fontSize: 13, fontWeight: "900" },
+  offlineTitle: { color: colors.warning, fontSize: 13, fontWeight: '900' },
   profileAvatar: {
-    alignItems: "center",
-    alignSelf: "flex-start",
+    alignItems: 'center',
+    alignSelf: 'flex-start',
     backgroundColor: colors.primary,
     borderRadius: 28,
     height: 56,
-    justifyContent: "center",
+    justifyContent: 'center',
     marginTop: 18,
     width: 56,
   },
-  profileAvatarText: { color: colors.text, fontSize: 18, fontWeight: "900" },
+  profileAvatarText: { color: colors.text, fontSize: 18, fontWeight: '900' },
   profileCaption: {
     color: colors.muted,
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: '700',
     lineHeight: 18,
     marginTop: 16,
   },
-  profileEmail: { color: colors.muted, fontSize: 14, fontWeight: "700", marginTop: 4 },
-  profileName: { color: colors.text, fontSize: 24, fontWeight: "900" },
+  profileEmail: { color: colors.muted, fontSize: 14, fontWeight: '700', marginTop: 4 },
+  profileName: { color: colors.text, fontSize: 24, fontWeight: '900' },
   profilePanel: {
     backgroundColor: colors.card,
     borderColor: colors.border,
@@ -1004,59 +1008,64 @@ const styles = StyleSheet.create({
   roleText: {
     color: colors.ai,
     fontSize: 10,
-    fontWeight: "800",
+    fontWeight: '800',
     marginTop: 3,
-    textTransform: "capitalize",
+    textTransform: 'capitalize',
   },
   sectionSubtitle: {
     color: colors.muted,
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: '600',
     lineHeight: 19,
     marginTop: 4,
   },
-  sectionTitle: { color: colors.text, fontSize: 28, fontWeight: "900" },
-  settingsBadge: { backgroundColor: colors.primarySoft, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
-  settingsBadgeText: { color: colors.ai, fontSize: 11, fontWeight: "900" },
+  sectionTitle: { color: colors.text, fontSize: 28, fontWeight: '900' },
+  settingsBadge: {
+    backgroundColor: colors.primarySoft,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  settingsBadgeText: { color: colors.ai, fontSize: 11, fontWeight: '900' },
   settingsRow: {
-    alignItems: "center",
+    alignItems: 'center',
     borderBottomColor: colors.border,
     borderBottomWidth: 1,
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     paddingVertical: 14,
   },
   signOutIcon: { backgroundColor: colors.dangerSoft },
-  signOutIconText: { color: colors.danger, fontSize: 16, fontWeight: "900" },
-  successText: { color: colors.success, marginTop: 10, textAlign: "center" },
-  subtitle: { color: colors.muted, fontSize: 16, lineHeight: 24, textAlign: "center" },
+  signOutIconText: { color: colors.danger, fontSize: 16, fontWeight: '900' },
+  successText: { color: colors.success, marginTop: 10, textAlign: 'center' },
+  subtitle: { color: colors.muted, fontSize: 16, lineHeight: 24, textAlign: 'center' },
   title: {
     color: colors.text,
     fontSize: 38,
-    fontWeight: "900",
+    fontWeight: '900',
     marginBottom: 10,
-    textAlign: "center",
+    textAlign: 'center',
   },
   topBar: {
-    alignItems: "center",
+    alignItems: 'center',
     borderBottomColor: colors.line,
     borderBottomWidth: 1,
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 12,
-    justifyContent: "space-between",
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  userName: { color: colors.text, fontSize: 13, fontWeight: "900" },
+  userName: { color: colors.text, fontSize: 13, fontWeight: '900' },
   userPill: {
-    alignItems: "center",
+    alignItems: 'center',
     backgroundColor: colors.card,
     borderColor: colors.border,
     borderRadius: 18,
     borderWidth: 1,
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 10,
-    maxWidth: "58%",
+    maxWidth: '58%',
     paddingHorizontal: 10,
     paddingVertical: 9,
   },
