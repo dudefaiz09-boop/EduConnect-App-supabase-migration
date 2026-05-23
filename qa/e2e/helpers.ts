@@ -45,7 +45,9 @@ export async function loginAsRole(page: Page, role: QaRole) {
   const { email, password } = getRoleCredentials(role);
 
   if (!email || !password) {
-    throw new Error(`Missing test credentials for ${role}. Set WEB_QA_${role.toUpperCase()}_EMAIL and WEB_QA_${role.toUpperCase()}_PASSWORD.`);
+    throw new Error(
+      `Missing test credentials for ${role}. Set WEB_QA_${role.toUpperCase()}_EMAIL and WEB_QA_${role.toUpperCase()}_PASSWORD.`
+    );
   }
 
   await page.goto('/auth/login');
@@ -86,7 +88,9 @@ export async function visitRoute(page: Page, route: QaRoute) {
 export async function assertRouteLoaded(page: Page, route: QaRoute, authenticated: boolean) {
   const body = page.locator('body');
   await expect(body).toBeVisible();
-  await expect(body).not.toContainText(/Something went wrong|Application error|Invalid web environment/i);
+  await expect(body).not.toContainText(
+    /Something went wrong|Application error|Invalid web environment/i
+  );
 
   if (route.authRequired && !authenticated) {
     await expect(page).toHaveURL(/\/auth\/login/);
@@ -102,7 +106,9 @@ export async function assertRouteLoaded(page: Page, route: QaRoute, authenticate
 export async function assertAccessState(page: Page, shouldHaveAccess: boolean) {
   const body = page.locator('body');
   await expect(body).toBeVisible();
-  await expect(body).not.toContainText(/Something went wrong|Application error|Invalid web environment/i);
+  await expect(body).not.toContainText(
+    /Something went wrong|Application error|Invalid web environment/i
+  );
 
   if (shouldHaveAccess) {
     await expect(body).not.toContainText(/Access denied/i);
