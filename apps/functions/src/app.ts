@@ -146,7 +146,7 @@ publicRouter.get('/version', (req, res) => {
   });
 });
 
-// Safe public AI endpoints. These never expose the OpenRouter key.
+// Safe public AI endpoints. These never expose provider keys.
 publicRouter.get('/ai/status', AiController.getStatus);
 publicRouter.post('/ai/query', AiController.publicQueryChatbot);
 
@@ -155,12 +155,20 @@ publicRouter.get('/ready', async (req, res) => {
     (name) => !process.env[name]
   );
 
+  const ai = getAiRuntimeStatus();
   const checks = {
     hasSupabaseUrl: !!process.env.SUPABASE_URL,
     hasServiceRoleKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
     hasCorsOrigins: !!process.env.CORS_ORIGINS,
     hasOpenRouterKey: !!process.env.OPENROUTER_API_KEY,
     hasOpenRouterModel: !!process.env.OPENROUTER_MODEL,
+    hasGeminiKey: !!process.env.GEMINI_API_KEY,
+    hasGeminiModel: !!process.env.GEMINI_MODEL,
+    aiProvider: ai.provider,
+    aiConfiguredProvider: ai.configuredProvider,
+    aiModel: ai.model,
+    aiFallbackProvider: ai.fallbackProvider,
+    aiLive: ai.enabled,
     expressAppLoaded: true,
   };
 
@@ -174,6 +182,7 @@ publicRouter.get('/ready', async (req, res) => {
     runtime: process.env.VERCEL_URL ? 'vercel' : 'local',
     checks,
     missing,
+    ai,
     timestamp: new Date().toISOString(),
   });
 });
@@ -232,7 +241,7 @@ app.use('/api', protectedRouter);
 // 5. Global Error Handling (MUST be last)
 app.use(globalErrorHandler);
 
-// Startup logs for environment diagnostics
+// Startup logs for environment diagnostics. This logs booleans/model names only, never secret values.
 logger.info(getAiRuntimeStatus(), 'AI Environment Diagnostic');
 
 export default app;
