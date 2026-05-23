@@ -607,9 +607,13 @@ export function ParentPortalScreen() {
         feesService.getStudentAccount(selectedStudentId) as Promise<FeeAccountResponse>,
         performanceService.student(selectedStudentId) as Promise<PerformanceRecord[]>,
         profile.classId
-          ? (assignmentsService.getAssignments(profile.classId) as Promise<ParentAssignmentSummary[]>)
+          ? (assignmentsService.getAssignments(
+              profile.classId
+            ) as Promise<ParentAssignmentSummary[]>)
           : Promise.resolve<ParentAssignmentSummary[]>([]),
-        assignmentsService.getMyHistory(selectedStudentId) as Promise<ParentSubmissionSummary[]>,
+        assignmentsService.getMyHistory(
+          selectedStudentId
+        ) as Promise<ParentSubmissionSummary[]>,
       ]);
       return { profile, attendance, fees, performance, assignments, submissions };
     },
