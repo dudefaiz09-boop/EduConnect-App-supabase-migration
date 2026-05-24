@@ -429,6 +429,7 @@ export const AttendancePage = () => {
                     className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
                   />
                   <select
+                    aria-label="Select attendance class"
                     value={selectedClass}
                     onChange={(e) => setSelectedClass(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 pl-11 pr-4 py-3 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-100 transition-all appearance-none"
@@ -452,6 +453,7 @@ export const AttendancePage = () => {
                     className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
                   />
                   <input
+                    aria-label="Select attendance date"
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}

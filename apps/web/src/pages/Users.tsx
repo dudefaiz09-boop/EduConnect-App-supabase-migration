@@ -563,6 +563,7 @@ export const UsersPage = ({ type }: { type: 'student' | 'teacher' | 'all' }) => 
               </div>
             </div>
             <select
+              aria-label="Select active tenant"
               value={activeTenantId}
               onChange={(event) => handleTenantChange(event.target.value)}
               className="min-w-[220px] rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-sm outline-none transition focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-cyan-400/20"
@@ -580,6 +581,7 @@ export const UsersPage = ({ type }: { type: 'student' | 'teacher' | 'all' }) => 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_180px_180px_220px] gap-3">
         <SearchBar value={search} onChange={setSearch} placeholder="Search users..." />
         <select
+          aria-label="Filter users by role"
           value={roleFilter}
           onChange={(event) => setRoleFilter(event.target.value as 'all' | Role)}
           className="bg-white border border-slate-200 px-4 py-3 rounded-2xl text-sm font-bold text-slate-600 outline-none"
@@ -592,6 +594,7 @@ export const UsersPage = ({ type }: { type: 'student' | 'teacher' | 'all' }) => 
           ))}
         </select>
         <select
+          aria-label="Filter users by status"
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value as 'all' | UserStatus)}
           className="bg-white border border-slate-200 px-4 py-3 rounded-2xl text-sm font-bold text-slate-600 outline-none"
@@ -603,6 +606,7 @@ export const UsersPage = ({ type }: { type: 'student' | 'teacher' | 'all' }) => 
         <div className="relative">
           <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input
+            aria-label="Filter users by module"
             placeholder="Filter module..."
             value={moduleFilter}
             onChange={(event) => setModuleFilter(event.target.value)}

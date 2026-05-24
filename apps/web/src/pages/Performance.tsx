@@ -509,6 +509,7 @@ export const PerformancePage = () => {
                   Select Class
                 </label>
                 <select
+                  aria-label="Filter performance records by class"
                   value={selectedClass}
                   onChange={(e) => handleClassChange(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-100 px-4 py-3 rounded-xl outline-none font-bold text-slate-700"

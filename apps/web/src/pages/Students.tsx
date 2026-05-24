@@ -399,6 +399,7 @@ export const StudentsPage = () => {
         <div className="flex items-center gap-2 px-4 bg-white border border-slate-200 rounded-3xl shadow-sm">
           <Filter size={18} className="text-slate-400" />
           <select
+            aria-label="Filter students by class"
             value={selectedClass}
             onChange={(e) => setSelectedClass(e.target.value)}
             className="py-4 bg-transparent outline-none text-sm font-bold text-slate-600 pr-4"

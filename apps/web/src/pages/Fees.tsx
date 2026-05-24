@@ -550,6 +550,7 @@ export const FeesPage = () => {
                   Filter Class
                 </label>
                 <select
+                  aria-label="Filter fee records by class"
                   value={selectedClass}
                   onChange={(e) => setSelectedClass(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-100 px-4 py-3 rounded-xl outline-none font-bold text-slate-700"

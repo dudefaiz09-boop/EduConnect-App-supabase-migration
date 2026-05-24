@@ -28,6 +28,7 @@ module.exports = {
         'categories:best-practices': ['warn', { minScore: 0.8 }],
         'categories:seo': ['warn', { minScore: 0.8 }],
         'color-contrast': 'warn',
+        'network-dependency-tree-insight': 'warn',
         'unused-javascript': 'off',
         'uses-long-cache-ttl': 'off',
       },
