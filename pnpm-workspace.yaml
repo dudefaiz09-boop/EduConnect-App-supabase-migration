@@ -1,9 +1,8 @@
 packages:
   - 'apps/*'
   - 'packages/*'
-onlyBuiltDependencies:
-  - '@percy/core'
 allowBuilds:
+  '@percy/core': true
   '@google/genai': false
   esbuild: false
   protobufjs: false
