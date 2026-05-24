@@ -18,7 +18,7 @@
     "test:visual": "pnpm qa:deps && pnpm qa:visual:deps && pnpm exec percy exec -- playwright test -c playwright.config.ts qa/e2e/visual.percy.spec.ts",
     "test:lighthouse": "pnpm qa:deps && pnpm exec lhci autorun --config=./lighthouserc.cjs",
     "lhci": "pnpm test:lighthouse",
-    "qa:deps": "pnpm add -wD @playwright/test@1.56.1 @axe-core/playwright@4.10.2 @lhci/cli@0.15.1 --lockfile=false",
+    "qa:deps": "pnpm add -wD @playwright/test@1.60.0 @axe-core/playwright@4.10.2 @lhci/cli@0.15.1 --lockfile=false",
     "qa:visual:deps": "pnpm add -wD @percy/cli@1.31.3 @percy/playwright@1.1.0 --lockfile=false --ignore-scripts",
     "qa:pr": "pnpm qa:deps && pnpm exec playwright test -c playwright.config.ts --grep @pr --grep-invert @visual",
     "qa:full": "pnpm qa:deps && pnpm exec playwright test -c playwright.config.ts --grep @full --grep-invert @visual && pnpm test:lighthouse",
@@ -47,9 +47,13 @@
     "setup": "corepack pnpm install"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.10.2",
     "@eslint/js": "^10.0.1",
     "@google/genai": "^2.0.1",
-    "@playwright/test": "^1.60.0",
+    "@lhci/cli": "0.15.1",
+    "@percy/cli": "1.31.3",
+    "@percy/playwright": "1.1.0",
+    "@playwright/test": "1.60.0",
     "@types/jest": "^30.0.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
