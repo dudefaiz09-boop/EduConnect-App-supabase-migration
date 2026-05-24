@@ -256,6 +256,7 @@ export const AnnouncementsPage = () => {
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input
+            aria-label="Search announcements"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search announcements..."
@@ -265,6 +266,7 @@ export const AnnouncementsPage = () => {
         <div className="relative">
           <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <select
+            aria-label="Filter announcement category"
             value={categoryFilter}
             onChange={(event) => setCategoryFilter(event.target.value)}
             className="h-14 w-full rounded-2xl border border-white bg-white/85 pl-11 pr-4 text-sm font-black text-slate-600 shadow-sm outline-none"

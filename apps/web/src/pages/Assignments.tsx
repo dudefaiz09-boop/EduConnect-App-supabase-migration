@@ -351,6 +351,7 @@ export const AssignmentsPage = () => {
         <div className="flex items-center gap-4">
           {!isStudent && (
             <select
+              aria-label="Select assignment class"
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
               className="bg-white border border-slate-200 px-4 py-3 rounded-2xl font-bold text-slate-700 shadow-sm focus:ring-2 focus:ring-blue-100 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"

@@ -403,8 +403,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
-      throw new Error(getAuthErrorMessage(error));
+      console.warn('Supabase sign-out request failed; clearing the local session.', error);
+      const { error: localError } = await supabase.auth.signOut({ scope: 'local' });
+      if (localError) {
+        throw new Error(getAuthErrorMessage(localError));
+      }
     }
+    await applySession(null);
     clearStoredTenantId();
     toast({ tone: 'success', title: 'Signed out', description: 'Your session has ended.' });
   };
