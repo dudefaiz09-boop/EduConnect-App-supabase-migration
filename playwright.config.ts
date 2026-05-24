@@ -1,4 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
+import dotenv from 'dotenv';
+
+dotenv.config({ quiet: true });
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:4173';
 const webServerCommand =
@@ -8,9 +11,16 @@ const webServerCommand =
 const previewEnv = {
   VITE_ENVIRONMENT: process.env.VITE_ENVIRONMENT || 'preview',
   VITE_DEMO_MODE: process.env.VITE_DEMO_MODE || 'true',
-  VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL || 'https://example.supabase.co',
-  VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY || 'qa-placeholder-anon-key',
-  VITE_SUPABASE_UPLOADS_BUCKET: process.env.VITE_SUPABASE_UPLOADS_BUCKET || 'educonnect-uploads',
+  VITE_SUPABASE_URL:
+    process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://example.supabase.co',
+  VITE_SUPABASE_ANON_KEY:
+    process.env.VITE_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    'qa-placeholder-anon-key',
+  VITE_SUPABASE_UPLOADS_BUCKET:
+    process.env.VITE_SUPABASE_UPLOADS_BUCKET ||
+    process.env.SUPABASE_UPLOADS_BUCKET ||
+    'educonnect-uploads',
   VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || '/api',
 };
 
