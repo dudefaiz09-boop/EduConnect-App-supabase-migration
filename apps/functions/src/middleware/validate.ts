@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ZodSchema, ZodError } from 'zod';
+import { ZodSchema, ZodError, type ZodIssue } from 'zod';
 import { AppError } from './error.js';
 
 /**
@@ -22,10 +22,10 @@ export const validate =
             code: 'VALIDATION_ERROR',
             message: 'The request contains invalid data.',
             statusCode: 400,
-            details: error.issues.map((err: any) => ({
-              path: err.path.join('.'),
-              message: err.message,
-              code: err.code,
+            details: error.issues.map((issue: ZodIssue) => ({
+              path: issue.path.join('.'),
+              message: issue.message,
+              code: issue.code,
             })),
           })
         );

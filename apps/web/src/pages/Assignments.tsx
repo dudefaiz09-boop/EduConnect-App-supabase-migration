@@ -25,7 +25,6 @@ import {
 import { ApiRequestError } from '@educonnect/shared-api';
 import { assignmentsService } from '../lib/api-client';
 import { getApiBaseUrlDiagnostic } from '../lib/env';
-import { getActiveTenantId, getDefaultClassId, getDemoClassesForTenant } from '../lib/tenant';
 import { FileUpload } from '../components/FileUpload';
 import { EmptyState } from '../components/saas/EmptyState';
 import { SearchBar } from '../components/saas/SearchBar';
@@ -69,10 +68,9 @@ export const AssignmentsPage = () => {
   const { user, isStudent, canManageAssignments, classId: userClassId, schoolId } = useAuth();
   const { toast } = useToast();
   const uid = user?.uid;
-  const activeTenantId = getActiveTenantId(schoolId);
-  const classOptions = useMemo(() => getDemoClassesForTenant(activeTenantId), [activeTenantId]);
+  const [classOptions] = useState<Array<{ id: string; label: string; section: string }>>([]);
 
-  const [selectedClass, setSelectedClass] = useState(userClassId || getDefaultClassId(schoolId));
+  const [selectedClass, setSelectedClass] = useState(userClassId || '');
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState(() => Date.now());
@@ -124,19 +122,17 @@ export const AssignmentsPage = () => {
     title: '',
     description: '',
     dueDate: format(new Date(Date.now() + 7 * 86400000), 'yyyy-MM-dd'),
-    classId: userClassId || getDefaultClassId(schoolId),
+    classId: userClassId || '',
     subject: 'General',
     pointsPossible: 100,
   }));
   const [assignmentAttachmentUrl, setAssignmentAttachmentUrl] = useState('');
 
   useEffect(() => {
-    if (!classOptions.some((option) => option.id === selectedClass)) {
-      queueMicrotask(() =>
-        setSelectedClass(userClassId || classOptions[0]?.id || getDefaultClassId(activeTenantId))
-      );
+    if (classOptions.length > 0 && !classOptions.some((option) => option.id === selectedClass)) {
+      queueMicrotask(() => setSelectedClass(userClassId || classOptions[0]?.id || ''));
     }
-  }, [activeTenantId, classOptions, selectedClass, userClassId]);
+  }, [classOptions, selectedClass, userClassId]);
 
   useEffect(() => {
     queueMicrotask(() =>
@@ -434,7 +430,7 @@ export const AssignmentsPage = () => {
                   <code className="break-all font-mono">{getApiBaseUrlDiagnostic()}</code>
                 </p>
               )}
-              <p className="max-w-md text-sm text-red-500 dark:text-red-300">
+              <p className="max-w-md text-sm text-red-700 dark:text-red-300">
                 The assignment list is still safe to retry. Empty classes will show an empty state
                 instead of crashing.
               </p>
@@ -503,10 +499,10 @@ export const AssignmentsPage = () => {
                           <span className="flex items-center gap-1">
                             <Users size={12} /> {classes.length ? classes.join(', ') : 'All'}
                           </span>
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                             {subject}
                           </span>
-                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-blue-600 dark:bg-blue-950/50 dark:text-blue-200">
+                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-blue-700 dark:bg-blue-950/50 dark:text-blue-200">
                             {submissionCount} submissions
                           </span>
                         </div>

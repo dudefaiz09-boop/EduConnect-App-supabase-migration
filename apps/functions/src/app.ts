@@ -20,22 +20,23 @@ import './features/notifications/attendance.consumer.js';
 // Features (Refactored)
 import studentRoutes from './features/students/student.routes.js';
 import aiRoutes from './features/ai/ai.routes.js';
+import dashboardRoutes from './features/dashboard/dashboard.routes.js';
 import { AiController } from './features/ai/ai.controller.js';
 
-// Legacy Routes (Pending Refactor)
-import authProfileRouter from './routes/auth-profile.js';
-import ownProfileRouter from './routes/own-profile.js';
-import announcementsRouter from './routes/announcements.js';
-import attendanceRouter from './routes/attendance.js';
-import assignmentsRouter from './routes/assignments.js';
-import libraryRouter from './routes/library.js';
-import feesRouter from './routes/fees.js';
-import performanceRouter from './routes/performance.js';
-import teachersRouter from './routes/teachers.js';
-import chatRouter from './routes/chat.js';
-import rolesRouter from './routes/roles.js';
-import usersRouter from './routes/users.js';
-import notificationsRouter from './routes/notifications.js';
+// Feature Routes (Refactored)
+import authProfileRouter from './features/auth-profile/authProfile.routes.js';
+import ownProfileRouter from './features/own-profile/ownProfile.routes.js';
+import announcementsRouter from './features/announcements/announcements.routes.js';
+import attendanceRouter from './features/attendance/attendance.routes.js';
+import assignmentsRouter from './features/assignments/assignments.routes.js';
+import libraryRouter from './features/library/library.routes.js';
+import feesRouter from './features/fees/fees.routes.js';
+import performanceRouter from './features/performance/performance.routes.js';
+import teachersRouter from './features/teachers/teachers.routes.js';
+import chatRouter from './features/chat/chat.routes.js';
+import rolesRouter from './features/roles/roles.routes.js';
+import usersRouter from './features/users/users.routes.js';
+import notificationsRouter from './features/notifications/notifications.routes.js';
 
 const app: Express = express();
 app.set('trust proxy', 1);
@@ -222,10 +223,11 @@ protectedRouter.use('/fees/upload', sensitiveLimiter);
 protectedRouter.use('/performance/upload', sensitiveLimiter);
 
 // Feature Routes
+protectedRouter.use('/dashboard', dashboardRoutes);
 protectedRouter.use('/students', studentRoutes);
 protectedRouter.use('/ai', aiRoutes);
 
-// Legacy Routes
+// Refactored Feature Routes
 protectedRouter.use('/announcements', announcementsRouter);
 protectedRouter.use('/attendance', attendanceRouter);
 protectedRouter.use('/assignments', assignmentsRouter);

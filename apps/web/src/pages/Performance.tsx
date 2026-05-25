@@ -17,7 +17,6 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { getActiveTenantId, getDefaultClassId, getDemoClassesForTenant } from '../lib/tenant';
 import { validatePerformanceCSV, CSVValidationError } from '../lib/csvValidator';
 import {
   AreaChart,
@@ -54,13 +53,9 @@ interface PerformanceReport {
 }
 
 export const PerformancePage = () => {
-  const { user, isStudent, canManagePerformance, classId: userClassId, schoolId } = useAuth();
+  const { user, isStudent, canManagePerformance, classId: userClassId } = useAuth();
   const { toast } = useToast();
-  const activeTenantId = getActiveTenantId(schoolId);
-  const classOptions = React.useMemo(
-    () => getDemoClassesForTenant(activeTenantId),
-    [activeTenantId]
-  );
+  const [classOptions] = React.useState<Array<{ id: string; label: string; section: string }>>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [records, setRecords] = useState<PerformanceRecord[]>([]);
   const [report, setReport] = useState<PerformanceReport | null>(null);
@@ -72,18 +67,16 @@ export const PerformancePage = () => {
   // Import State
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [uploadText, setUploadText] = useState('');
-  const [selectedClass, setSelectedClass] = useState(userClassId || getDefaultClassId(schoolId));
+  const [selectedClass, setSelectedClass] = useState(userClassId || '');
   const [scoreSearch, setScoreSearch] = useState('');
   const [uploadError, setUploadError] = useState<CSVValidationError[] | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
 
   useEffect(() => {
-    if (!classOptions.some((option) => option.id === selectedClass)) {
-      queueMicrotask(() =>
-        setSelectedClass(userClassId || classOptions[0]?.id || getDefaultClassId(activeTenantId))
-      );
+    if (classOptions.length > 0 && !classOptions.some((option) => option.id === selectedClass)) {
+      queueMicrotask(() => setSelectedClass(userClassId || classOptions[0]?.id || ''));
     }
-  }, [activeTenantId, classOptions, selectedClass, userClassId]);
+  }, [classOptions, selectedClass, userClassId]);
 
   const loadStudentData = useCallback(async () => {
     try {
@@ -188,7 +181,7 @@ export const PerformancePage = () => {
 
   const downloadPerformanceSample = () => {
     const sample =
-      'studentId,subject,term,score,grade,class\nstudent_demo1_a,Mathematics,Term 1,85,A,10A\nstudent_demo1_b,Science,Term 1,72,B,10B';
+      'studentId,subject,term,score,grade,class\nstudent001,Mathematics,Term 1,85,A,10A\nstudent002,Science,Term 1,72,B,10B';
     const blob = new Blob([sample], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -712,7 +705,7 @@ export const PerformancePage = () => {
                       rows={8}
                       value={uploadText}
                       onChange={(e) => setUploadText(e.target.value)}
-                      placeholder="studentId, subject, term, score, grade&#10;user_uid_1, Mathematics, Term 1, 85, A&#10;user_uid_2, Science, Term 1, 72, B"
+                      placeholder="studentId, subject, term, score, grade&#10;student001, Mathematics, Term 1, 85, A&#10;student002, Science, Term 1, 72, B"
                       className="w-full bg-slate-50 border border-slate-200 p-6 rounded-[32px] text-slate-900 outline-none focus:ring-4 focus:ring-indigo-100 transition-all font-mono text-xs leading-relaxed dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                     />
                     <input

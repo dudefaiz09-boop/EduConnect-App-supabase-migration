@@ -32,7 +32,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { usersService } from '../lib/api-client';
 import { useDebounce } from '../lib/hooks';
-import { DEMO_TENANTS, getStoredTenantId, isDemoMode, setStoredTenantId } from '../lib/tenant';
+import { getStoredTenantId, setStoredTenantId } from '../lib/tenant';
 import { cn } from '../lib/utils';
 import { SearchBar } from '../components/saas/SearchBar';
 import { StatCard } from '../components/saas/StatCard';
@@ -176,17 +176,10 @@ export const UsersPage = ({ type }: { type: 'student' | 'teacher' | 'all' }) => 
 
   const tenantOptions = useMemo(() => {
     const tenantById = new Map<string, Tenant>();
-    if (isDemoMode()) DEMO_TENANTS.forEach((tenant) => tenantById.set(tenant.id, tenant));
     tenants.forEach((tenant) => tenantById.set(tenant.id, tenant));
 
     const allowedIds =
-      isSuperAdmin && managedTenantIds.length > 0
-        ? managedTenantIds
-        : schoolId
-          ? [schoolId]
-          : isDemoMode()
-            ? DEMO_TENANTS.map((tenant) => tenant.id)
-            : [];
+      isSuperAdmin && managedTenantIds.length > 0 ? managedTenantIds : schoolId ? [schoolId] : [];
 
     return allowedIds.map(
       (id) => tenantById.get(id) || { id, name: id.replaceAll('-', ' '), slug: id }
@@ -406,8 +399,8 @@ export const UsersPage = ({ type }: { type: 'student' | 'teacher' | 'all' }) => 
   const downloadTemplate = () => {
     const headers =
       'email,role,password,permissions,classId,classIds,linkedStudentIds,tenantId,displayName';
-    const sampleTenantId = bulkTargetTenantId || (isDemoMode() ? 'tenant-a' : 'YOUR_TENANT_ID');
-    const row = `student.import1@educonnect.test,student,Test@123456,"viewOwnRecords,viewAssignments",A1,"A1,A2",,${sampleTenantId},Imported Student 1`;
+    const sampleTenantId = bulkTargetTenantId || 'YOUR_TENANT_ID';
+    const row = `student.import@school.test,student,YourPassword123!,"viewOwnRecords,viewAssignments",A1,"A1,A2",,${sampleTenantId},Imported Student 1`;
     const blob = new Blob([`${headers}\n${row}`], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');

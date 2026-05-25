@@ -29,6 +29,28 @@ export const updateStudentSchema = z.object({
     .strict(),
 });
 
+export const bulkImportSchema = z.object({
+  body: z
+    .object({
+      students: z
+        .array(
+          z.object({
+            email: z.string().email(),
+            password: z.string().min(8),
+            displayName: z.string().min(2),
+            classId: z.string().optional(),
+            classIds: z.array(z.string()).optional(),
+            section: z.string().optional(),
+            sectionIds: z.array(z.string()).optional(),
+            admissionNumber: z.string().optional(),
+            phone: z.string().optional(),
+          })
+        )
+        .min(1, 'At least one student is required.'),
+    })
+    .strict(),
+});
+
 export const studentQuerySchema = z.object({
   params: z.object({
     uid: z.string(),

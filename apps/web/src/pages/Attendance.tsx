@@ -16,7 +16,7 @@ import {
 import { cn } from '../lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useDebounce } from '../lib/hooks';
-import { getActiveTenantId, getDefaultClassId, getDemoClassesForTenant } from '../lib/tenant';
+import { getActiveTenantId } from '../lib/tenant';
 import { AttendanceRecord, StudentProfile as Student } from '@educonnect/shared';
 import { Card } from '../components/ui/Card';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -101,10 +101,7 @@ export const AttendancePage = () => {
   const { user, canManageAttendance, classId: userClassId, schoolId } = useAuth();
   const { toast } = useToast();
   const activeTenantId = getActiveTenantId(schoolId);
-  const classOptions = React.useMemo(
-    () => getDemoClassesForTenant(activeTenantId),
-    [activeTenantId]
-  );
+  const [classOptions] = React.useState<Array<{ id: string; label: string; section: string }>>([]);
 
   const [view, setView] = useState<'marking' | 'history' | 'reports'>(
     canManageAttendance ? 'marking' : 'history'
@@ -112,7 +109,7 @@ export const AttendancePage = () => {
 
   // Shared state
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [selectedClass, setSelectedClass] = useState(userClassId || getDefaultClassId(schoolId));
+  const [selectedClass, setSelectedClass] = useState(userClassId || '');
   const [loading, setLoading] = useState(true);
   const [lastSyncTime, setLastSyncTime] = useState<Date>(new Date());
 
@@ -144,12 +141,10 @@ export const AttendancePage = () => {
   }, [userDocuments, selectedClass, activeTenantId]);
 
   useEffect(() => {
-    if (!classOptions.some((option) => option.id === selectedClass)) {
-      queueMicrotask(() =>
-        setSelectedClass(userClassId || classOptions[0]?.id || getDefaultClassId(activeTenantId))
-      );
+    if (classOptions.length > 0 && !classOptions.some((option) => option.id === selectedClass)) {
+      queueMicrotask(() => setSelectedClass(userClassId || classOptions[0]?.id || ''));
     }
-  }, [activeTenantId, classOptions, selectedClass, userClassId]);
+  }, [classOptions, selectedClass, userClassId]);
 
   const loadMarkingData = useCallback(async () => {
     setLoading(true);
@@ -411,7 +406,7 @@ export const AttendancePage = () => {
                 <p className="text-xs font-bold text-emerald-700">
                   Last synced: {formatDistanceToNow(lastSyncTime, { addSuffix: true })}
                 </p>
-                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">
+                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">
                   Realtime enabled
                 </span>
               </div>
@@ -480,7 +475,7 @@ export const AttendancePage = () => {
                 <h3 className="font-bold text-slate-900 flex items-center gap-2">
                   <CheckSquare size={20} className="text-blue-600" />
                   Mark Attendance
-                  <span className="bg-blue-100 text-blue-600 text-[10px] px-2 py-0.5 rounded-full">
+                  <span className="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded-full">
                     {filteredStudents.length} Students
                   </span>
                 </h3>
@@ -527,7 +522,7 @@ export const AttendancePage = () => {
                           <tr key={studentId} className="hover:bg-slate-50/50 transition-colors">
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500 text-xs">
+                                <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600 text-xs">
                                   {(s.displayName || '?')[0]}
                                 </div>
                                 <div>

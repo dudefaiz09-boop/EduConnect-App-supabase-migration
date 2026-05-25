@@ -44,6 +44,7 @@
     "deploy:api": "corepack pnpm --filter @educonnect/functions build",
     "deploy:functions": "corepack pnpm --filter @educonnect/functions build",
     "seed:supabase": "corepack pnpm --filter @educonnect/functions seed:supabase",
+    "backup:supabase": "powershell -ExecutionPolicy Bypass -File scripts/backup-supabase.ps1",
     "setup": "corepack pnpm install"
   },
   "devDependencies": {

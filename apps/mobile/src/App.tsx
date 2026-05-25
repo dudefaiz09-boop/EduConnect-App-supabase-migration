@@ -319,7 +319,7 @@ const AuthScreen = ({
     <SafeAreaView style={styles.container}>
       <View style={styles.loginContainer}>
         <View style={styles.brandBadge}>
-          <Text style={styles.brandBadgeText}>AI ERP</Text>
+          <Text style={styles.brandBadgeText}>School</Text>
         </View>
         <Text style={styles.title}>{titles[mode].title}</Text>
         <Text style={styles.subtitle}>{titles[mode].subtitle}</Text>
@@ -726,7 +726,7 @@ const AppContent = () => {
         <View style={styles.brandBlock}>
           <Text style={styles.brandTitle}>EduConnect</Text>
           <Text style={styles.brandSubtitle}>
-            {schoolId ? `School ${schoolId}` : 'AI ERP'} - {role}
+            {schoolId ? `School ${schoolId}` : 'EduConnect'} - {role}
           </Text>
         </View>
         <View style={styles.userPill}>

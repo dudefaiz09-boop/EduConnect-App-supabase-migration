@@ -18,9 +18,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../lib/api-client';
 import {
-  DEMO_TENANT_IDS,
   getActiveTenantId,
-  isDemoMode,
   setStoredTenantId,
 } from '../../lib/tenant';
 import { cn } from '../../lib/utils';
@@ -137,7 +135,6 @@ export const GlobalChatbot = () => {
       getActiveTenantId(schoolId),
       schoolId,
       managedTenantIds[0],
-      isDemoMode() ? DEMO_TENANT_IDS[0] : null,
     ].filter(Boolean) as string[];
 
     const tenantId = candidates[0] || null;

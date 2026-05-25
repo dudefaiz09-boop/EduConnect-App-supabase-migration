@@ -18,6 +18,7 @@ import {
   UserPlus,
   Server,
   Database,
+  WifiOff,
 } from 'lucide-react';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -72,6 +73,30 @@ export const AdminApp = () => {
   const [userSearch, setUserSearch] = useState('');
   const [selectedSchoolFilter, setSelectedSchoolFilter] = useState('all');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState('all');
+
+  // Health Check State
+  const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+  const [apiStatus, setApiStatus] = useState<'checking' | 'connected' | 'error'>(() =>
+    apiBase ? 'checking' : 'error'
+  );
+  const [dbStatus, setDbStatus] = useState<'checking' | 'synced' | 'error'>(() =>
+    apiBase ? 'checking' : 'error'
+  );
+
+  useEffect(() => {
+    if (!apiBase) return;
+    fetch(`${apiBase}/api/health`, { signal: AbortSignal.timeout(5000) })
+      .then((r) => {
+        if (r.ok) setApiStatus('connected');
+        else setApiStatus('error');
+        return r.json();
+      })
+      .then((data) => setDbStatus(data.status === 'healthy' ? 'synced' : 'error'))
+      .catch(() => {
+        setApiStatus('error');
+        setDbStatus('error');
+      });
+  }, [apiBase]);
 
   // School Onboarding Form State
   const [showOnboardModal, setShowOnboardModal] = useState(false);
@@ -354,7 +379,7 @@ export const AdminApp = () => {
                 <input
                   type="email"
                   required
-                  placeholder="admin@educonnect.test"
+                  placeholder="admin@school.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-11 pr-4 py-3 bg-slate-950/40 border border-slate-800 rounded-2xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-white text-sm transition-all"
@@ -490,13 +515,49 @@ export const AdminApp = () => {
           </div>
           <div className="flex items-center gap-4">
             {/* System Status badges */}
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold text-slate-300 shadow-sm">
-              <Server size={14} className="text-emerald-500" />
-              API Connected
+            <div
+              className={`flex items-center gap-2 px-3 py-1.5 border rounded-xl text-xs font-bold shadow-sm ${
+                apiStatus === 'connected'
+                  ? 'bg-slate-900 border-slate-800 text-slate-300'
+                  : apiStatus === 'checking'
+                    ? 'bg-slate-900 border-slate-800 text-slate-500'
+                    : 'bg-red-950/40 border-red-900 text-red-400'
+              }`}
+            >
+              {apiStatus === 'connected' ? (
+                <Server size={14} className="text-emerald-500" />
+              ) : apiStatus === 'checking' ? (
+                <Loader2 size={14} className="text-slate-500 animate-spin" />
+              ) : (
+                <WifiOff size={14} className="text-red-500" />
+              )}
+              {apiStatus === 'connected'
+                ? 'API Connected'
+                : apiStatus === 'checking'
+                  ? 'Checking...'
+                  : 'API Offline'}
             </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold text-slate-300 shadow-sm">
-              <Database size={14} className="text-emerald-500" />
-              DB Synced
+            <div
+              className={`flex items-center gap-2 px-3 py-1.5 border rounded-xl text-xs font-bold shadow-sm ${
+                dbStatus === 'synced'
+                  ? 'bg-slate-900 border-slate-800 text-slate-300'
+                  : dbStatus === 'checking'
+                    ? 'bg-slate-900 border-slate-800 text-slate-500'
+                    : 'bg-red-950/40 border-red-900 text-red-400'
+              }`}
+            >
+              {dbStatus === 'synced' ? (
+                <Database size={14} className="text-emerald-500" />
+              ) : dbStatus === 'checking' ? (
+                <Loader2 size={14} className="text-slate-500 animate-spin" />
+              ) : (
+                <WifiOff size={14} className="text-red-500" />
+              )}
+              {dbStatus === 'synced'
+                ? 'DB Synced'
+                : dbStatus === 'checking'
+                  ? 'Checking...'
+                  : 'DB Error'}
             </div>
           </div>
         </header>
@@ -533,7 +594,15 @@ export const AdminApp = () => {
                 <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider">
                   System Status
                 </h3>
-                <p className="text-3xl font-black text-emerald-400 mt-2">Optimal</p>
+                <p
+                  className={`text-3xl font-black mt-2 ${
+                    apiStatus === 'connected' && dbStatus === 'synced'
+                      ? 'text-emerald-400'
+                      : 'text-amber-400'
+                  }`}
+                >
+                  {apiStatus === 'connected' && dbStatus === 'synced' ? 'Optimal' : 'Degraded'}
+                </p>
               </div>
             </div>
 
@@ -696,7 +765,7 @@ export const AdminApp = () => {
                             <input
                               type="text"
                               required
-                              placeholder="school-x"
+                              placeholder="your-school-id"
                               value={newSchoolId}
                               onChange={(e) => setNewSchoolId(e.target.value)}
                               className="w-full px-4 py-2.5 bg-slate-950/40 border border-slate-800 rounded-xl text-sm text-white"
@@ -709,7 +778,7 @@ export const AdminApp = () => {
                             <input
                               type="text"
                               required
-                              placeholder="Stanford Prep"
+                              placeholder="Your School Name"
                               value={newSchoolName}
                               onChange={(e) => setNewSchoolName(e.target.value)}
                               className="w-full px-4 py-2.5 bg-slate-950/40 border border-slate-800 rounded-xl text-sm text-white"
@@ -724,7 +793,7 @@ export const AdminApp = () => {
                           <input
                             type="text"
                             required
-                            placeholder="stanford-prep"
+                            placeholder="your-school-slug"
                             value={newSchoolSlug}
                             onChange={(e) => setNewSchoolSlug(e.target.value)}
                             className="w-full px-4 py-2.5 bg-slate-950/40 border border-slate-800 rounded-xl text-sm text-white"
@@ -745,7 +814,7 @@ export const AdminApp = () => {
                               <input
                                 type="text"
                                 required
-                                placeholder="John Doe"
+                                placeholder="Admin Full Name"
                                 value={newAdminName}
                                 onChange={(e) => setNewAdminName(e.target.value)}
                                 className="w-full px-4 py-2.5 bg-slate-950/40 border border-slate-800 rounded-xl text-sm text-white"
@@ -758,7 +827,7 @@ export const AdminApp = () => {
                               <input
                                 type="email"
                                 required
-                                placeholder="admin@stanford.test"
+                                placeholder="admin@school.com"
                                 value={newAdminEmail}
                                 onChange={(e) => setNewAdminEmail(e.target.value)}
                                 className="w-full px-4 py-2.5 bg-slate-950/40 border border-slate-800 rounded-xl text-sm text-white"

@@ -1,3 +1,4 @@
+import { logger } from '@educonnect/logger';
 import { AiGenerationConfig } from './ai-providers/base.provider.js';
 import { OfflineAiProvider } from './ai-providers/offline.provider.js';
 
@@ -216,7 +217,7 @@ async function tryGeminiFallback(
     const response = await callGeminiModel(systemInstruction, userPrompt, config);
     return response.trim() ? response : null;
   } catch (error) {
-    console.error('[AI] Gemini fallback failed:', error);
+    logger.error({ err: error }, '[AI] Gemini fallback failed');
     return null;
   }
 }
@@ -246,7 +247,7 @@ async function tryOpenRouterFreeModels(
         return response;
       }
     } catch (error) {
-      console.error(`[AI] Free model ${model} failed:`, error);
+      logger.error({ err: error, model }, '[AI] Free model failed');
     }
   }
 

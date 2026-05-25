@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { logger } from '@educonnect/logger';
 import { generateSafeContent } from '../../lib/ai.js';
 import { db } from '../../lib/documents.js';
 
@@ -24,7 +25,7 @@ export class AiService {
 
     const cached = AI_CACHE.get(cacheKey);
     if (cached && cached.expires > Date.now()) {
-      console.log('[AI] Serving cached response for query:', normalizedQuery.slice(0, 50));
+      logger.info({ query: normalizedQuery.slice(0, 50) }, '[AI] Serving cached response');
       return {
         id: `cached-${randomUUID()}`,
         response: cached.response,
@@ -90,7 +91,7 @@ export class AiService {
         )
         .join('\n\n');
     } catch (error) {
-      console.error('[AI] Chat history load failed. Continuing without history:', error);
+      logger.error({ err: error }, '[AI] Chat history load failed. Continuing without history');
     }
 
     const fullPrompt = history
@@ -118,10 +119,7 @@ export class AiService {
         response: responseText,
       };
     } catch (error) {
-      console.error(
-        '[AI] Chat log save failed. Returning AI response without persisted log:',
-        error
-      );
+      logger.error({ err: error }, '[AI] Chat log save failed. Returning AI response without persisted log');
       return {
         id: randomUUID(),
         response: responseText,
@@ -156,7 +154,7 @@ export class AiService {
         };
       });
     } catch (error) {
-      console.error('[AI] Chat history fetch failed. Returning empty history:', error);
+      logger.error({ err: error }, '[AI] Chat history fetch failed. Returning empty history');
       return [];
     }
   }
