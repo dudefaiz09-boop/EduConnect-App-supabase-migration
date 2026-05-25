@@ -6,6 +6,16 @@ import './features/notifications/attendance.consumer.js';
 import app from './app.js';
 import { logger } from '@educonnect/logger';
 
+process.on('unhandledRejection', (reason) => {
+  logger.error({ err: reason }, 'UNHANDLED_REJECTION — process exiting');
+  process.exit(1);
+});
+
+process.on('uncaughtException', (err) => {
+  logger.fatal({ err }, 'UNCAUGHT_EXCEPTION — process exiting');
+  process.exit(1);
+});
+
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => {

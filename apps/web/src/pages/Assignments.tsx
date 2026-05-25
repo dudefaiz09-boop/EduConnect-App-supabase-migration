@@ -25,7 +25,7 @@ import {
 import { ApiRequestError } from '@educonnect/shared-api';
 import { assignmentsService } from '../lib/api-client';
 import { getApiBaseUrlDiagnostic } from '../lib/env';
-import { getActiveTenantId, getDefaultClassId, getDemoClassesForTenant } from '../lib/tenant';
+import { getActiveTenantId } from '../lib/tenant';
 import { FileUpload } from '../components/FileUpload';
 import { EmptyState } from '../components/saas/EmptyState';
 import { SearchBar } from '../components/saas/SearchBar';
@@ -70,9 +70,9 @@ export const AssignmentsPage = () => {
   const { toast } = useToast();
   const uid = user?.uid;
   const activeTenantId = getActiveTenantId(schoolId);
-  const classOptions = useMemo(() => getDemoClassesForTenant(activeTenantId), [activeTenantId]);
+  const [classOptions] = useState<Array<{ id: string; label: string; section: string }>>([]);
 
-  const [selectedClass, setSelectedClass] = useState(userClassId || getDefaultClassId(schoolId));
+  const [selectedClass, setSelectedClass] = useState(userClassId || '');
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState(() => Date.now());
@@ -124,19 +124,19 @@ export const AssignmentsPage = () => {
     title: '',
     description: '',
     dueDate: format(new Date(Date.now() + 7 * 86400000), 'yyyy-MM-dd'),
-    classId: userClassId || getDefaultClassId(schoolId),
+    classId: userClassId || '',
     subject: 'General',
     pointsPossible: 100,
   }));
   const [assignmentAttachmentUrl, setAssignmentAttachmentUrl] = useState('');
 
   useEffect(() => {
-    if (!classOptions.some((option) => option.id === selectedClass)) {
+    if (classOptions.length > 0 && !classOptions.some((option) => option.id === selectedClass)) {
       queueMicrotask(() =>
-        setSelectedClass(userClassId || classOptions[0]?.id || getDefaultClassId(activeTenantId))
+        setSelectedClass(userClassId || classOptions[0]?.id || '')
       );
     }
-  }, [activeTenantId, classOptions, selectedClass, userClassId]);
+  }, [classOptions, selectedClass, userClassId]);
 
   useEffect(() => {
     queueMicrotask(() =>

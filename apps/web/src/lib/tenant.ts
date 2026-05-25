@@ -3,32 +3,6 @@ import { env } from './env';
 export const SELECTED_TENANT_STORAGE_KEY = 'educonnect_selected_tenant_id';
 export const LEGACY_TENANT_STORAGE_KEY = 'educonnect_school_id';
 
-export const DEMO_TENANTS = [
-  { id: 'tenant-a', name: 'EduConnect Demo Academy', slug: 'educonnect-demo-academy' },
-  {
-    id: 'tenant-b',
-    name: 'EduConnect International School',
-    slug: 'educonnect-international-school',
-  },
-] as const;
-
-export const DEMO_TENANT_IDS = ['tenant-a', 'tenant-b'] as const;
-export const isDemoMode = () => env.VITE_DEMO_MODE === 'true';
-
-export const DEMO_CLASSES_BY_TENANT: Record<
-  (typeof DEMO_TENANT_IDS)[number],
-  Array<{ id: string; label: string; section: string }>
-> = {
-  'tenant-a': [
-    { id: 'A1', label: 'Class 10A', section: 'A' },
-    { id: 'A2', label: 'Class 10B', section: 'B' },
-  ],
-  'tenant-b': [
-    { id: 'B1', label: 'Class 9A', section: 'A' },
-    { id: 'B2', label: 'Class 9B', section: 'B' },
-  ],
-};
-
 function isBrowser() {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
 }
@@ -36,7 +10,7 @@ function isBrowser() {
 export function isValidTenantId(value: string | null | undefined, allowedTenantIds?: string[]) {
   if (!value) return false;
   if (allowedTenantIds?.length) return allowedTenantIds.includes(value);
-  return isDemoMode() && DEMO_TENANT_IDS.includes(value as (typeof DEMO_TENANT_IDS)[number]);
+  return false;
 }
 
 export function getStoredTenantId(allowedTenantIds?: string[]) {
@@ -87,18 +61,6 @@ export function resolveActiveTenantId(options: {
   return getStoredTenantId();
 }
 
-export function getDefaultClassId(tenantId?: string | null) {
-  if (!isDemoMode()) return '';
-  if (tenantId === 'tenant-b') return 'B1';
-  return 'A1';
-}
-
-export function getDemoClassesForTenant(tenantId?: string | null) {
-  if (!isDemoMode()) return [];
-  const validTenantId = isValidTenantId(tenantId) ? tenantId : 'tenant-a';
-  return DEMO_CLASSES_BY_TENANT[validTenantId as (typeof DEMO_TENANT_IDS)[number]];
-}
-
 export function getActiveTenantId(defaultTenantId?: string | null) {
-  return getStoredTenantId() || defaultTenantId || (isDemoMode() ? 'tenant-a' : null);
+  return getStoredTenantId() || defaultTenantId || null;
 }

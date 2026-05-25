@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '@educonnect/logger';
-import { bindRequestTenantAndUser, getCorrelationId } from '../lib/context.js';
+import { bindRequestTenantAndUser, getCorrelationId, type UserContext } from '../lib/context.js';
 import { AppError } from './error.js';
 import { getSupabaseAdmin } from '../lib/supabase.js';
 
@@ -165,6 +165,6 @@ async function resolveTenant(req: Request, next: NextFunction) {
   }
 
   req.tenantId = resolvedTenantId;
-  bindRequestTenantAndUser(resolvedTenantId, req.user as any);
+  bindRequestTenantAndUser(resolvedTenantId, req.user as UserContext);
   return next();
 }

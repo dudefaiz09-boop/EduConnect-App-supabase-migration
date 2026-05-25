@@ -63,7 +63,7 @@ export class AppError extends Error {
   }
 }
 
-function normalizeError(err: any) {
+function normalizeError(err: unknown) {
   if (err instanceof AppError) return err;
 
   if (err instanceof ZodError) {
@@ -79,7 +79,7 @@ function normalizeError(err: any) {
     });
   }
 
-  if (err?.name === 'SyntaxError' && 'body' in err) {
+  if (err && typeof err === 'object' && 'name' in err && err.name === 'SyntaxError' && 'body' in err) {
     return new AppError({
       code: 'INVALID_JSON',
       message: 'Request body must be valid JSON.',
@@ -87,16 +87,19 @@ function normalizeError(err: any) {
     });
   }
 
-  if (err?.code || err?.message?.includes?.('Supabase')) {
-    return new AppError({
-      code: 'SUPABASE_ERROR',
-      message: 'The data service could not complete the request.',
-      statusCode: Number(err.statusCode || err.status || 500),
-      details: {
-        providerCode: err.code,
-      },
-      expose: Number(err.statusCode || err.status || 500) < 500,
-    });
+  if (err && typeof err === 'object') {
+    const errorRecord = err as Record<string, unknown>;
+    if (errorRecord.code || (typeof errorRecord.message === 'string' && errorRecord.message.includes('Supabase'))) {
+      return new AppError({
+        code: 'SUPABASE_ERROR',
+        message: 'The data service could not complete the request.',
+        statusCode: Number(errorRecord.statusCode || errorRecord.status || 500),
+        details: {
+          providerCode: String(errorRecord.code || ''),
+        },
+        expose: Number(errorRecord.statusCode || errorRecord.status || 500) < 500,
+      });
+    }
   }
 
   return new AppError({
@@ -109,7 +112,7 @@ function normalizeError(err: any) {
   });
 }
 
-export const globalErrorHandler = (err: any, req: Request, res: Response, _next: NextFunction) => {
+export const globalErrorHandler = (err: unknown, req: Request, res: Response, _next: NextFunction) => {
   const normalized = normalizeError(err);
   const status = normalized.statusCode;
   const correlationId =
@@ -130,8 +133,8 @@ export const globalErrorHandler = (err: any, req: Request, res: Response, _next:
       message: normalized.message,
       path: req.path,
       method: req.method,
-      userId: (req as any).user?.uid || 'anonymous',
-      tenantId: (req as any).tenantId,
+      userId: req.user?.uid || 'anonymous',
+      tenantId: req.tenantId,
       correlationId,
     },
     'Request failed'

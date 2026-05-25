@@ -16,7 +16,7 @@ import {
 import { cn } from '../lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useDebounce } from '../lib/hooks';
-import { getActiveTenantId, getDefaultClassId, getDemoClassesForTenant } from '../lib/tenant';
+import { getActiveTenantId } from '../lib/tenant';
 import { AttendanceRecord, StudentProfile as Student } from '@educonnect/shared';
 import { Card } from '../components/ui/Card';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -101,10 +101,7 @@ export const AttendancePage = () => {
   const { user, canManageAttendance, classId: userClassId, schoolId } = useAuth();
   const { toast } = useToast();
   const activeTenantId = getActiveTenantId(schoolId);
-  const classOptions = React.useMemo(
-    () => getDemoClassesForTenant(activeTenantId),
-    [activeTenantId]
-  );
+  const [classOptions, setClassOptions] = React.useState<Array<{ id: string; label: string; section: string }>>([]);
 
   const [view, setView] = useState<'marking' | 'history' | 'reports'>(
     canManageAttendance ? 'marking' : 'history'
@@ -112,7 +109,7 @@ export const AttendancePage = () => {
 
   // Shared state
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [selectedClass, setSelectedClass] = useState(userClassId || getDefaultClassId(schoolId));
+  const [selectedClass, setSelectedClass] = useState(userClassId || '');
   const [loading, setLoading] = useState(true);
   const [lastSyncTime, setLastSyncTime] = useState<Date>(new Date());
 
@@ -144,12 +141,12 @@ export const AttendancePage = () => {
   }, [userDocuments, selectedClass, activeTenantId]);
 
   useEffect(() => {
-    if (!classOptions.some((option) => option.id === selectedClass)) {
+    if (classOptions.length > 0 && !classOptions.some((option) => option.id === selectedClass)) {
       queueMicrotask(() =>
-        setSelectedClass(userClassId || classOptions[0]?.id || getDefaultClassId(activeTenantId))
+        setSelectedClass(userClassId || classOptions[0]?.id || '')
       );
     }
-  }, [activeTenantId, classOptions, selectedClass, userClassId]);
+  }, [classOptions, selectedClass, userClassId]);
 
   const loadMarkingData = useCallback(async () => {
     setLoading(true);

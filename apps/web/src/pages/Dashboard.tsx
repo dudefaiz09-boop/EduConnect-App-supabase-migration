@@ -19,26 +19,8 @@ import { QuickActionCard } from '../components/saas/QuickActionCard';
 import { PageShell } from '../components/ui/PageShell';
 import { useAuth } from '../contexts/AuthContext';
 import { useDocuments } from '../lib/documents';
+import { useDashboardStats, useAttendanceTrend, usePerformanceTrend } from '../lib/hooks';
 import { cn } from '../lib/utils';
-
-const attendanceTrend = [
-  { label: 'Mon', value: 92 },
-  { label: 'Tue', value: 95 },
-  { label: 'Wed', value: 88 },
-  { label: 'Thu', value: 94 },
-  { label: 'Fri', value: 97 },
-  { label: 'Sat', value: 91 },
-];
-
-// TODO: Replace with real financial data from Supabase fees collection
-const revenueTrend = [
-  { label: 'Jan', value: 42 },
-  { label: 'Feb', value: 56 },
-  { label: 'Mar', value: 49 },
-  { label: 'Apr', value: 72 },
-  { label: 'May', value: 86 },
-  { label: 'Jun', value: 93 },
-];
 
 const performanceTrend = [
   { label: 'Math', value: 82 },
@@ -57,11 +39,6 @@ type UserRole =
   | 'librarian'
   | 'accountant'
   | 'staff';
-
-type DashboardUser = {
-  role?: UserRole;
-  roles?: UserRole[];
-};
 
 type DashboardAnnouncement = {
   id?: string;
@@ -118,6 +95,16 @@ const roleCopy: Record<UserRole, { title: string; subtitle: string; insight: str
   },
 };
 
+const iconMap: Record<string, React.ElementType> = {
+  Users,
+  GraduationCap,
+  Activity,
+  Banknote,
+  CalendarDays,
+  BookOpen,
+  Brain,
+};
+
 export function DashboardPage() {
   const { role } = useAuth();
   const {
@@ -128,119 +115,17 @@ export function DashboardPage() {
     order: { field: 'createdAt', ascending: false },
     limit: 4,
   });
-  const {
-    data: users,
-    error: usersError,
-    loading: usersLoading,
-  } = useDocuments<DashboardUser>('users');
+
+  const { data: dashboardStats, error: statsError, isLoading: statsLoading } = useDashboardStats();
+  const { data: attendanceTrend, isLoading: trendLoading } = useAttendanceTrend();
+  const { data: perfTrend } = usePerformanceTrend();
+
   const userRole = (role as UserRole) || 'student';
   const copy = roleCopy[userRole] || roleCopy.student;
 
-  const { studentCount, teacherCount } = React.useMemo(
-    () => ({
-      studentCount: users.filter((u) => u.role === 'student' || u.roles?.includes('student'))
-        .length,
-      teacherCount: users.filter((u) => u.role === 'teacher' || u.roles?.includes('teacher'))
-        .length,
-    }),
-    [users]
-  );
-
-  const stats =
-    role === 'teacher'
-      ? [
-          {
-            title: 'Classes Today',
-            value: '5',
-            detail: 'Two lab sessions',
-            icon: CalendarDays,
-            tone: 'blue' as const,
-          },
-          {
-            title: 'Submissions',
-            value: '28',
-            detail: '7 need grading',
-            icon: BookOpen,
-            tone: 'violet' as const,
-          },
-          {
-            title: 'Attendance',
-            value: '94%',
-            detail: 'Across assigned classes',
-            icon: Activity,
-            tone: 'emerald' as const,
-          },
-          {
-            title: 'AI Drafts',
-            value: '3',
-            detail: 'Lesson ideas ready',
-            icon: Brain,
-            tone: 'cyan' as const,
-          },
-        ]
-      : role === 'student'
-        ? [
-            {
-              title: 'Attendance',
-              value: '96%',
-              detail: 'Great consistency',
-              icon: Activity,
-              tone: 'emerald' as const,
-            },
-            {
-              title: 'Assignments',
-              value: '4',
-              detail: 'Due this week',
-              icon: BookOpen,
-              tone: 'blue' as const,
-            },
-            {
-              title: 'Average',
-              value: 'A-',
-              detail: 'Up 4% this term',
-              icon: GraduationCap,
-              tone: 'violet' as const,
-            },
-            {
-              title: 'Study Plan',
-              value: '2h',
-              detail: 'Recommended today',
-              icon: Brain,
-              tone: 'cyan' as const,
-            },
-          ]
-        : [
-            {
-              title: 'Students',
-              value: usersLoading ? '...' : String(studentCount),
-              detail: usersError ? 'Unable to load users' : 'Active learners',
-              icon: Users,
-              tone: usersError ? ('rose' as const) : ('blue' as const),
-              trend: usersError ? undefined : '+6%',
-            },
-            {
-              title: 'Teachers',
-              value: usersLoading ? '...' : String(teacherCount),
-              detail: usersError ? 'Unable to load users' : 'Faculty coverage',
-              icon: GraduationCap,
-              tone: usersError ? ('rose' as const) : ('violet' as const),
-            },
-            {
-              title: 'Attendance',
-              value: '93%',
-              detail: 'School-wide today',
-              icon: Activity,
-              tone: 'emerald' as const,
-              trend: '+2%',
-            },
-            {
-              title: 'Revenue',
-              value: '86%',
-              detail: 'Collection progress',
-              icon: Banknote,
-              tone: 'cyan' as const,
-            },
-          ];
+  const trendData = attendanceTrend?.data && attendanceTrend.data.length > 0
+    ? attendanceTrend.data
+    : [];
 
   return (
     <PageShell>
@@ -268,17 +153,33 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {usersError && (
+      {statsError && (
         <div className="flex items-center gap-3 rounded-3xl border border-amber-100 bg-amber-50 p-4 text-sm font-bold text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
           <AlertCircle size={18} />
-          Demo user counts could not be loaded. Other dashboard modules remain available.
+          Dashboard stats could not be loaded. Other modules remain available.
         </div>
       )}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => (
-          <StatCard key={stat.title} {...stat} />
-        ))}
+        {statsLoading ? (
+          <>
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-28 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
+            ))}
+          </>
+        ) : (
+          dashboardStats?.stats?.map((stat: Record<string, unknown>) => (
+            <StatCard
+              key={String(stat.title)}
+              title={String(stat.title)}
+              value={String(stat.value)}
+              detail={String(stat.detail)}
+              icon={iconMap[String(stat.icon)] || Activity}
+              tone={(stat.tone as 'blue' | 'violet' | 'emerald' | 'cyan' | 'rose') || 'blue'}
+              trend={stat.trend as string | undefined}
+            />
+          ))
+        )}
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
@@ -287,15 +188,17 @@ export function DashboardPage() {
           subtitle={
             role === 'student'
               ? 'Your weekly consistency'
-              : 'Realtime trend from current operational data'
+              : trendLoading
+                ? 'Loading trend data...'
+                : 'Realtime trend from current operational data'
           }
-          data={role === 'accountant' || role === 'admin' ? revenueTrend : attendanceTrend}
+          data={trendData || []}
           dataKey="value"
         />
         <AnalyticsChart
           title="Performance Mix"
           subtitle="Subject-level pulse for faster interventions"
-          data={performanceTrend}
+          data={perfTrend?.data || performanceTrend}
           dataKey="value"
           variant="bar"
         />

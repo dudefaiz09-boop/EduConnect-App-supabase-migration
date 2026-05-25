@@ -71,7 +71,7 @@ using (
 );
 
 insert into storage.buckets (id, name, public, file_size_limit)
-values ('educonnect-uploads', 'educonnect-uploads', true, 52428800)
+values ('educonnect-uploads', 'educonnect-uploads', false, 52428800)
 on conflict (id) do update
 set public = excluded.public,
     file_size_limit = excluded.file_size_limit;
@@ -81,15 +81,24 @@ create policy "authenticated uploads educonnect files"
 on storage.objects
 for insert
 to authenticated
-with check (bucket_id = 'educonnect-uploads');
+with check (
+  bucket_id = 'educonnect-uploads'
+  and coalesce((auth.jwt() -> 'app_metadata' ->> 'schoolId')::text, '') != ''
+);
 
 drop policy if exists "authenticated updates own educonnect files" on storage.objects;
 create policy "authenticated updates own educonnect files"
 on storage.objects
 for update
 to authenticated
-using (bucket_id = 'educonnect-uploads')
-with check (bucket_id = 'educonnect-uploads');
+using (
+  bucket_id = 'educonnect-uploads'
+  and (storage.foldername(name))[1] = (auth.jwt() -> 'app_metadata' ->> 'schoolId')
+)
+with check (
+  bucket_id = 'educonnect-uploads'
+  and (storage.foldername(name))[1] = (auth.jwt() -> 'app_metadata' ->> 'schoolId')
+);
 create or replace function public.touch_updated_at()
 returns trigger
 language plpgsql
@@ -388,17 +397,59 @@ create policy "admin write notifications" on public.notifications
 for all to authenticated using (coalesce((auth.jwt() -> 'app_metadata' ->> 'isAdmin')::boolean, false))
 with check (coalesce((auth.jwt() -> 'app_metadata' ->> 'isAdmin')::boolean, false));
 
-drop policy if exists "school authenticated read core" on public.attendance;
-create policy "school authenticated read core" on public.attendance for select to authenticated using (true);
-drop policy if exists "school authenticated read assignments" on public.assignments;
-create policy "school authenticated read assignments" on public.assignments for select to authenticated using (true);
-drop policy if exists "school authenticated read library" on public.library_books;
-create policy "school authenticated read library" on public.library_books for select to authenticated using (true);
+drop policy if exists "tenant attendance read" on public.attendance;
+create policy "tenant attendance read" on public.attendance for select to authenticated
+using (school_id = (select auth.jwt() -> 'app_metadata' ->> 'schoolId'));
+drop policy if exists "tenant assignments read" on public.assignments;
+create policy "tenant assignments read" on public.assignments for select to authenticated
+using (school_id = (select auth.jwt() -> 'app_metadata' ->> 'schoolId'));
+drop policy if exists "tenant library read" on public.library_books;
+create policy "tenant library read" on public.library_books for select to authenticated
+using (school_id = (select auth.jwt() -> 'app_metadata' ->> 'schoolId'));
 
 drop policy if exists "admin write attendance" on public.attendance;
 create policy "admin write attendance" on public.attendance for all to authenticated
 using (coalesce((auth.jwt() -> 'app_metadata' ->> 'isAdmin')::boolean, false) or (auth.jwt() -> 'app_metadata' -> 'roles') ? 'teacher')
 with check (coalesce((auth.jwt() -> 'app_metadata' ->> 'isAdmin')::boolean, false) or (auth.jwt() -> 'app_metadata' -> 'roles') ? 'teacher');
+
+drop policy if exists "tenant fees read" on public.fees;
+create policy "tenant fees read" on public.fees for select to authenticated
+using (school_id = (select auth.jwt() -> 'app_metadata' ->> 'schoolId'));
+
+drop policy if exists "admin write fees" on public.fees;
+create policy "admin write fees" on public.fees for all to authenticated
+using (coalesce((auth.jwt() -> 'app_metadata' ->> 'isAdmin')::boolean, false) or (auth.jwt() -> 'app_metadata' -> 'roles') ? 'accountant')
+with check (coalesce((auth.jwt() -> 'app_metadata' ->> 'isAdmin')::boolean, false) or (auth.jwt() -> 'app_metadata' -> 'roles') ? 'accountant');
+
+drop policy if exists "tenant payments read" on public.payments;
+create policy "tenant payments read" on public.payments for select to authenticated
+using (student_id = auth.uid()
+  or coalesce((auth.jwt() -> 'app_metadata' ->> 'isAdmin')::boolean, false)
+  or (auth.jwt() -> 'app_metadata' -> 'roles') ?| array['accountant', 'principal']);
+
+drop policy if exists "tenant performance read" on public.performance;
+create policy "tenant performance read" on public.performance for select to authenticated
+using (school_id = (select auth.jwt() -> 'app_metadata' ->> 'schoolId'));
+
+drop policy if exists "admin write performance" on public.performance;
+create policy "admin write performance" on public.performance for all to authenticated
+using (coalesce((auth.jwt() -> 'app_metadata' ->> 'isAdmin')::boolean, false) or (auth.jwt() -> 'app_metadata' -> 'roles') ? 'teacher')
+with check (coalesce((auth.jwt() -> 'app_metadata' ->> 'isAdmin')::boolean, false) or (auth.jwt() -> 'app_metadata' -> 'roles') ? 'teacher');
+
+drop policy if exists "tenant borrowed_books read" on public.borrowed_books;
+create policy "tenant borrowed_books read" on public.borrowed_books for select to authenticated
+using (borrower_id = auth.uid()
+  or coalesce((auth.jwt() -> 'app_metadata' ->> 'isAdmin')::boolean, false)
+  or (auth.jwt() -> 'app_metadata' -> 'roles') ? 'librarian');
+
+drop policy if exists "tenant borrowed_books write" on public.borrowed_books;
+create policy "tenant borrowed_books write" on public.borrowed_books for all to authenticated
+using (borrower_id = auth.uid()
+  or coalesce((auth.jwt() -> 'app_metadata' ->> 'isAdmin')::boolean, false)
+  or (auth.jwt() -> 'app_metadata' -> 'roles') ? 'librarian')
+with check (borrower_id = auth.uid()
+  or coalesce((auth.jwt() -> 'app_metadata' ->> 'isAdmin')::boolean, false)
+  or (auth.jwt() -> 'app_metadata' -> 'roles') ? 'librarian');
 
 create trigger profiles_updated_at before update on public.profiles
 for each row execute function public.set_updated_at();
@@ -599,18 +650,32 @@ create trigger enrollments_updated_at before update on public.enrollments
 for each row execute function public.set_updated_at();
 -- Storage Policies for educonnect-uploads bucket
 
--- 1. Allow authenticated users to read/download objects from the uploads bucket
+-- 1. Allow authenticated users to read/download objects from the uploads bucket (tenant-scoped)
 drop policy if exists "authenticated select educonnect files" on storage.objects;
 create policy "authenticated select educonnect files"
 on storage.objects
 for select
 to authenticated
-using (bucket_id = 'educonnect-uploads');
+using (
+  bucket_id = 'educonnect-uploads'
+  and (
+    -- User can access files in their own school/tenant folder
+    (storage.foldername(name))[1] = (auth.jwt() -> 'app_metadata' ->> 'schoolId')
+    -- Super admins can access all files
+    or coalesce((auth.jwt() -> 'app_metadata' ->> 'isAdmin')::boolean, false)
+  )
+);
 
--- 2. Allow authenticated users to delete objects from the uploads bucket
+-- 2. Allow authenticated users to delete objects from the uploads bucket (tenant-scoped)
 drop policy if exists "authenticated delete educonnect files" on storage.objects;
 create policy "authenticated delete educonnect files"
 on storage.objects
 for delete
 to authenticated
-using (bucket_id = 'educonnect-uploads');
+using (
+  bucket_id = 'educonnect-uploads'
+  and (
+    (storage.foldername(name))[1] = (auth.jwt() -> 'app_metadata' ->> 'schoolId')
+    or coalesce((auth.jwt() -> 'app_metadata' ->> 'isAdmin')::boolean, false)
+  )
+);

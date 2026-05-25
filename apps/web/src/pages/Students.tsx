@@ -679,7 +679,7 @@ export const StudentsPage = () => {
                     rows={8}
                     value={bulkText}
                     onChange={(e) => setBulkText(e.target.value)}
-                    placeholder="email, name, class, section, password&#10;alice@school.test, Alice Smith, 10A, A, TestPass123!&#10;bob@school.test, Bob Jones, 10B, B, TestPass123!"
+                    placeholder="email, name, class, section, password&#10;student@school.test, Student Name, 10A, A, YourPassword123!&#10;student2@school.test, Student Name 2, 10B, B, YourPassword123!"
                     className="w-full bg-slate-50 border border-slate-100 p-8 rounded-[32px] outline-none focus:ring-4 focus:ring-blue-100 transition-all font-mono text-sm leading-relaxed"
                   />
                   <div className="p-6 bg-blue-50 rounded-3xl border border-blue-100">

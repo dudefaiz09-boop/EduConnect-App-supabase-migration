@@ -778,8 +778,8 @@ export function PlaceholderApiScreen({ title, subtitle }: { title: string; subti
     <ScrollView contentContainerStyle={styles.listContent}>
       <ModuleHeader title={title} subtitle={subtitle} />
       <EmptyState
-        title="Mobile API not implemented"
-        body="The web module has planned backend actions, but no safe mobile contract was found. This screen stays connected and non-crashing."
+        title="Coming soon on mobile"
+        body="This module is available on the web dashboard. Mobile support is being built."
       />
     </ScrollView>
   );

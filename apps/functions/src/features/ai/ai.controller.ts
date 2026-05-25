@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { logger } from '@educonnect/logger';
 import { AiService } from './ai.service.js';
 import { AiContextService } from './ai-context.service.js';
 import { getAiRuntimeStatus } from '../../lib/ai.js';
@@ -19,12 +20,13 @@ function sendAiUnavailable(res: Response) {
   });
 }
 
-function handleAiError(error: any, res: Response, next: NextFunction) {
-  if (error.status === 502 || error.message?.includes('AI provider')) {
+function handleAiError(error: unknown, res: Response, next: NextFunction) {
+  const errRecord = error && typeof error === 'object' ? error as Record<string, unknown> : {};
+  if (errRecord.status === 502 || (typeof errRecord.message === 'string' && errRecord.message.includes('AI provider'))) {
     return res.status(502).json({
       error: 'AI_PROVIDER_ERROR',
       message: 'AI provider request failed',
-      details: error.message,
+      details: errRecord.message,
     });
   }
 
@@ -52,7 +54,7 @@ export class AiController {
         typeof req.headers['x-user-role'] === 'string' ? req.headers['x-user-role'] : 'student';
 
       if (!tenantId) {
-        console.warn('[AI] Missing tenant header (x-school-id) for public query');
+        logger.warn({}, '[AI] Missing tenant header (x-school-id) for public query');
         return res.status(400).json({
           error: 'Tenant Context Required',
           message: 'x-school-id header is required for AI chat.',
@@ -60,7 +62,7 @@ export class AiController {
       }
 
       if (typeof query !== 'string' || query.trim().length === 0 || query.length > 2000) {
-        console.warn('[AI] Validation failure:', { queryLength: query?.length, mode });
+        logger.warn({ queryLength: query?.length, mode }, '[AI] Validation failure');
         return res.status(400).json({
           error: 'Invalid AI query',
           message: 'query must be a non-empty string under 2000 characters.',
@@ -75,7 +77,7 @@ export class AiController {
       );
 
       res.json({ success: true, id, response, timestamp: new Date().toISOString() });
-    } catch (error: any) {
+    } catch (error: unknown) {
       return handleAiError(error, res, next);
     }
   }
@@ -90,10 +92,6 @@ export class AiController {
       const user = req.user;
       const tenantId = req.tenantId || (req.headers['x-school-id'] as string | undefined);
 
-      // The AI assistant does not read private school records in this route; it only answers the
-      // submitted prompt. During Supabase migration, some valid sessions may not resolve to req.user
-      // even though the tenant header is present. Allow a tenant-scoped fallback user so the assistant
-      // remains usable instead of surfacing a misleading provider configuration error.
       if (!user && !tenantId) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
@@ -106,7 +104,7 @@ export class AiController {
       const { id, response } = await AiService.getChatbotResponse(userId, role, query, mode);
 
       res.json({ success: true, id, response, timestamp: new Date().toISOString() });
-    } catch (error: any) {
+    } catch (error: unknown) {
       return handleAiError(error, res, next);
     }
   }
@@ -139,7 +137,7 @@ export class AiController {
       );
 
       res.json({ success: true, id, response, timestamp: new Date().toISOString() });
-    } catch (error: any) {
+    } catch (error: unknown) {
       return handleAiError(error, res, next);
     }
   }

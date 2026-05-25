@@ -17,7 +17,7 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { getActiveTenantId, getDefaultClassId, getDemoClassesForTenant } from '../lib/tenant';
+import { getActiveTenantId } from '../lib/tenant';
 import { validateFeesCSV, CSVValidationError } from '../lib/csvValidator';
 import {
   BarChart,
@@ -96,10 +96,7 @@ export const FeesPage = () => {
   const { user, isStudent, canManageFees, classId: userClassId, schoolId } = useAuth();
   const { toast } = useToast();
   const activeTenantId = getActiveTenantId(schoolId);
-  const classOptions = React.useMemo(
-    () => getDemoClassesForTenant(activeTenantId),
-    [activeTenantId]
-  );
+  const [classOptions] = React.useState<Array<{ id: string; label: string; section: string }>>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [fees, setFees] = useState<FeeRecord[]>([]);
@@ -113,18 +110,18 @@ export const FeesPage = () => {
   // Management State
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadText, setUploadText] = useState('');
-  const [selectedClass, setSelectedClass] = useState(userClassId || getDefaultClassId(schoolId));
+  const [selectedClass, setSelectedClass] = useState(userClassId || '');
   const [feeSearch, setFeeSearch] = useState('');
   const [uploadError, setUploadError] = useState<CSVValidationError[] | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
 
   useEffect(() => {
-    if (!classOptions.some((option) => option.id === selectedClass)) {
+    if (classOptions.length > 0 && !classOptions.some((option) => option.id === selectedClass)) {
       queueMicrotask(() =>
-        setSelectedClass(userClassId || classOptions[0]?.id || getDefaultClassId(activeTenantId))
+        setSelectedClass(userClassId || classOptions[0]?.id || '')
       );
     }
-  }, [activeTenantId, classOptions, selectedClass, userClassId]);
+  }, [classOptions, selectedClass, userClassId]);
 
   const loadStudentData = React.useCallback(async () => {
     setLoading(true);
@@ -229,7 +226,7 @@ export const FeesPage = () => {
 
   const downloadFeeSample = () => {
     const sample =
-      'studentId,amountDue,dueDate,status,amountPaid\nstudent_demo1_a,5000,2026-06-30,pending,0\nstudent_demo1_b,4500,2026-06-15,paid,4500';
+      'studentId,amountDue,dueDate,status,amountPaid\nstudent001,5000,2026-06-30,pending,0\nstudent002,4500,2026-06-15,paid,4500';
     const blob = new Blob([sample], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -758,7 +755,7 @@ export const FeesPage = () => {
                       rows={8}
                       value={uploadText}
                       onChange={(e) => setUploadText(e.target.value)}
-                      placeholder="studentId,amountDue,dueDate,status,amountPaid&#10;student_demo1_a,5000,2026-06-30,pending,0&#10;student_demo1_b,4500,2026-06-15,paid,4500"
+                      placeholder="studentId,amountDue,dueDate,status,amountPaid&#10;student001,5000,2026-06-30,pending,0&#10;student002,4500,2026-06-15,paid,4500"
                       className="w-full bg-slate-50 border border-slate-200 p-6 rounded-3xl text-slate-900 outline-none focus:ring-4 focus:ring-blue-100 transition-all font-mono text-xs leading-relaxed dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                     />
                     <input

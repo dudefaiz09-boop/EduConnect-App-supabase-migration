@@ -6,6 +6,7 @@ import {
   createStudentSchema,
   updateStudentSchema,
   studentQuerySchema,
+  bulkImportSchema,
 } from './student.validation.js';
 import { checkAdmin, checkPermission } from '../../middleware/auth.js';
 
@@ -25,7 +26,7 @@ function canViewStudentProfile(req: Request, res: Response, next: NextFunction) 
 
 router.post('/create', checkAdmin, validate(createStudentSchema), StudentController.create);
 
-router.post('/bulk-import', checkAdmin, StudentController.bulkImport);
+router.post('/bulk-import', checkAdmin, validate(bulkImportSchema), StudentController.bulkImport);
 
 router.put('/:uid', checkAdmin, validate(updateStudentSchema), StudentController.update);
 
