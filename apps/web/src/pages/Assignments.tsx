@@ -25,7 +25,6 @@ import {
 import { ApiRequestError } from '@educonnect/shared-api';
 import { assignmentsService } from '../lib/api-client';
 import { getApiBaseUrlDiagnostic } from '../lib/env';
-import { getActiveTenantId } from '../lib/tenant';
 import { FileUpload } from '../components/FileUpload';
 import { EmptyState } from '../components/saas/EmptyState';
 import { SearchBar } from '../components/saas/SearchBar';
@@ -69,7 +68,6 @@ export const AssignmentsPage = () => {
   const { user, isStudent, canManageAssignments, classId: userClassId, schoolId } = useAuth();
   const { toast } = useToast();
   const uid = user?.uid;
-  const activeTenantId = getActiveTenantId(schoolId);
   const [classOptions] = useState<Array<{ id: string; label: string; section: string }>>([]);
 
   const [selectedClass, setSelectedClass] = useState(userClassId || '');

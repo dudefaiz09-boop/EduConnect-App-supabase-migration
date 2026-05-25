@@ -17,7 +17,6 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { getActiveTenantId } from '../lib/tenant';
 import { validatePerformanceCSV, CSVValidationError } from '../lib/csvValidator';
 import {
   AreaChart,
@@ -54,9 +53,8 @@ interface PerformanceReport {
 }
 
 export const PerformancePage = () => {
-  const { user, isStudent, canManagePerformance, classId: userClassId, schoolId } = useAuth();
+  const { user, isStudent, canManagePerformance, classId: userClassId } = useAuth();
   const { toast } = useToast();
-  const activeTenantId = getActiveTenantId(schoolId);
   const [classOptions] = React.useState<Array<{ id: string; label: string; section: string }>>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [records, setRecords] = useState<PerformanceRecord[]>([]);

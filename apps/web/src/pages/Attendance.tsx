@@ -101,9 +101,7 @@ export const AttendancePage = () => {
   const { user, canManageAttendance, classId: userClassId, schoolId } = useAuth();
   const { toast } = useToast();
   const activeTenantId = getActiveTenantId(schoolId);
-  const [classOptions, setClassOptions] = React.useState<
-    Array<{ id: string; label: string; section: string }>
-  >([]);
+  const [classOptions] = React.useState<Array<{ id: string; label: string; section: string }>>([]);
 
   const [view, setView] = useState<'marking' | 'history' | 'reports'>(
     canManageAttendance ? 'marking' : 'history'

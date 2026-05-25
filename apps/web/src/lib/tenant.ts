@@ -1,5 +1,3 @@
-import { env } from './env';
-
 export const SELECTED_TENANT_STORAGE_KEY = 'educonnect_selected_tenant_id';
 export const LEGACY_TENANT_STORAGE_KEY = 'educonnect_school_id';
 
