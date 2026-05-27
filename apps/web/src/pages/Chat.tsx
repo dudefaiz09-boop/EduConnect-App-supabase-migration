@@ -162,7 +162,7 @@ function canMessageUser(
 }
 
 export const ChatPage = () => {
-  const { user, role, classIds, linkedStudentIds } = useAuth();
+  const { user, role, classIds, linkedStudentIds, schoolId } = useAuth();
   const { toast } = useToast();
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
   const [newMessage, setNewMessage] = useState('');
@@ -248,6 +248,15 @@ export const ChatPage = () => {
   const startConversation = async (profile: UserProfile) => {
     const recipientId = profile.uid || profile.id;
     if (!recipientId) return;
+
+    if (!schoolId) {
+      toast({
+        tone: 'error',
+        title: 'Could not start chat',
+        description: 'Tenant context missing or denied. Select a school and retry.',
+      });
+      return;
+    }
 
     setIsStartingChat(true);
     try {

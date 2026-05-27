@@ -200,6 +200,13 @@ export const UsersPage = ({ type }: { type: 'student' | 'teacher' | 'all' }) => 
 
   const reload = useCallback(async () => {
     setLoading(true);
+
+    if (!activeTenantId) {
+      setAllUsers([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       const records = (await usersService.list({
         tenantId: activeTenantId || undefined,

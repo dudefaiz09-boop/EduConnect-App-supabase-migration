@@ -53,7 +53,7 @@ const priorities = {
 };
 
 export const AnnouncementsPage = () => {
-  const { isAdmin, isTeacher, user, role, classIds } = useAuth();
+  const { isAdmin, isTeacher, user, role, classIds, schoolId } = useAuth();
   const { toast } = useToast();
   const [renderedAt] = useState(() => Date.now());
   const canPost = isAdmin || isTeacher || role === 'principal';
@@ -121,6 +121,14 @@ export const AnnouncementsPage = () => {
 
   const createAnnouncement = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!schoolId) {
+      toast({
+        tone: 'error',
+        title: 'Announcement not posted',
+        description: 'Tenant context missing or denied. Select a school and retry.',
+      });
+      return;
+    }
     const title = form.title.trim();
     const content = form.content.trim();
     if (title.length < 3 || content.length < 10) {

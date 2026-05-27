@@ -90,6 +90,12 @@ export const StudentsPage = () => {
   const reloadStudents = useCallback(async () => {
     setLoading(true);
 
+    if (!schoolId) {
+      setStudents([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       const data = (await usersService.list({
         tenantId: schoolId || undefined,

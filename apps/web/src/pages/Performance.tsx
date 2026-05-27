@@ -53,7 +53,7 @@ interface PerformanceReport {
 }
 
 export const PerformancePage = () => {
-  const { user, isStudent, canManagePerformance, classId: userClassId } = useAuth();
+  const { user, isStudent, canManagePerformance, classId: userClassId, schoolId } = useAuth();
   const { toast } = useToast();
   const [classOptions] = React.useState<Array<{ id: string; label: string; section: string }>>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -116,6 +116,17 @@ export const PerformancePage = () => {
     e.preventDefault();
     setUploadError(null);
     setUploadSuccess(false);
+
+    if (!schoolId) {
+      setLoading(false);
+      toast({
+        tone: 'error',
+        title: 'Score import failed',
+        description: 'Tenant context missing or denied. Select a school and retry.',
+      });
+      return;
+    }
+
     setLoading(true);
 
     const validation = validatePerformanceCSV(uploadText);

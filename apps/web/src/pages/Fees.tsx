@@ -92,7 +92,7 @@ function createIdempotencyKey(prefix: string, id: string) {
 }
 
 export const FeesPage = () => {
-  const { user, isStudent, canManageFees, classId: userClassId } = useAuth();
+  const { user, isStudent, canManageFees, classId: userClassId, schoolId } = useAuth();
   const { toast } = useToast();
   const [classOptions] = React.useState<Array<{ id: string; label: string; section: string }>>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -159,6 +159,16 @@ export const FeesPage = () => {
     e.preventDefault();
     setUploadError(null);
     setUploadSuccess(false);
+
+    if (!schoolId) {
+      setLoading(false);
+      toast({
+        tone: 'error',
+        title: 'Import failed',
+        description: 'Tenant context missing or denied. Select a school and retry.',
+      });
+      return;
+    }
 
     if (!uploadText.trim()) {
       toast({

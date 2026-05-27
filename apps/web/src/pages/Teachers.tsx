@@ -95,6 +95,12 @@ export const TeachersPage = () => {
   const reloadTeachers = useCallback(async () => {
     setLoading(true);
 
+    if (!schoolId) {
+      setTeachers([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       const data = (await usersService.list({
         tenantId: schoolId || undefined,

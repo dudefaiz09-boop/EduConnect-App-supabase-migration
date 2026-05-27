@@ -113,7 +113,7 @@ function getBorrowDueState(record: BorrowRecord): BorrowDueState {
 }
 
 export const LibraryPage = () => {
-  const { isStudent, canManageLibrary, user } = useAuth();
+  const { isStudent, canManageLibrary, user, schoolId } = useAuth();
   const { toast } = useToast();
 
   const [resources, setResources] = useState<LibraryResource[]>([]);
@@ -178,6 +178,15 @@ export const LibraryPage = () => {
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!schoolId) {
+      toast({
+        tone: 'error',
+        title: 'Upload failed',
+        description: 'Tenant context missing or denied. Select a school and retry.',
+      });
+      return;
+    }
 
     // Validation
     if (!uploadData.title || !uploadData.subject || !uploadData.grade) {

@@ -10,8 +10,8 @@ export function isValidTenantId(
   allowedTenantIds?: string[]
 ): value is string {
   if (!value) return false;
-  if (allowedTenantIds?.length) return allowedTenantIds.includes(value);
-  return false;
+  if (!allowedTenantIds || allowedTenantIds.length === 0) return true;
+  return allowedTenantIds.includes(value);
 }
 
 export function getStoredTenantId(allowedTenantIds?: string[]) {
