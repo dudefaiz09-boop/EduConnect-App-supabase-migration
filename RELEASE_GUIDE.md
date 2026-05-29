@@ -12,7 +12,12 @@ supabase link --project-ref your-project-ref
 supabase db push
 ```
 
-Confirm the `educonnect-uploads` storage bucket exists before testing file uploads.
+## File Storage (Supabase & Firebase)
+
+Before deploying the backend, ensure:
+1. The legacy `educonnect-uploads` storage bucket exists in Supabase for backward compatibility.
+2. A Firebase project is set up with **Firebase Storage** enabled (Spark free plan).
+3. A Firebase service account is created and its JSON key file is downloaded to configure the backend environment variables.
 
 ## Backend API
 
@@ -32,6 +37,12 @@ Set:
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `SUPABASE_UPLOADS_BUCKET`
+- `STORAGE_PROVIDER=firebase` (set to `supabase` only if fallback is needed)
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_CLIENT_EMAIL`
+- `FIREBASE_PRIVATE_KEY` (ensure standard newlines are preserved)
+- `FIREBASE_STORAGE_BUCKET` (e.g. `your-project.appspot.com` or `your-project.firebasestorage.app`)
+- `FIREBASE_SIGNED_URL_TTL_SECONDS` (optional, defaults to 900)
 - `CORS_ORIGINS`
 - `GEMINI_API_KEY` if AI is enabled
 

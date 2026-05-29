@@ -2,9 +2,10 @@ import * as admin from 'firebase-admin';
 import { randomUUID } from 'node:crypto';
 import { AppError } from '../../middleware/error.js';
 import type { StorageProvider, PresignedUploadResult, PresignedReadResult } from './types.js';
+import { Bucket } from '@google-cloud/storage';
 
 export class FirebaseStorageProvider implements StorageProvider {
-  private bucket: import('firebase-admin/storage').Bucket;
+  private bucket: Bucket;
 
   constructor() {
     if (!admin.apps.length) {

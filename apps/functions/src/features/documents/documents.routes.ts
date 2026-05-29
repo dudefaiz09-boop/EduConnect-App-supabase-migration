@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { DocumentsController } from './documents.controller.js';
 
-const router = Router();
+const router: Router = Router();
 
 // Wrap async handlers properly for Express error handling
 const asyncHandler = (fn: any) => (req: any, res: any, next: any) => {
