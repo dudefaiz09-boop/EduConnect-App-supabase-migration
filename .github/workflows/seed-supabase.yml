@@ -46,3 +46,4 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SEED_SCHOOL_ID: ${{ inputs.school_id }}
+          CONFIRM_RESET_DEMO_DATA: tenant-a,tenant-b

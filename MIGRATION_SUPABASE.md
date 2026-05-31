@@ -7,7 +7,7 @@ This duplicate repo is the migration workspace for moving EduConnect away from G
 - Web hosting: Vercel Hobby
 - Auth: Supabase Auth
 - Database: Supabase Postgres with a generic `documents` table during migration
-- File uploads: Supabase Storage bucket `educonnect-uploads`
+- File uploads: Firebase Storage for new uploads; Supabase Storage only for legacy read/delete migration
 - API: existing Express app deployed as Vercel Node.js Functions
 - AI: optional Gemini API key, disabled by omission
 
@@ -19,14 +19,15 @@ This duplicate repo is the migration workspace for moving EduConnect away from G
 - Backend Firestore calls are routed through a Supabase-backed compatibility adapter.
 - Web login/logout and API bearer tokens now use Supabase Auth.
 - Mobile login/logout and API bearer tokens now use Supabase Auth.
-- Web file uploads now use Supabase Storage.
+- Web file uploads now go through the backend API, which creates Firebase Storage signed uploads.
 - Web user, staff, student, attendance, chat, and announcement screens no longer import Firebase.
 - The unused legacy realtime workspace has been removed.
 - Backend document access now imports from a Supabase document adapter instead of a Firebase-named module.
 - Turbo and smoke-test configuration now use Supabase environment variables.
 - Vercel deployment config exposes the Express API as Node.js Functions under `/api`.
-- Vercel project settings now support the web app and API as separate projects.
-- Supabase migrations create `documents`, enable Realtime for it, and create the upload bucket.
+- Vercel project settings support the recommended combined web/API project and advanced split projects.
+- Supabase migrations create `documents` and enable Realtime for it. The historical Supabase
+  uploads bucket is legacy-only.
 
 ## Remaining Migration Work
 
@@ -42,7 +43,7 @@ This duplicate repo is the migration workspace for moving EduConnect away from G
 4. Seed demo users and starter documents:
 
 ```bash
-pnpm seed:supabase
+CONFIRM_RESET_DEMO_DATA=tenant-a,tenant-b pnpm seed:supabase
 ```
 
 Use `pnpm seed:supabase -- --dry-run` to preview the seed users without touching Supabase.

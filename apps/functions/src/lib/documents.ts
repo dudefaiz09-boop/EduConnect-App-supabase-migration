@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { getSupabaseAdmin, type DocumentData, withSupabaseRetry } from './supabase.js';
 import { tryGetTenantId } from './context.js';
 import { AppError } from '../middleware/error.js';
+import { getProfileNormalizedFirst } from './identity-profile.js';
 
 // Compatibility layer for the migration. Existing routes keep their
 // document-store shaped calls while the storage underneath runs on Supabase.
@@ -322,16 +323,7 @@ export const db = {
 };
 
 async function getUserProfile(uid: string) {
-  const supabaseAdmin = getSupabaseAdmin();
-  const { data, error } = await supabaseAdmin
-    .from('documents')
-    .select('data')
-    .eq('collection', 'users')
-    .eq('id', uid)
-    .maybeSingle<{ data: DocumentData | null }>();
-
-  if (error) throw error;
-  return data?.data || {};
+  return getProfileNormalizedFirst(uid);
 }
 
 export const auth = {

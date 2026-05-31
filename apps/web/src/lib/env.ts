@@ -5,7 +5,6 @@ const DEFAULT_API_BASE_URL = '/api';
 const envSchema = z.object({
   VITE_SUPABASE_URL: z.string().url('VITE_SUPABASE_URL must be a valid Supabase project URL'),
   VITE_SUPABASE_ANON_KEY: z.string().min(1, 'VITE_SUPABASE_ANON_KEY is required'),
-  VITE_SUPABASE_UPLOADS_BUCKET: z.string().min(1).default('educonnect-uploads'),
   VITE_API_BASE_URL: z
     .string()
     .min(1, 'VITE_API_BASE_URL is required')

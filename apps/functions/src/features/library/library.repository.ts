@@ -1,4 +1,6 @@
+import { randomUUID } from 'node:crypto';
 import { db } from '../../lib/documents.js';
+import { getSupabaseAdmin } from '../../lib/supabase.js';
 import { createNotification } from '../../lib/notifications.js';
 import { logger } from '@educonnect/logger';
 import { AppError } from '../../middleware/error.js';
@@ -71,6 +73,67 @@ async function safeNotification(input: any) {
   } catch (error) {
     logger.warn({ err: error, title: input.title }, 'Library notification could not be created');
   }
+}
+
+function mapLibraryBorrowRpcError(error: unknown) {
+  const message =
+    error && typeof error === 'object' && 'message' in error
+      ? String(error.message)
+      : String(error || '');
+  if (message.includes('LIBRARY_RESOURCE_NOT_FOUND'))
+    return new AppError('Resource not found', 404);
+  if (message.includes('LIBRARY_TENANT_DENIED')) return new AppError('Tenant access denied', 403);
+  if (message.includes('LIBRARY_RESOURCE_ARCHIVED')) {
+    return new AppError('Resource is archived and cannot be borrowed', 409);
+  }
+  if (message.includes('LIBRARY_NO_COPIES_AVAILABLE')) {
+    return new AppError('No copies available for borrowing', 409);
+  }
+  if (message.includes('LIBRARY_ALREADY_BORROWED')) {
+    return new AppError('Resource is already borrowed by this user', 409);
+  }
+  if (message.includes('LIBRARY_BORROW_RECORD_NOT_FOUND')) {
+    return new AppError('Borrow record not found', 404);
+  }
+  return error;
+}
+
+async function borrowResourceAtomically(input: {
+  resourceId: string;
+  tenantId: string;
+  studentId: string;
+  studentName: string;
+  recordId: string;
+  borrowedAt: string;
+  dueAt: string;
+}) {
+  const { data, error } = await getSupabaseAdmin().rpc('borrow_library_resource_document', {
+    p_resource_id: input.resourceId,
+    p_tenant_id: input.tenantId,
+    p_student_id: input.studentId,
+    p_student_name: input.studentName,
+    p_borrow_record_id: input.recordId,
+    p_borrowed_at: input.borrowedAt,
+    p_due_at: input.dueAt,
+  });
+  if (error) throw mapLibraryBorrowRpcError(error);
+  return data as BorrowRecord & { id: string };
+}
+
+async function returnResourceAtomically(input: {
+  recordId: string;
+  tenantId: string;
+  actorId: string;
+  returnedAt: string;
+}) {
+  const { data, error } = await getSupabaseAdmin().rpc('return_library_resource_document', {
+    p_record_id: input.recordId,
+    p_tenant_id: input.tenantId,
+    p_actor_id: input.actorId,
+    p_returned_at: input.returnedAt,
+  });
+  if (error) throw mapLibraryBorrowRpcError(error);
+  return data as { success: boolean; id: string; status: 'returned' };
 }
 
 export class LibraryRepository {
@@ -159,40 +222,16 @@ export class LibraryRepository {
       throw new AppError('Forbidden: resource is not visible to this user', 403);
     }
 
-    // Enforce copy limit
-    const availableCopies = resource.availableCopies ?? Infinity;
-    const borrowedCount = resource.borrowedCount ?? 0;
-    if (borrowedCount >= availableCopies) {
-      throw new AppError('No copies available for borrowing', 409);
-    }
-
-    const activeBorrows = await db
-      .collection('borrowRecords')
-      .where('tenantId', '==', tenantId)
-      .where('studentId', '==', actor.uid)
-      .where('resourceId', '==', resourceId)
-      .where('status', '==', 'borrowed')
-      .get();
-    if (activeBorrows.docs.length > 0)
-      throw new AppError('Resource is already borrowed by this user', 409);
-
     const now = new Date().toISOString();
     const dueAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
-    const borrowRecord: BorrowRecord & Record<string, unknown> = {
-      tenantId,
-      schoolId: tenantId,
+    const borrowRecord = await borrowResourceAtomically({
       resourceId,
+      tenantId,
       studentId: actor.uid,
       studentName: actor.email || 'Student',
       borrowedAt: now,
       dueAt,
-      status: 'borrowed',
-      returnedAt: null,
-    };
-    const recordRef = await db.collection('borrowRecords').add(borrowRecord);
-    await resourceRef.update({
-      borrowedCount: Number(resource.borrowedCount || 0) + 1,
-      updatedAt: now,
+      recordId: randomUUID(),
     });
     await safeNotification({
       title: 'Library resource borrowed',
@@ -203,9 +242,9 @@ export class LibraryRepository {
       schoolId: tenantId,
       tenantId,
       actorId: actor.uid,
-      metadata: { resourceId, borrowRecordId: recordRef.id },
+      metadata: { resourceId, borrowRecordId: borrowRecord.id },
     });
-    return { id: recordRef.id, ...borrowRecord };
+    return borrowRecord;
   }
 
   static async return(recordId: string, actor: Actor, tenantId: string) {
@@ -220,20 +259,15 @@ export class LibraryRepository {
     if (record.status === 'returned') return { success: true, id: recordId, status: 'returned' };
 
     const now = new Date().toISOString();
-    await recordRef.update({
-      status: 'returned',
+    const result = await returnResourceAtomically({
+      recordId,
+      tenantId,
+      actorId: actor.uid,
       returnedAt: now,
-      updatedAt: now,
-      updatedBy: actor.uid,
     });
     const resourceRef = db.collection('library').doc(record.resourceId);
     const resourceSnapshot = await resourceRef.get();
     const resource = resourceSnapshot.exists ? (resourceSnapshot.data() as LibraryResource) : null;
-    if (resource)
-      await resourceRef.update({
-        borrowedCount: Math.max(Number(resource.borrowedCount || 1) - 1, 0),
-        updatedAt: now,
-      });
     await safeNotification({
       title: 'Library resource returned',
       message: `${resource?.title || 'Your borrowed resource'} was marked as returned.`,
@@ -245,7 +279,7 @@ export class LibraryRepository {
       actorId: actor.uid,
       metadata: { resourceId: record.resourceId, borrowRecordId: recordId },
     });
-    return { success: true, id: recordId, status: 'returned' };
+    return result;
   }
 
   static async updateResource(id: string, data: any, actor: Actor, tenantId: string) {

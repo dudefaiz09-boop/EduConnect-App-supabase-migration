@@ -24,7 +24,7 @@ This phase covers:
 From the repository root:
 
 ```powershell
-pnpm --filter @educonnect/functions seed:supabase
+CONFIRM_RESET_DEMO_DATA=tenant-a,tenant-b pnpm --filter @educonnect/functions seed:supabase
 pnpm --filter @educonnect/functions verify:demo-seed
 pnpm --filter @educonnect/functions export:demo-artifacts
 ```

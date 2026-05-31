@@ -57,6 +57,9 @@ function supabaseWithErrors(errors: Record<string, unknown> = {}) {
   return {
     from: jest.fn((table: string) => ({
       upsert: jest.fn().mockResolvedValue({ error: errors[table] || null }),
+      delete: jest.fn(() => ({
+        eq: jest.fn().mockResolvedValue({ error: errors[`${table}:delete`] || null }),
+      })),
     })),
   };
 }

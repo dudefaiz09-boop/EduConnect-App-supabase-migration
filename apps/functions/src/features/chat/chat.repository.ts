@@ -86,10 +86,6 @@ async function canMessageUser(
   tenantId?: string
 ): Promise<{ allowed: boolean; reason?: string }> {
   const actor = toChatActor(currentUser);
-  const adminCheck = sharedCanMessageUser(actor, { uid: targetUserId });
-  if (adminCheck.allowed) {
-    return adminCheck;
-  }
   const targetDoc = await db.collection('users').doc(targetUserId).get();
   if (!targetDoc.exists) return { allowed: false, reason: 'Target user not found' };
   const targetData = (targetDoc.data() || {}) as UserRecord;

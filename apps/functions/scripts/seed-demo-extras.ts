@@ -5,7 +5,7 @@ config({ path: '../../.env', quiet: true });
 config({ quiet: true });
 
 const now = new Date().toISOString();
-const demoPassword = 'Test@123456';
+const demoPassword = process.env.DEMO_PASSWORD?.trim() || 'Test@123456';
 
 const staffUsers = [
   {

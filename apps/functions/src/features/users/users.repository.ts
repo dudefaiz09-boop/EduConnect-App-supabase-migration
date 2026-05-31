@@ -1,9 +1,14 @@
 import { createManagedUser, updateManagedUser, writeAuditLog } from '../../lib/user-management.js';
 import { auth, db } from '../../lib/documents.js';
+import { normalizeProfileRow } from '../../lib/identity-profile.js';
 import { AppError } from '../../middleware/error.js';
 import type { Request } from 'express';
 
 type Actor = { uid: string; email?: string; schoolId?: string | null };
+type ManagedUserInput = Record<string, unknown> & {
+  tenantId?: unknown;
+  schoolId?: unknown;
+};
 
 function canManageTenant(req: Request, tenantId?: string | null) {
   if (!tenantId) return false;
@@ -21,13 +26,20 @@ export class UsersRepository {
     req: Request
   ) {
     const requestedTenantId = query.tenantId || req.tenantId;
+    if (!requestedTenantId) throw new AppError('Tenant context required', 400);
     assertCanManageTenant(req, requestedTenantId);
-    const snapshot = await db.collection('users').where('tenantId', '==', requestedTenantId).get();
-    let users = snapshot.docs.map((doc) => ({ id: doc.id, uid: doc.id, ...(doc.data() as any) }));
-    if (query.role)
+    const supabaseAdmin = auth.getSupabaseAdmin();
+    const { data, error } = await supabaseAdmin
+      .from('profiles')
+      .select('*')
+      .eq('school_id', requestedTenantId);
+    if (error) throw error;
+    let users = (data || []).map((row) => normalizeProfileRow(row as any));
+    const requestedRole = query.role;
+    if (requestedRole)
       users = users.filter((p) => {
         const roles = Array.isArray(p.roles) ? p.roles : [];
-        return p.role === query.role || roles.includes(query.role);
+        return p.role === requestedRole || roles.includes(requestedRole);
       });
     if (query.status) users = users.filter((p) => p.status === query.status);
     if (query.search) {
@@ -46,10 +58,13 @@ export class UsersRepository {
         ? [req.tenantId]
         : [];
     if (allowedTenantIds.length === 0) return [];
-    const snapshot = await db.collection('schools').get();
-    return snapshot.docs
-      .map((doc) => ({ id: doc.id, ...doc.data() }))
-      .filter((t) => allowedTenantIds.includes(String(t.id)));
+    const supabaseAdmin = auth.getSupabaseAdmin();
+    const { data, error } = await supabaseAdmin
+      .from('tenants')
+      .select('id,name,slug,status,metadata')
+      .in('id', allowedTenantIds);
+    if (error) throw error;
+    return data || [];
   }
 
   static async getAuditLogs(query: { targetUid?: string; limit?: number }, tenantId: string) {
@@ -94,11 +109,19 @@ export class UsersRepository {
     }
   }
 
-  static async create(data: Record<string, unknown>, actor: Actor) {
+  static async create(data: ManagedUserInput, req: Request, actor: Actor) {
+    const requestedTenantId =
+      typeof data.tenantId === 'string'
+        ? data.tenantId
+        : typeof data.schoolId === 'string'
+          ? data.schoolId
+          : req.tenantId;
+    assertCanManageTenant(req, requestedTenantId);
+
     return createManagedUser(
       {
         ...data,
-        tenantId: typeof data.tenantId === 'string' ? data.tenantId : undefined,
+        tenantId: requestedTenantId,
       },
       actor
     );

@@ -235,6 +235,7 @@ async function rollbackCreatedUser(
   userRef?: { delete: () => Promise<void> } | null
 ) {
   const rollbackErrors: string[] = [];
+  const supabase = (auth as any).getSupabaseAdmin ? (auth as any).getSupabaseAdmin() : null;
 
   try {
     await auth.deleteUser(uid);
@@ -247,6 +248,25 @@ async function rollbackCreatedUser(
       await userRef.delete();
     } catch (error) {
       rollbackErrors.push(error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  if (supabase) {
+    const cleanupResults = await Promise.allSettled([
+      supabase.from('profiles').delete().eq('id', uid),
+      supabase.from('user_tenants').delete().eq('user_id', uid),
+    ]);
+
+    for (const result of cleanupResults) {
+      if (result.status === 'rejected') {
+        rollbackErrors.push(
+          result.reason instanceof Error ? result.reason.message : String(result.reason)
+        );
+        continue;
+      }
+      if (result.value?.error) {
+        rollbackErrors.push(result.value.error.message || 'normalized user cleanup failed');
+      }
     }
   }
 

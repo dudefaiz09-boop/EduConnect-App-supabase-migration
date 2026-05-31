@@ -40,32 +40,26 @@ jobs:
         with:
           cache: true
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: corepack pnpm install --frozen-lockfile
+      - name: Build
+        run: corepack pnpm build
       - name: Dependency audit
-        run: pnpm audit --audit-level high
+        run: corepack pnpm audit --audit-level high
         continue-on-error: true
         # TODO: Remove continue-on-error once @lhci/cli no longer pulls tmp <0.2.6.
         # Current high: GHSA-ph9p-34f9-6g65 (tmp, path traversal) in @lhci/cli (dev-only).
       - name: Format check
-        run: pnpm format:check
+        run: corepack pnpm format:check
       - name: Shared API boundary audit
-        run: pnpm audit:web-shared-api
+        run: corepack pnpm audit:web-shared-api
       - name: Lint
-        run: pnpm lint
+        run: corepack pnpm lint
+      - name: Typecheck
+        run: corepack pnpm typecheck
       - name: Test
-        run: pnpm test
-      - name: Build shared
-        run: pnpm turbo build --filter @educonnect/shared
-      - name: Build shared-api
-        run: pnpm turbo build --filter @educonnect/shared-api
-      - name: Build shared-education
-        run: pnpm turbo build --filter @educonnect/shared-education
-      - name: Build API
-        run: pnpm turbo build --filter @educonnect/functions
-      - name: Build Web
-        run: pnpm turbo build --filter @educonnect/web
+        run: corepack pnpm test
       - name: Generate release checklist
-        run: pnpm release:checklist
+        run: corepack pnpm release:checklist
       - name: Upload release checklist
         uses: actions/upload-artifact@v4
         with:

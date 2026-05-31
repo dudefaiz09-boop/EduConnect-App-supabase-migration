@@ -10,6 +10,7 @@ import {
 } from '../lib/tenant';
 import { getAuthErrorMessage } from '../lib/auth-errors';
 import { useToast } from '../components/saas/ToastProvider';
+import type { ProfileRow } from '../types/database';
 
 export enum OperationType {
   CREATE = 'create',
@@ -196,6 +197,47 @@ function resolveRoles(profile: UserProfileData, appMetadata: Record<string, unkn
 }
 
 async function getProfile(uid: string) {
+  const { data: profile, error: profileError } = (await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', uid)
+    .maybeSingle()) as { data: ProfileRow | null; error: Error | null };
+
+  if (!profileError && profile) {
+    return {
+      uid: profile.id,
+      id: profile.id,
+      email: profile.email,
+      displayName: profile.display_name || profile.email,
+      display_name: profile.display_name || profile.email,
+      schoolId: profile.school_id,
+      school_id: profile.school_id,
+      tenantId: profile.school_id,
+      tenant_id: profile.school_id,
+      role: profile.role,
+      roles: profile.roles,
+      permissions: profile.permissions as Record<string, boolean>,
+      classId: profile.class_ids?.[0] || null,
+      classIds: profile.class_ids,
+      class_ids: profile.class_ids,
+      subjectIds: profile.subject_ids,
+      subject_ids: profile.subject_ids,
+      sectionIds: profile.section_ids,
+      section_ids: profile.section_ids,
+      linkedStudentIds: profile.linked_student_ids,
+      linked_student_ids: profile.linked_student_ids,
+      assignedModules: profile.assigned_modules,
+      assigned_modules: profile.assigned_modules,
+      is_super_admin: profile.is_super_admin,
+      isSuperAdmin: profile.is_super_admin,
+      managed_tenant_ids: profile.managed_tenant_ids,
+      managedTenantIds: profile.managed_tenant_ids,
+      status: profile.status,
+      created_at: profile.created_at,
+      updated_at: profile.updated_at,
+    } as UserProfileData;
+  }
+
   const { data, error } = (await supabase
     .from('documents')
     .select('data')
@@ -203,7 +245,7 @@ async function getProfile(uid: string) {
     .eq('id', uid)
     .maybeSingle()) as { data: UserProfileRow | null; error: Error | null };
 
-  if (error) throw error;
+  if (error) throw profileError || error;
   return (data?.data || {}) as UserProfileData;
 }
 

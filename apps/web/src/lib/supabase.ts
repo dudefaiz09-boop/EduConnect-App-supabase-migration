@@ -10,8 +10,6 @@ export const supabase = createClient<Database>(env.VITE_SUPABASE_URL, env.VITE_S
   },
 });
 
-export const uploadsBucket = env.VITE_SUPABASE_UPLOADS_BUCKET;
-
 export async function getSupabaseAccessToken() {
   const { data } = await supabase.auth.getSession();
   return data.session?.access_token || null;

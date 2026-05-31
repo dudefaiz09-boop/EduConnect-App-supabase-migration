@@ -3,7 +3,7 @@
 Run the seed script:
 
 ```bash
-pnpm seed:supabase
+CONFIRM_RESET_DEMO_DATA=tenant-a,tenant-b pnpm seed:supabase
 ```
 
 Dry run:

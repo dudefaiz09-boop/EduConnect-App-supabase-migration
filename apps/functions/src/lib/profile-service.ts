@@ -1,51 +1,14 @@
+import { getProfileNormalizedFirst, type ProfileRecord } from './identity-profile.js';
 import { getSupabaseAdmin } from './supabase.js';
 
-export type ProfileRecord = {
-  uid?: string;
-  email?: string;
-  displayName?: string;
-  display_name?: string;
-  photoURL?: string;
-  avatar_url?: string;
-  schoolId?: string;
-  tenantId?: string;
-  defaultTenantId?: string;
-  classId?: string | null;
-  classIds?: string[];
-  subjectIds?: string[];
-  sectionIds?: string[];
-  linkedStudentIds?: string[];
-  assignedModules?: string[];
-  is_super_admin?: boolean;
-  isSuperAdmin?: boolean;
-  managed_tenant_ids?: string[];
-  managedTenantIds?: string[];
-  roles?: string[];
-  role?: string;
-  permissions?: Record<string, boolean>;
-  disabled?: boolean;
-  status?: string;
-  createdAt?: string;
-  created_at?: string;
-  updatedAt?: string;
-  updated_at?: string;
-};
+export type { ProfileRecord } from './identity-profile.js';
 
 /**
- * Reads a user profile directly from the `documents` table without requiring a
- * tenant context. Safe to call before `tenantMiddleware` runs.
+ * Reads a user profile from normalized `profiles` first, then merges legacy
+ * `documents.users` fields that still exist during migration.
  */
 export async function getOwnProfile(uid: string): Promise<ProfileRecord> {
-  const supabaseAdmin = getSupabaseAdmin();
-  const { data, error } = await supabaseAdmin
-    .from('documents')
-    .select('data')
-    .eq('collection', 'users')
-    .eq('id', uid)
-    .maybeSingle<{ data: ProfileRecord | null }>();
-
-  if (error) throw error;
-  return (data?.data as ProfileRecord) || {};
+  return getProfileNormalizedFirst(uid);
 }
 
 /**
