@@ -308,28 +308,6 @@ export const FeesPage = () => {
     URL.revokeObjectURL(url);
   };
 
-  const processPayment = async (feeId: string, amount: number) => {
-    try {
-      await feesService.pay(
-        { feeId, amount, method: 'online' },
-        createIdempotencyKey('payment', feeId)
-      );
-      toast({
-        tone: 'success',
-        title: 'Payment recorded',
-        description: `${formatCurrency(amount)} was recorded successfully.`,
-      });
-      loadStudentData();
-    } catch (error) {
-      console.error('Payment failed:', error);
-      toast({
-        tone: 'error',
-        title: 'Payment failed',
-        description: 'Please try again or contact the accounts office.',
-      });
-    }
-  };
-
   const totalDue = React.useMemo(() => fees.reduce((sum, f) => sum + f.amountDue, 0), [fees]);
   const totalPaid = React.useMemo(() => fees.reduce((sum, f) => sum + f.amountPaid, 0), [fees]);
 
@@ -489,8 +467,11 @@ export const FeesPage = () => {
                     <p className="text-xl font-bold">May 15</p>
                   </div>
                 </div>
-                <button className="w-full bg-white text-blue-600 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-50 transition-colors">
-                  Pay Now
+                <button
+                  disabled
+                  className="w-full bg-white/90 text-blue-600 py-4 rounded-2xl font-black uppercase tracking-widest text-xs cursor-not-allowed"
+                >
+                  Contact Accounts
                 </button>
                 {isParent && linkedStudentIds.length > 0 && (
                   <select
@@ -605,10 +586,10 @@ export const FeesPage = () => {
                       </div>
                       {fee.status !== 'paid' && (
                         <button
-                          onClick={() => processPayment(fee.id, fee.amountDue - fee.amountPaid)}
-                          className="bg-slate-900 text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95"
+                          disabled
+                          className="bg-slate-200 text-slate-600 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest cursor-not-allowed"
                         >
-                          Pay
+                          Pending
                         </button>
                       )}
                     </div>

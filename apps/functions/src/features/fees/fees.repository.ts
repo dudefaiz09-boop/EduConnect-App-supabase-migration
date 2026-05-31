@@ -2,12 +2,7 @@ import { db } from '../../lib/documents.js';
 import { createNotification } from '../../lib/notifications.js';
 import { logger } from '@educonnect/logger';
 import { AppError } from '../../middleware/error.js';
-import {
-  actorHasRole,
-  assertCanAccessStudent,
-  isSchoolAdmin,
-  type ActorContext,
-} from '../../lib/authorization.js';
+import { actorHasRole, isSchoolAdmin, type ActorContext } from '../../lib/authorization.js';
 
 type FeeRecord = {
   studentId: string;
@@ -150,13 +145,35 @@ export class FeesRepository {
     const canRecordAnyPayment =
       isSchoolAdmin(actor) || actor.permissions?.manageFees || actorHasRole(actor, 'accountant');
     if (!canRecordAnyPayment) {
-      await assertCanAccessStudent(actor, fee.studentId, tenantId);
+      throw new AppError({
+        code: 'PAYMENT_VERIFICATION_REQUIRED',
+        message: 'Fee payments must be recorded by an authorized finance user.',
+        statusCode: 403,
+        details: { feeId },
+      });
     }
 
     const now = new Date().toISOString();
     const currentPaid = Number(fee.amountPaid || 0);
     const amountDue = Number(fee.amountDue || 0);
-    const nextPaid = Math.min(currentPaid + amount, amountDue);
+    const remaining = Math.max(amountDue - currentPaid, 0);
+    if (remaining <= 0) {
+      throw new AppError({
+        code: 'FEE_ALREADY_PAID',
+        message: 'This fee has already been fully paid.',
+        statusCode: 409,
+        details: { feeId },
+      });
+    }
+    if (amount > remaining) {
+      throw new AppError({
+        code: 'PAYMENT_AMOUNT_EXCEEDS_BALANCE',
+        message: 'Payment amount cannot exceed the remaining fee balance.',
+        statusCode: 400,
+        details: { feeId, remaining },
+      });
+    }
+    const nextPaid = currentPaid + amount;
 
     const paymentRef = await db.collection('payments').add({
       tenantId,
