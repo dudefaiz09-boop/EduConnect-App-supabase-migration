@@ -10,13 +10,16 @@
 Run the Supabase demo seed with:
 
 ```bash
-pnpm seed:supabase
+pnpm seed:supabase -- --dry-run
+CONFIRM_RESET_DEMO_DATA=tenant-a,tenant-b pnpm seed:supabase
 ```
 
 The seed script first removes only known demo records for `tenant-a`, `tenant-b`, stale
 `tenant-c`, `@educonnect.test` auth users, and explicitly listed stale test identities such as
 `test@test.com`, `Student Demo`, `Student A`, `Student B`, and `TEST`. It does not delete unknown
-tenants or real user domains. All seeded accounts use the local/demo-only password `Test@123456`.
+tenants or real user domains. Write runs require `CONFIRM_RESET_DEMO_DATA=tenant-a,tenant-b`.
+All seeded accounts use `DEMO_PASSWORD` when provided, otherwise the local/demo-only password
+`Test@123456`; the seed prints the password only for local/dev runs, not CI.
 
 ## Seeded Modules
 

@@ -2,8 +2,8 @@
 
 The web app resolves API calls from `VITE_API_BASE_URL`.
 
-- Same deployment: leave `VITE_API_BASE_URL` unset and the client uses `/api`.
-- Separate API deployment: set `VITE_API_BASE_URL` to the deployed functions URL, including `/api` only if that deployment expects it.
+- Same deployment: set `VITE_API_BASE_URL=/api`.
+- Separate API deployment: set `VITE_API_BASE_URL` to the deployed functions URL ending in `/api`.
 - Health check: `GET /api/health`.
 - Readiness check: `GET /api/ready`.
 

@@ -186,6 +186,13 @@ export const DEFAULT_ROLE_MODULES: Record<Role, ModuleKey[]> = {
 export const DEFAULT_ROLE_PERMISSIONS: Record<Role, PermissionKey[]> = {
   admin: [...ALL_PERMISSIONS],
   principal: [
+    'viewStudents',
+    'manageStudents',
+    'manageTeachers',
+    'viewAssignments',
+    'viewFees',
+    'viewFinancials',
+    'viewAttendance',
     'viewReports',
     'createAnnouncements',
     'manageAnnouncements',
@@ -195,6 +202,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, PermissionKey[]> = {
   ],
   teacher: [
     'useAI',
+    'viewStudents',
+    'viewAssignments',
+    'viewAttendance',
     'createAnnouncements',
     'markAttendance',
     'viewReports',
@@ -217,9 +227,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, PermissionKey[]> = {
     'viewFees',
     'viewPerformance',
   ],
-  librarian: ['manageLibrary'],
+  librarian: ['manageLibrary', 'viewStudents'],
   accountant: ['manageFees', 'viewStudents', 'viewReports', 'viewFinancials'],
-  staff: ['markAttendance'],
+  staff: ['markAttendance', 'viewStudents', 'viewAttendance'],
 };
 
 export function isRole(value: unknown): value is Role {

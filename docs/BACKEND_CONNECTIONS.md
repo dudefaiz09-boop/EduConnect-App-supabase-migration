@@ -4,7 +4,7 @@ Runtime entrypoints:
 
 | Entrypoint                    | Behavior                                                                                |
 | ----------------------------- | --------------------------------------------------------------------------------------- |
-| `api/index.ts`                | Root Vercel handler, imports `apps/functions/src/app.ts`, never starts `app.listen()`   |
+| `api/index.ts`                | Root Vercel handler, imports `apps/functions/dist/app.js`, never starts `app.listen()`  |
 | `apps/functions/api/index.ts` | Functions-project Vercel handler, imports `../dist/app.js`, never starts `app.listen()` |
 | `apps/functions/src/app.ts`   | Express app factory/export                                                              |
 | `apps/functions/src/index.ts` | Local Node server only; calls `app.listen()`                                            |

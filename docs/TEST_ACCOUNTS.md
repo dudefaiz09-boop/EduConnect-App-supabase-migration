@@ -1,6 +1,7 @@
 # Test Accounts for EduConnect Demo
 
-All demo accounts use the local/demo-only password `Test@123456`.
+All demo accounts use `DEMO_PASSWORD` when the seed is run with that env var. Otherwise they use
+the local/demo-only password `Test@123456`.
 
 ## Global Admin
 

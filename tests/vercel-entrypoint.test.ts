@@ -5,13 +5,13 @@ import { describe, it, expect } from '@jest/globals';
 import app from '../apps/functions/src/app.js';
 
 describe('Vercel Entrypoint Verification', () => {
-  it('api/index.ts imports the source Express app, not dist or listener bundles', () => {
+  it('api/index.ts imports the compiled Express app, not source or listener bundles', () => {
     const entrypoint = readFileSync(join(process.cwd(), 'api/index.ts'), 'utf8');
 
-    expect(entrypoint).toContain('../apps/functions/src/app.ts');
+    expect(entrypoint).toContain('../apps/functions/dist/app.js');
+    expect(entrypoint).not.toContain('../apps/functions/src/app.ts');
     expect(entrypoint).not.toContain('../apps/functions/src/index');
     expect(entrypoint).not.toContain('../apps/functions/dist/index.js');
-    expect(entrypoint).not.toContain('../apps/functions/dist/app.js');
   });
 
   it('apps/functions/api/index.ts imports the compiled app bundle, not the listener bundle', () => {
