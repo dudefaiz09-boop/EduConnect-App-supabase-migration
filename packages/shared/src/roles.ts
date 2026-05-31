@@ -2,6 +2,7 @@ import { ROLES } from './constants/index.js';
 
 type PermissionUser = {
   roles?: readonly string[];
+  role?: string;
   isAdmin?: boolean;
   permissions?: Record<string, boolean>;
 };
@@ -272,15 +273,20 @@ export function hasPermission(
   permission: string
 ): boolean {
   if (!user || !permission) return false;
-  const role = getUserRole(user.roles || []);
-  if (user.isAdmin || role === ROLES.ADMIN) return true;
+  if (user.isAdmin) return true;
 
   const explicitPermissions = toPermissionMap(user.permissions || {});
   if (explicitPermissions[permission]) return true;
 
   if (!isPermissionKey(permission)) return !!user.permissions?.[permission];
 
-  return DEFAULT_ROLE_PERMISSIONS[role].includes(permission);
+  const allRoles = Array.from(new Set([...(user.roles || []), ...(user.role ? [user.role] : [])]));
+
+  for (const r of allRoles) {
+    if (isRole(r) && DEFAULT_ROLE_PERMISSIONS[r].includes(permission)) return true;
+  }
+
+  return false;
 }
 
 export function getEffectiveModules(

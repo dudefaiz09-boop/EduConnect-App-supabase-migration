@@ -1,5 +1,8 @@
+import { ROLES, SYSTEM_ROLES } from '@educonnect/shared';
 import { AppError } from '../middleware/error.js';
 import { db } from './documents.js';
+
+const LEGACY_LEADERSHIP_ROLES = ['president'] as const;
 
 export type ActorContext = {
   uid: string;
@@ -46,14 +49,16 @@ export function isSchoolAdmin(actor: Actor) {
   return (
     !!actor.isAdmin ||
     !!actor.isSuperAdmin ||
-    actorHasRole(actor, 'admin') ||
-    actorHasRole(actor, 'super_admin')
+    actorHasRole(actor, ROLES.ADMIN) ||
+    actorHasRole(actor, SYSTEM_ROLES.SUPER_ADMIN)
   );
 }
 
 export function isLeadership(actor: Actor) {
   return (
-    isSchoolAdmin(actor) || actorHasRole(actor, 'principal') || actorHasRole(actor, 'president')
+    isSchoolAdmin(actor) ||
+    actorHasRole(actor, ROLES.PRINCIPAL) ||
+    LEGACY_LEADERSHIP_ROLES.some((role) => actorHasRole(actor, role))
   );
 }
 
@@ -75,7 +80,7 @@ export async function getUserDocument(uid: string, tenantId: string) {
 
 export async function getStudentClassIds(studentId: string, tenantId: string) {
   const profile = await getUserDocument(studentId, tenantId);
-  const isStudent = profile.role === 'student' || profile.roles?.includes('student');
+  const isStudent = profile.role === ROLES.STUDENT || profile.roles?.includes(ROLES.STUDENT);
   if (!isStudent) throw forbidden('Requested user is not a student.', { studentId });
   return Array.from(new Set(profile.classIds || (profile.classId ? [profile.classId] : []))).filter(
     Boolean
@@ -96,15 +101,15 @@ export async function getVisibleClassIdsForActor(actor: Actor, tenantId: string)
     return classIds.length ? classIds : getActorClassIds(actor);
   }
 
-  if (actorHasRole(actor, 'teacher') || actorHasRole(actor, 'staff')) {
+  if (actorHasRole(actor, ROLES.TEACHER) || actorHasRole(actor, ROLES.STAFF)) {
     return getActorClassIds(actor);
   }
 
-  if (actorHasRole(actor, 'student')) {
+  if (actorHasRole(actor, ROLES.STUDENT)) {
     return getActorClassIds(actor);
   }
 
-  if (actorHasRole(actor, 'parent')) {
+  if (actorHasRole(actor, ROLES.PARENT)) {
     return getLinkedChildClassIds(actor, tenantId);
   }
 
@@ -114,14 +119,14 @@ export async function getVisibleClassIdsForActor(actor: Actor, tenantId: string)
 export async function assertCanAccessStudent(actor: Actor, studentId: string, tenantId: string) {
   if (isLeadership(actor)) return;
 
-  if (actor.uid === studentId && actorHasRole(actor, 'student')) return;
+  if (actor.uid === studentId && actorHasRole(actor, ROLES.STUDENT)) return;
 
-  if (actorHasRole(actor, 'parent') && actor.linkedStudentIds?.includes(studentId)) return;
+  if (actorHasRole(actor, ROLES.PARENT) && actor.linkedStudentIds?.includes(studentId)) return;
 
   const studentClassIds = await getStudentClassIds(studentId, tenantId);
   const actorClassIds = getActorClassIds(actor);
   if (
-    (actorHasRole(actor, 'teacher') || actorHasRole(actor, 'staff')) &&
+    (actorHasRole(actor, ROLES.TEACHER) || actorHasRole(actor, ROLES.STAFF)) &&
     studentClassIds.some((classId) => actorClassIds.includes(classId))
   ) {
     return;
@@ -142,7 +147,7 @@ export async function assertCanAccessClass(actor: Actor, classId: string, tenant
 
 export async function assertCanManageClass(actor: Actor, classId: string, tenantId: string) {
   if (isLeadership(actor)) return;
-  if (actorHasRole(actor, 'teacher') || actorHasRole(actor, 'staff')) {
+  if (actorHasRole(actor, ROLES.TEACHER) || actorHasRole(actor, ROLES.STAFF)) {
     await assertCanAccessClass(actor, classId, tenantId);
     return;
   }

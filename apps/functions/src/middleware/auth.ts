@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { auth } from '../lib/documents.js';
 import { logger } from '@educonnect/logger';
-import { getUserRole, hasPermission as userHasPermission } from '@educonnect/shared';
+import { ROLES, getUserRole, hasPermission as userHasPermission } from '@educonnect/shared';
 import { AppError } from './error.js';
 import { getCorrelationId, getContext, type UserContext } from '../lib/context.js';
 
@@ -31,7 +31,10 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
         role,
         roles: roles.length > 0 ? roles : [role],
         isAdmin:
-          !!decodedToken.isAdmin || role === 'admin' || roles.includes('admin') || isSuperAdmin,
+          !!decodedToken.isAdmin ||
+          role === ROLES.ADMIN ||
+          roles.includes(ROLES.ADMIN) ||
+          isSuperAdmin,
         isSuperAdmin,
         managedTenantIds: (decodedToken.managedTenantIds as string[]) || [],
         schoolId: (decodedToken.schoolId as string) || null,
@@ -139,7 +142,7 @@ export const checkAdmin = (req: Request, res: Response, next: NextFunction) => {
       })
     );
   }
-  if (user.isAdmin || user.role === 'admin' || user.roles.includes('admin')) return next();
+  if (user.isAdmin || user.role === ROLES.ADMIN || user.roles.includes(ROLES.ADMIN)) return next();
 
   logger.warn(
     { uid: user.uid, roles: user.roles, path: req.path, correlationId: getCorrelationId() },

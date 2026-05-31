@@ -466,7 +466,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const role = getUserRole(roles);
   const permissionUser = {
     uid: user?.uid || '',
-    roles: role ? [role] : [],
+    roles,
+    role,
     isAdmin: roles.includes(ROLES.ADMIN) || isSuperAdmin,
     isSuperAdmin,
     managedTenantIds,

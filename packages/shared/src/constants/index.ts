@@ -24,6 +24,10 @@ export const ROLES = {
   ACCOUNTANT: 'accountant',
 } as const;
 
+export const SYSTEM_ROLES = {
+  SUPER_ADMIN: 'super_admin',
+} as const;
+
 export type UserRole = (typeof ROLES)[keyof typeof ROLES];
 
 export const PERMISSIONS = {

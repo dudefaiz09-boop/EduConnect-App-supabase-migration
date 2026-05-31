@@ -65,4 +65,40 @@ describe('Role/module access helpers', () => {
     expect(accountantActions).toEqual(['Fee records']);
     expect(librarianActions).toEqual(['Library']);
   });
+
+  describe('multi-role permission checks', () => {
+    it('student can submitAssignments', () => {
+      expect(hasPermission({ roles: ['student'] }, 'submitAssignments')).toBe(true);
+    });
+
+    it('parent can viewLinkedStudentRecords', () => {
+      expect(hasPermission({ roles: ['parent'] }, 'viewLinkedStudentRecords')).toBe(true);
+    });
+
+    it('accountant can viewFinancials', () => {
+      expect(hasPermission({ roles: ['accountant'] }, 'viewFinancials')).toBe(true);
+    });
+
+    it('teacher + librarian union gives manageLibrary', () => {
+      expect(hasPermission({ roles: ['teacher', 'librarian'] }, 'manageLibrary')).toBe(true);
+    });
+
+    it('student + parent union gives viewLinkedStudentRecords and submitAssignments', () => {
+      const user = { roles: ['student', 'parent'] };
+      expect(hasPermission(user, 'viewLinkedStudentRecords')).toBe(true);
+      expect(hasPermission(user, 'submitAssignments')).toBe(true);
+    });
+
+    it('unknown permission only passes if explicitly true', () => {
+      expect(hasPermission({ roles: ['admin'] }, 'unknownPerm')).toBe(false);
+      expect(
+        hasPermission({ roles: ['admin'], permissions: { unknownPerm: true } }, 'unknownPerm')
+      ).toBe(true);
+    });
+
+    it('admin bypass works', () => {
+      expect(hasPermission({ roles: ['admin'] }, 'manageFees')).toBe(true);
+      expect(hasPermission({ isAdmin: true, roles: [] }, 'anyPermission')).toBe(true);
+    });
+  });
 });
