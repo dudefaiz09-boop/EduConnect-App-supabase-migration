@@ -7,7 +7,7 @@ export class AttendanceProvider implements AiModuleProvider {
     const { uid, role, classId, classIds, linkedStudentIds } = user;
     const supabase = getSupabaseAdmin();
 
-    if (['admin', 'principal'].includes(role)) {
+    if (role === 'admin' || role === 'principal') {
       const { data, error } = await supabase
         .from('attendance')
         .select('attendance_date, class_id, status')

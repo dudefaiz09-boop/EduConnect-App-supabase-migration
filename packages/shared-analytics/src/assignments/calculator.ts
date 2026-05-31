@@ -10,11 +10,9 @@ export class AssignmentAnalytics {
    */
   static calculateStats(
     assignment: Assignment & { id: string },
-    submissions: AssignmentSubmission[]
+    submissions: AssignmentSubmission[],
+    totalStudents: number
   ): AssignmentStats {
-    const totalStudents = assignment.targetClasses.length > 0 ? 0 : 0; // In a real scenario, we'd pass the class size
-    // For this implementation, we treat the number of submissions + missing as total if not provided
-
     const submittedCount = submissions.length;
     const gradedCount = submissions.filter(
       (s) => s.status === 'graded' || s.status === 'returned'
@@ -34,11 +32,11 @@ export class AssignmentAnalytics {
       assignmentId: assignment.id,
       title: assignment.title,
       dueDate: assignment.dueDate,
-      totalStudents: assignment.pointsPossible, // Placeholder mapping or external count
+      totalStudents,
       submittedCount,
       gradedCount,
       avgScore,
-      submissionRate: 0, // Would require total class size
+      submissionRate: totalStudents > 0 ? submittedCount / totalStudents : 0,
       lateSubmissionCount,
     };
   }

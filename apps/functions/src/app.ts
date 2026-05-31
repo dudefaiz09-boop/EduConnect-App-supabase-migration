@@ -37,9 +37,14 @@ import chatRouter from './features/chat/chat.routes.js';
 import rolesRouter from './features/roles/roles.routes.js';
 import usersRouter from './features/users/users.routes.js';
 import notificationsRouter from './features/notifications/notifications.routes.js';
+import documentsRouter from './features/documents/documents.routes.js';
 
 const app: Express = express();
 app.set('trust proxy', 1);
+
+// Track whether the Express app has fully loaded all routes and middleware.
+// /api/health and /api/ready read this flag instead of hardcoding `true`.
+let appLoadStatus: 'loading' | 'ready' | 'failed' = 'loading';
 
 // 1. Security & Observability
 app.use(requestContextMiddleware);
@@ -127,10 +132,12 @@ publicRouter.get('/', (req, res) => {
   });
 });
 
-publicRouter.get('/health', (req, res) => {
-  // Simple health check that doesn't depend on any environment variables.
-  res.json({
-    status: 'healthy',
+publicRouter.get('/health', (_req, res) => {
+  // Returns 503 while the app is still initialising (e.g. mid cold-start).
+  const isUp = appLoadStatus === 'ready';
+  return res.status(isUp ? 200 : 503).json({
+    status: isUp ? 'healthy' : 'starting',
+    appLoadStatus,
     timestamp: new Date().toISOString(),
   });
 });
@@ -171,10 +178,10 @@ publicRouter.get('/ready', async (req, res) => {
     aiModel: ai.model,
     aiFallbackProvider: ai.fallbackProvider,
     aiLive: ai.enabled,
-    expressAppLoaded: true,
+    expressAppLoaded: appLoadStatus === 'ready',
   };
 
-  const isReady = missing.length === 0;
+  const isReady = missing.length === 0 && appLoadStatus === 'ready';
 
   return res.status(isReady ? 200 : 503).json({
     status: isReady ? 'ready' : 'not_ready',
@@ -239,6 +246,7 @@ protectedRouter.use('/chat', chatRouter);
 protectedRouter.use('/roles', rolesRouter);
 protectedRouter.use('/users', usersRouter);
 protectedRouter.use('/notifications', notificationsRouter);
+protectedRouter.use('/documents', documentsRouter);
 
 app.use('/api', protectedRouter);
 
@@ -247,5 +255,8 @@ app.use(globalErrorHandler);
 
 // Startup logs for environment diagnostics. This logs booleans/model names only, never secret values.
 logger.info(getAiRuntimeStatus(), 'AI Environment Diagnostic');
+
+// Signal that all routes and middleware are registered. Health/ready checks read this.
+appLoadStatus = 'ready';
 
 export default app;

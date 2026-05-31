@@ -8,25 +8,7 @@ import { getCorrelationId, getContext, type UserContext } from '../lib/context.j
 declare global {
   namespace Express {
     interface Request {
-      user?: {
-        uid: string;
-        email?: string;
-        displayName?: string;
-        role: string;
-        roles: string[];
-        isAdmin: boolean;
-        isSuperAdmin?: boolean;
-        managedTenantIds?: string[];
-        schoolId: string | null;
-        classId: string | null;
-        classIds: string[];
-        subjectIds: string[];
-        sectionIds: string[];
-        linkedStudentIds: string[];
-        assignedModules: string[];
-        permissions: Record<string, boolean>;
-        status: 'active' | 'inactive';
-      };
+      user?: UserContext;
     }
   }
 }

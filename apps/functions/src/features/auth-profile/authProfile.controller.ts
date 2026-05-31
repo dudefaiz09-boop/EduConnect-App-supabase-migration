@@ -8,7 +8,8 @@ export class AuthProfileController {
       res.json({
         uid: req.user!.uid,
         email: req.user!.email,
-        displayName: req.user!.displayName,
+        displayName: profile.displayName || profile.display_name || req.user!.displayName || null,
+        photoURL: profile.photoURL || profile.avatar_url || null,
         ...profile,
       });
     } catch (error) {

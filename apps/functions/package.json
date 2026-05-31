@@ -15,7 +15,7 @@
     "demo:api-smoke": "tsx scripts/demo-api-smoke.ts",
     "export:demo-artifacts": "tsx scripts/export-demo-artifacts.ts",
     "demo:ready": "pnpm seed:supabase && pnpm seed:demo-extras && pnpm verify:demo-seed && pnpm export:demo-artifacts",
-    "test": "echo 'No tests yet' && exit 0"
+    "test": "npx jest --config ../../jest.config.cjs --testPathPattern=apps/functions/tests"
   },
   "dependencies": {
     "@educonnect/shared": "workspace:*",
@@ -26,6 +26,7 @@
     "dotenv": "^17.4.2",
     "express": "^4.19.2",
     "express-rate-limit": "^7.1.5",
+    "firebase-admin": "^13.10.0",
     "helmet": "^7.1.0",
     "pino": "^10.3.1",
     "pino-http": "^9.0.0",

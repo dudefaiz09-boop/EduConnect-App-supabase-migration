@@ -6,6 +6,7 @@ import type { Assignment, AssignmentSubmission } from '@educonnect/shared-educat
 import { createNotification, type NotificationInput } from '../../lib/notifications.js';
 import { AppError } from '../../middleware/error.js';
 import { assertCanAccessClass, assertCanManageClass } from '../../lib/authorization.js';
+import { getSupabaseAdmin } from '../../lib/supabase.js';
 
 type AssignmentRecord = {
   id: string;
@@ -121,6 +122,32 @@ export class AssignmentsRepository {
       id: doc.id,
       ...(doc.data() as Omit<AssignmentRecord, 'id'>),
     }));
+
+    // Compute class roster count from profiles table for correct totalStudents
+    let rosterCount = 0;
+    try {
+      const supabase = getSupabaseAdmin();
+      const { count, error } = await supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('school_id', tenantId)
+        .contains('class_ids', [classId])
+        .contains('roles', ['student']);
+      if (!error && count !== null) {
+        rosterCount = count;
+      } else {
+        logger.warn(
+          { classId, tenantId, error },
+          'Failed to count class roster, falling back to submission data'
+        );
+      }
+    } catch {
+      logger.warn(
+        { classId, tenantId },
+        'Exception counting class roster, falling back to submission data'
+      );
+    }
+
     return Promise.all(
       assignments.map(async (assignment) => {
         const submissionsSnap = await db
@@ -129,9 +156,17 @@ export class AssignmentsRepository {
           .where('assignmentId', '==', assignment.id)
           .get();
         const submissions = submissionsSnap.docs.map((doc) => doc.data() as SubmissionRecord);
+        // Fallback: use unique submitted student IDs when roster count could not be obtained.
+        // This may inflate submissionRate because non-submitting students are not represented.
+        let totalStudents = rosterCount;
+        if (totalStudents === 0) {
+          const uniqueSubmitters = new Set(submissions.map((s) => s.studentId).filter(Boolean));
+          totalStudents = uniqueSubmitters.size;
+        }
         return AssignmentAnalytics.calculateStats(
           toAnalyticsAssignment(assignment, tenantId),
-          submissions.map((submission) => toAnalyticsSubmission(submission, tenantId))
+          submissions.map((submission) => toAnalyticsSubmission(submission, tenantId)),
+          totalStudents
         );
       })
     );
