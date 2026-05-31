@@ -3,12 +3,12 @@ import type { StorageProvider, PresignedUploadResult, PresignedReadResult } from
 
 export class SupabaseStorageProvider implements StorageProvider {
   async createPresignedUpload(
-    tenantId: string,
-    module: string,
-    entityId: string,
-    filename: string,
-    contentType: string,
-    sizeBytes: number
+    _tenantId: string,
+    _module: string,
+    _entityId: string,
+    _filename: string,
+    _contentType: string,
+    _sizeBytes: number
   ): Promise<PresignedUploadResult> {
     throw new Error(
       'New uploads to Supabase Storage are no longer supported. Please configure Firebase Storage.'
