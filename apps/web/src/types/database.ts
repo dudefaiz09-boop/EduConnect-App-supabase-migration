@@ -13,6 +13,8 @@ export interface ProfileRow {
   subject_ids: string[];
   section_ids: string[];
   linked_student_ids: string[];
+  is_super_admin: boolean;
+  managed_tenant_ids: string[];
   status: 'active' | 'inactive';
   created_at: string;
   updated_at: string;
@@ -49,6 +51,28 @@ export interface DocumentRow {
   updated_at: string;
 }
 
+export interface TenantRow {
+  id: string;
+  name: string;
+  slug: string;
+  status: 'active' | 'inactive';
+  metadata: Json;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserTenantRow {
+  id: string;
+  user_id: string;
+  email: string;
+  tenant_id: string;
+  role: string;
+  is_default: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -72,6 +96,16 @@ export interface Database {
         Row: DocumentRow;
         Insert: Partial<DocumentRow> & Pick<DocumentRow, 'collection' | 'id' | 'data'>;
         Update: Partial<DocumentRow>;
+      };
+      tenants: {
+        Row: TenantRow;
+        Insert: Partial<TenantRow> & Pick<TenantRow, 'id' | 'name' | 'slug'>;
+        Update: Partial<TenantRow>;
+      };
+      user_tenants: {
+        Row: UserTenantRow;
+        Insert: Partial<UserTenantRow> & Pick<UserTenantRow, 'email' | 'tenant_id' | 'role'>;
+        Update: Partial<UserTenantRow>;
       };
     };
   };

@@ -29,15 +29,14 @@ async function tenantExistsAndActive(tenantId: string) {
 
   const supabaseAdmin = getSupabaseAdmin();
   const { data, error } = await supabaseAdmin
-    .from('documents')
-    .select('data')
-    .eq('collection', 'tenants')
+    .from('tenants')
+    .select('status')
     .eq('id', tenantId)
-    .maybeSingle<{ data: Record<string, unknown> | null }>();
+    .maybeSingle<{ status: string | null }>();
 
   if (error) throw error;
 
-  if (!data?.data) {
+  if (!data) {
     if (process.env.NODE_ENV !== 'production') {
       logger.warn(
         { tenantId, correlationId: getCorrelationId() },
@@ -48,7 +47,7 @@ async function tenantExistsAndActive(tenantId: string) {
     return null;
   }
 
-  const active = data.data.status !== 'inactive' && data.data.active !== false;
+  const active = data.status !== 'inactive';
   tenantCache.set(tenantId, { active, expiresAt: Date.now() + TENANT_CACHE_TTL_MS });
   return active;
 }
