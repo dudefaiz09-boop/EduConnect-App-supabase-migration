@@ -1,4 +1,6 @@
 pnpm-lock.yaml
+.nvmrc
+.node-version
 apps/functions/src/features/ai/ai.service.ts
 apps/functions/src/features/ai/ai.controller.ts
 apps/functions/src/app.ts

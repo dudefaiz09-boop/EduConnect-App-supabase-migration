@@ -392,23 +392,37 @@ export async function createManagedUser(payload: ManagedUserPayload, actor: Acto
   });
 
   const profile = buildManagedUserProfile(userRecord.uid, payload, actor);
-  await db.collection('users').doc(userRecord.uid).set(profile);
-  await auth.setCustomUserClaims(userRecord.uid, buildClaims(profile));
 
-  // Link user to tenant in user_tenants table
   const supabase = (auth as any).getSupabaseAdmin ? (auth as any).getSupabaseAdmin() : null;
-  if (supabase) {
-    await supabase.from('user_tenants').upsert(
-      {
-        user_id: userRecord.uid,
-        email: profile.email,
-        tenant_id: profile.schoolId,
-        role: profile.role,
-        is_default: true,
-        is_active: profile.status === 'active',
-      },
-      { onConflict: 'email,tenant_id' }
-    );
+  try {
+    await db.collection('users').doc(userRecord.uid).set(profile);
+    await auth.setCustomUserClaims(userRecord.uid, buildClaims(profile));
+
+    // Link user to tenant in user_tenants table
+    if (supabase) {
+      await supabase.from('user_tenants').upsert(
+        {
+          user_id: userRecord.uid,
+          email: profile.email,
+          tenant_id: profile.schoolId,
+          role: profile.role,
+          is_default: true,
+          is_active: profile.status === 'active',
+        },
+        { onConflict: 'email,tenant_id' }
+      );
+    }
+  } catch (error) {
+    await Promise.allSettled([
+      auth.deleteUser(userRecord.uid),
+      supabase
+        ? supabase.from('documents').delete().eq('collection', 'users').eq('id', userRecord.uid)
+        : Promise.resolve(),
+      supabase
+        ? supabase.from('user_tenants').delete().eq('user_id', userRecord.uid)
+        : Promise.resolve(),
+    ]);
+    throw error;
   }
 
   await writeAuditLog({
