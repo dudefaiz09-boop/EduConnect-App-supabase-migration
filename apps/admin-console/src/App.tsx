@@ -292,7 +292,7 @@ export const AdminApp = () => {
           password: newAdminPassword,
           displayName: newAdminName,
           role: 'admin',
-          schoolId: newSchoolId,
+          tenantId: newSchoolId,
           permissions: {
             viewStudentDetails: true,
             manageAttendance: true,

@@ -1,5 +1,26 @@
 import { z } from 'zod';
 
+const managedUserFields = {
+  email: z.string().email(),
+  password: z.string().min(8),
+  displayName: z.string().min(1),
+  role: z.string().optional(),
+  roles: z.array(z.string()).optional(),
+  tenantId: z.string().optional(),
+  schoolId: z.string().optional(),
+  permissions: z.record(z.boolean()).optional(),
+  assignedModules: z.array(z.string()).optional(),
+  classId: z.string().optional(),
+  classIds: z.array(z.string()).optional(),
+  subjectIds: z.array(z.string()).optional(),
+  sectionIds: z.array(z.string()).optional(),
+  linkedStudentIds: z.array(z.string()).optional(),
+  phone: z.string().optional(),
+  admissionNumber: z.string().optional(),
+  employeeId: z.string().optional(),
+  status: z.string().optional(),
+};
+
 export const listUsersQuerySchema = z.object({
   query: z.object({
     tenantId: z.string().optional(),
@@ -20,16 +41,7 @@ export const auditLogsQuerySchema = z.object({
 export const createManagedUserSchema = z.object({
   body: z
     .object({
-      email: z.string().email(),
-      password: z.string().min(8),
-      displayName: z.string().min(1),
-      role: z.string().optional(),
-      roles: z.array(z.string()).optional(),
-      tenantId: z.string().optional(),
-      classId: z.string().optional(),
-      classIds: z.array(z.string()).optional(),
-      phone: z.string().optional(),
-      status: z.string().optional(),
+      ...managedUserFields,
     })
     .strict(),
 });
@@ -39,16 +51,7 @@ export const bulkManagedUsersSchema = z.object({
     .object({
       users: z.array(
         z.object({
-          email: z.string().email(),
-          password: z.string().min(8),
-          displayName: z.string().min(1),
-          role: z.string().optional(),
-          roles: z.array(z.string()).optional(),
-          tenantId: z.string().optional(),
-          classId: z.string().optional(),
-          classIds: z.array(z.string()).optional(),
-          phone: z.string().optional(),
-          status: z.string().optional(),
+          ...managedUserFields,
         })
       ),
     })
@@ -62,9 +65,17 @@ export const updateManagedUserSchema = z.object({
       role: z.string().optional(),
       roles: z.array(z.string()).optional(),
       tenantId: z.string().optional(),
+      schoolId: z.string().optional(),
+      permissions: z.record(z.boolean()).optional(),
+      assignedModules: z.array(z.string()).optional(),
       classId: z.string().optional(),
       classIds: z.array(z.string()).optional(),
+      subjectIds: z.array(z.string()).optional(),
+      sectionIds: z.array(z.string()).optional(),
+      linkedStudentIds: z.array(z.string()).optional(),
       phone: z.string().optional(),
+      admissionNumber: z.string().optional(),
+      employeeId: z.string().optional(),
       status: z.string().optional(),
     })
     .strict(),

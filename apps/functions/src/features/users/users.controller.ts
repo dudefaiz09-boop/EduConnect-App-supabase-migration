@@ -40,7 +40,7 @@ export class UsersController {
 
   static async create(req: Request, res: Response, next: NextFunction) {
     try {
-      const profile = await UsersRepository.create(req.body, {
+      const profile = await UsersRepository.create(req.body, req, {
         uid: req.user!.uid,
         email: req.user!.email,
         schoolId: req.user!.schoolId,

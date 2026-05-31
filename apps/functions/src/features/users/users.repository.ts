@@ -5,6 +5,10 @@ import { AppError } from '../../middleware/error.js';
 import type { Request } from 'express';
 
 type Actor = { uid: string; email?: string; schoolId?: string | null };
+type ManagedUserInput = Record<string, unknown> & {
+  tenantId?: unknown;
+  schoolId?: unknown;
+};
 
 function canManageTenant(req: Request, tenantId?: string | null) {
   if (!tenantId) return false;
@@ -105,11 +109,19 @@ export class UsersRepository {
     }
   }
 
-  static async create(data: Record<string, unknown>, actor: Actor) {
+  static async create(data: ManagedUserInput, req: Request, actor: Actor) {
+    const requestedTenantId =
+      typeof data.tenantId === 'string'
+        ? data.tenantId
+        : typeof data.schoolId === 'string'
+          ? data.schoolId
+          : req.tenantId;
+    assertCanManageTenant(req, requestedTenantId);
+
     return createManagedUser(
       {
         ...data,
-        tenantId: typeof data.tenantId === 'string' ? data.tenantId : undefined,
+        tenantId: requestedTenantId,
       },
       actor
     );
