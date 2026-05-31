@@ -23,7 +23,12 @@ router.post(
   validate(feeUploadSchema),
   FeesController.upload
 );
-router.post('/pay', validate(feePaymentSchema), FeesController.pay);
+router.post(
+  '/pay',
+  requirePermission('manageFees'),
+  validate(feePaymentSchema),
+  FeesController.pay
+);
 router.get('/:uid', validate(studentFeesParamsSchema), FeesController.getStudentFees);
 
 export default router;
