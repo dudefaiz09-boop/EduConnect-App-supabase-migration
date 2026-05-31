@@ -11,3 +11,4 @@ export * from './auth-errors.js';
 export * from './utils/errors.js';
 export * from './utils/offline.js';
 export * from './testing/index.js';
+export * from './permissions/chat.js';

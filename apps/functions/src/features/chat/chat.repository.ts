@@ -1,6 +1,8 @@
 import { db } from '../../lib/documents.js';
 import { createNotification } from '../../lib/notifications.js';
 import { logger } from '@educonnect/logger';
+import { canMessageUser as sharedCanMessageUser } from '@educonnect/shared';
+import type { ChatPermissionActor, ChatPermissionTarget } from '@educonnect/shared';
 import { AppError } from '../../middleware/error.js';
 import { getLinkedChildClassIds, getStudentClassIds } from '../../lib/authorization.js';
 
@@ -54,8 +56,28 @@ function isTenantRecord(
 ) {
   return record.tenantId === tenantId || record.schoolId === tenantId;
 }
-function getClassIds(user: Pick<UserRecord, 'classId' | 'classIds'>): string[] {
-  return user.classIds || (user.classId ? [user.classId] : []);
+
+function toChatActor(user: ChatUser): ChatPermissionActor {
+  return {
+    uid: user.uid,
+    role: user.role,
+    roles: user.roles,
+    classId: user.classId,
+    classIds: user.classIds,
+    linkedStudentIds: user.linkedStudentIds,
+    isAdmin: user.isAdmin,
+  };
+}
+
+function toChatTarget(userData: UserRecord): ChatPermissionTarget {
+  return {
+    uid: userData.uid || '',
+    role: userData.role,
+    roles: userData.roles,
+    classId: userData.classId,
+    classIds: userData.classIds,
+    linkedStudentIds: userData.linkedStudentIds,
+  };
 }
 
 async function canMessageUser(
@@ -63,67 +85,41 @@ async function canMessageUser(
   targetUserId: string,
   tenantId?: string
 ): Promise<{ allowed: boolean; reason?: string }> {
-  const currentRole = currentUser.role;
-  if (currentRole === 'admin' || currentRole === 'principal' || currentUser.isAdmin)
-    return { allowed: true, reason: 'Admin/Principal access' };
+  const actor = toChatActor(currentUser);
+  const adminCheck = sharedCanMessageUser(actor, { uid: targetUserId });
+  if (adminCheck.allowed) {
+    return adminCheck;
+  }
   const targetDoc = await db.collection('users').doc(targetUserId).get();
   if (!targetDoc.exists) return { allowed: false, reason: 'Target user not found' };
   const targetData = (targetDoc.data() || {}) as UserRecord;
   if (!isTenantRecord(targetData, tenantId))
     return { allowed: false, reason: 'Target user is not in this school' };
-  const targetRole = targetData.role || targetData.roles?.[0] || '';
-  const targetClassIds = getClassIds(targetData);
-  const currentClassIds = getClassIds(currentUser);
-  if (currentRole === 'student') {
-    if (targetRole === 'teacher' && targetClassIds.some((c) => currentClassIds.includes(c)))
-      return { allowed: true, reason: 'Class Teacher' };
-    if (targetRole === 'principal' || targetRole === 'admin')
-      return { allowed: true, reason: 'Administration' };
-    return { allowed: false, reason: 'Not authorized to message this user' };
-  }
+  const target = toChatTarget(targetData);
+
+  const currentRole = currentUser.role;
   if (currentRole === 'parent') {
-    if (targetRole === 'teacher' && targetClassIds.some((c) => currentClassIds.includes(c)))
-      return { allowed: true, reason: "Child's Teacher" };
     const childClassIds = await getLinkedChildClassIds(currentUser, tenantId || '');
-    if (targetRole === 'teacher' && targetClassIds.some((c) => childClassIds.includes(c)))
-      return { allowed: true, reason: "Child's Teacher" };
-    if (targetRole === 'principal' || targetRole === 'admin')
-      return { allowed: true, reason: 'Administration' };
-    return { allowed: false, reason: 'Not authorized to message this user' };
-  }
-  if (currentRole === 'teacher') {
-    if (targetRole === 'student' && targetClassIds.some((c) => currentClassIds.includes(c)))
-      return { allowed: true, reason: 'Your Student' };
-    if (targetRole === 'parent') {
-      const linkedStudentClassIds = (
-        await Promise.all(
-          (targetData.linkedStudentIds || []).map((studentId) =>
-            getStudentClassIds(studentId, tenantId || '')
-          )
+    const parentActor: ChatPermissionActor = {
+      ...actor,
+      linkedStudentClassIds: childClassIds,
+    };
+    return sharedCanMessageUser(parentActor, target);
+  } else if (currentRole === 'teacher' && targetData.role === 'parent') {
+    const linkedStudentClassIds = (
+      await Promise.all(
+        (targetData.linkedStudentIds || []).map((studentId) =>
+          getStudentClassIds(studentId, tenantId || '')
         )
-      ).flat();
-      const hasLinked = linkedStudentClassIds.some((classId) => currentClassIds.includes(classId));
-      if (hasLinked) return { allowed: true, reason: "Student's Parent" };
-    }
-    if (['principal', 'admin', 'teacher'].includes(targetRole))
-      return { allowed: true, reason: 'Colleague' };
-    return { allowed: false, reason: 'Not authorized to message this user' };
+      )
+    ).flat();
+    const targetWithClassIds: ChatPermissionTarget = {
+      ...target,
+      classIds: linkedStudentClassIds,
+    };
+    return sharedCanMessageUser(actor, targetWithClassIds);
   }
-  if (currentRole === 'librarian') {
-    if (['admin', 'principal'].includes(targetRole))
-      return { allowed: true, reason: 'Administration' };
-    if (['student', 'parent'].includes(targetRole))
-      return { allowed: true, reason: 'Library Services' };
-    return { allowed: false, reason: 'Not authorized to message this user' };
-  }
-  if (currentRole === 'accountant') {
-    if (['admin', 'principal'].includes(targetRole))
-      return { allowed: true, reason: 'Administration' };
-    if (['student', 'parent'].includes(targetRole))
-      return { allowed: true, reason: 'Fee Management' };
-    return { allowed: false, reason: 'Not authorized to message this user' };
-  }
-  return { allowed: false, reason: 'Not authorized to message this user' };
+  return sharedCanMessageUser(actor, target);
 }
 
 function assertConversationAccess(

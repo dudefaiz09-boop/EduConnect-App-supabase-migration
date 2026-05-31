@@ -14,7 +14,7 @@ setInterval(() => {
   for (const [key, value] of cache) {
     if (value.expiresAt <= now) cache.delete(key);
   }
-}, IDEMPOTENCY_TTL_MS);
+}, IDEMPOTENCY_TTL_MS).unref();
 
 function cacheKey(req: Request, key: string) {
   return [

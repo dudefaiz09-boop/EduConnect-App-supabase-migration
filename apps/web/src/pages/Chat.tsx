@@ -20,6 +20,8 @@ import { collectionPath, useDocuments } from '../lib/documents';
 import { EmptyState } from '../components/saas/EmptyState';
 import { SearchBar } from '../components/saas/SearchBar';
 import { useToast } from '../components/saas/ToastProvider';
+import { canMessageUser as sharedCanMessageUser } from '@educonnect/shared';
+import type { ChatPermissionActor, ChatPermissionTarget } from '@educonnect/shared';
 
 interface Conversation {
   id: string;
@@ -71,117 +73,30 @@ function getLinkedStudentClassIds(linkedStudentIds: string[], profiles: UserProf
     .flatMap(getProfileClassIds);
 }
 
-/**
- * Determines if the current user can message a target user based on role eligibility rules.
- */
-function canMessageUser(
-  currentRole: string | null,
-  currentClassIds: string[],
-  currentLinkedStudentIds: string[],
-  targetProfile: UserProfile,
-  allProfiles: UserProfile[]
-): { allowed: boolean; reason?: string } {
-  if (!currentRole) return { allowed: false };
+function toChatActor(
+  role: string | null,
+  classIds: string[],
+  linkedStudentIds: string[],
+  linkedStudentClassIds?: string[]
+): ChatPermissionActor {
+  return {
+    uid: '',
+    role: role || undefined,
+    classIds,
+    linkedStudentIds,
+    linkedStudentClassIds,
+  };
+}
 
-  // Safety defaults for potential undefined context values
-  const safeClassIds = currentClassIds || [];
-  const safeLinkedIds = currentLinkedStudentIds || [];
-  const currentChildClassIds = getLinkedStudentClassIds(safeLinkedIds, allProfiles);
-
-  const targetRole = targetProfile.role || targetProfile.roles?.[0] || '';
-  const targetClassIds = getProfileClassIds(targetProfile);
-
-  // Admin and Principal can message anyone
-  if (currentRole === 'admin' || currentRole === 'principal') {
-    return { allowed: true, reason: 'Admin/Principal access' };
-  }
-
-  // Student eligibility
-  if (currentRole === 'student') {
-    // Can message teachers in their class
-    if (targetRole === 'teacher') {
-      const hasSharedClass = targetClassIds.some((classId) => safeClassIds.includes(classId));
-      if (hasSharedClass) return { allowed: true, reason: 'Class Teacher' };
-    }
-    // Can message principal
-    if (targetRole === 'principal') return { allowed: true, reason: 'Principal' };
-    // Can message admin/helpdesk
-    if (targetRole === 'admin') return { allowed: true, reason: 'Admin Support' };
-    return { allowed: false };
-  }
-
-  // Parent eligibility
-  if (currentRole === 'parent') {
-    // Can message their linked child's teachers
-    if (targetRole === 'teacher') {
-      // Check if teacher teaches any of the linked students' classes
-      const hasLinkedStudentClass = targetClassIds.some((classId) =>
-        currentChildClassIds.includes(classId)
-      );
-      if (hasLinkedStudentClass) return { allowed: true, reason: "Child's Teacher" };
-    }
-    // Can message principal
-    if (targetRole === 'principal') return { allowed: true, reason: 'Principal' };
-    // Can message admin/helpdesk
-    if (targetRole === 'admin') return { allowed: true, reason: 'Admin Support' };
-    return { allowed: false };
-  }
-
-  // Teacher eligibility
-  if (currentRole === 'teacher') {
-    // Can message students in assigned classes
-    if (targetRole === 'student') {
-      const hasSharedClass = targetClassIds.some((classId) => safeClassIds.includes(classId));
-      if (hasSharedClass) return { allowed: true, reason: 'Your Student' };
-    }
-    // Can message parents of assigned students
-    if (targetRole === 'parent') {
-      const targetChildClassIds = getLinkedStudentClassIds(
-        targetProfile.linkedStudentIds || [],
-        allProfiles
-      );
-      const hasLinkedStudentClass = targetChildClassIds.some((classId) =>
-        safeClassIds.includes(classId)
-      );
-      if (hasLinkedStudentClass) return { allowed: true, reason: "Student's Parent" };
-    }
-    // Can message principal/admin
-    if (targetRole === 'principal' || targetRole === 'admin') {
-      return { allowed: true, reason: 'Administration' };
-    }
-    // Can message other teachers
-    if (targetRole === 'teacher') return { allowed: true, reason: 'Colleague' };
-    return { allowed: false };
-  }
-
-  // Librarian eligibility
-  if (currentRole === 'librarian') {
-    // Can message admin/principal
-    if (targetRole === 'admin' || targetRole === 'principal') {
-      return { allowed: true, reason: 'Administration' };
-    }
-    // Can message students/parents for library-related matters
-    if (targetRole === 'student' || targetRole === 'parent') {
-      return { allowed: true, reason: 'Library Services' };
-    }
-    return { allowed: false };
-  }
-
-  // Accountant eligibility
-  if (currentRole === 'accountant') {
-    // Can message admin/principal
-    if (targetRole === 'admin' || targetRole === 'principal') {
-      return { allowed: true, reason: 'Administration' };
-    }
-    // Can message students/parents for fee-related matters
-    if (targetRole === 'student' || targetRole === 'parent') {
-      return { allowed: true, reason: 'Fee Management' };
-    }
-    return { allowed: false };
-  }
-
-  // Default: deny
-  return { allowed: false };
+function toChatTarget(profile: UserProfile): ChatPermissionTarget {
+  return {
+    uid: profileUid(profile),
+    role: profile.role,
+    roles: profile.roles,
+    classId: profile.classId,
+    classIds: profile.classIds,
+    linkedStudentIds: profile.linkedStudentIds,
+  };
 }
 
 export const ChatPage = () => {
@@ -217,13 +132,15 @@ export const ChatPage = () => {
 
   // Filter contacts by eligibility and search query
   const contactOptions = useMemo(() => {
+    const linkedStudentClassIds = getLinkedStudentClassIds(linkedStudentIds, userProfiles);
+    const actor = toChatActor(role, classIds, linkedStudentIds, linkedStudentClassIds);
     return userProfiles.filter((profile) => {
       const uid = profile.uid || profile.id;
       if (!uid || uid === user?.uid || profile.status === 'inactive') return false;
 
-      // Check eligibility
-      const eligibility = canMessageUser(role, classIds, linkedStudentIds, profile, userProfiles);
-      if (!eligibility.allowed) return false;
+      // Check eligibility using shared helper
+      const target = toChatTarget(profile);
+      if (!sharedCanMessageUser(actor, target).allowed) return false;
 
       // Apply search filter
       const query = contactSearch.trim().toLowerCase();
@@ -352,8 +269,10 @@ export const ChatPage = () => {
   }
 
   function getContactReason(profile: UserProfile) {
-    const eligibility = canMessageUser(role, classIds, linkedStudentIds, profile, userProfiles);
-    return eligibility.reason || '';
+    const linkedStudentClassIds = getLinkedStudentClassIds(linkedStudentIds, userProfiles);
+    const actor = toChatActor(role, classIds, linkedStudentIds, linkedStudentClassIds);
+    const target = toChatTarget(profile);
+    return sharedCanMessageUser(actor, target).reason || '';
   }
 
   const formatTime = (value: Conversation['updatedAt'] | Message['sentAt']) => {
