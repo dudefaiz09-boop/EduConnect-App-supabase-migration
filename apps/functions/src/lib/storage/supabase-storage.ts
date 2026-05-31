@@ -10,7 +10,9 @@ export class SupabaseStorageProvider implements StorageProvider {
     contentType: string,
     sizeBytes: number
   ): Promise<PresignedUploadResult> {
-    throw new Error('New uploads to Supabase Storage are no longer supported. Please configure Firebase Storage.');
+    throw new Error(
+      'New uploads to Supabase Storage are no longer supported. Please configure Firebase Storage.'
+    );
   }
 
   async createPresignedReadUrl(bucket: string, key: string): Promise<PresignedReadResult> {
@@ -18,7 +20,9 @@ export class SupabaseStorageProvider implements StorageProvider {
     const { data, error } = await supabaseAdmin.storage.from(bucket).createSignedUrl(key, 60 * 60);
 
     if (error) {
-      throw new Error(`Failed to generate signed URL for Supabase storage object: ${error.message}`);
+      throw new Error(
+        `Failed to generate signed URL for Supabase storage object: ${error.message}`
+      );
     }
 
     return { downloadUrl: data.signedUrl };

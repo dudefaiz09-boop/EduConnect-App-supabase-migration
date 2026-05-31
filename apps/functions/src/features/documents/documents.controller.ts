@@ -125,7 +125,8 @@ export class DocumentsController {
     const providerName = doc.storage_provider || 'supabase';
     const provider = getStorageProvider(providerName);
 
-    const bucket = doc.storage_bucket || process.env.SUPABASE_UPLOADS_BUCKET || 'educonnect-uploads';
+    const bucket =
+      doc.storage_bucket || process.env.SUPABASE_UPLOADS_BUCKET || 'educonnect-uploads';
     const key = doc.storage_key || doc.data?.objectPath || '';
 
     if (!key) {
@@ -164,7 +165,8 @@ export class DocumentsController {
     }
 
     const providerName = doc.storage_provider || 'supabase';
-    const bucket = doc.storage_bucket || process.env.SUPABASE_UPLOADS_BUCKET || 'educonnect-uploads';
+    const bucket =
+      doc.storage_bucket || process.env.SUPABASE_UPLOADS_BUCKET || 'educonnect-uploads';
     const key = doc.storage_key || doc.data?.objectPath || '';
 
     if (key) {

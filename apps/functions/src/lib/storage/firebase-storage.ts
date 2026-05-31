@@ -66,7 +66,7 @@ export class FirebaseStorageProvider implements StorageProvider {
       contentType,
       extensionHeaders: {
         'x-goog-content-length-range': `0,${maxBytes}`,
-      }
+      },
     });
 
     return {
@@ -82,7 +82,7 @@ export class FirebaseStorageProvider implements StorageProvider {
     }
 
     const file = this.bucket.file(key);
-    
+
     const ttlSeconds = Number(process.env.FIREBASE_SIGNED_URL_TTL_SECONDS || '900');
     const expires = Date.now() + ttlSeconds * 1000;
 

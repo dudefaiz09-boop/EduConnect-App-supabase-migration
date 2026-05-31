@@ -15,6 +15,7 @@ supabase db push
 ## File Storage (Supabase & Firebase)
 
 Before deploying the backend, ensure:
+
 1. The legacy `educonnect-uploads` storage bucket exists in Supabase for backward compatibility.
 2. A Firebase project is set up with **Firebase Storage** enabled (Spark free plan).
 3. A Firebase service account is created and its JSON key file is downloaded to configure the backend environment variables.

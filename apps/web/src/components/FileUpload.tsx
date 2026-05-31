@@ -82,7 +82,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     try {
       // Client-side validation
       if (file.size > MAX_FILE_SIZE_BYTES) {
-        throw new Error(`File is too large. Maximum allowed size is ${MAX_FILE_SIZE_BYTES / 1024 / 1024} MB.`);
+        throw new Error(
+          `File is too large. Maximum allowed size is ${MAX_FILE_SIZE_BYTES / 1024 / 1024} MB.`
+        );
       }
 
       const { module, entityId } = parsePath(path);
@@ -111,11 +113,13 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       });
 
       if (!presignRes.ok) {
-        const errBody = await presignRes.json().catch(() => ({})) as { message?: string };
+        const errBody = (await presignRes.json().catch(() => ({}))) as { message?: string };
         throw new Error(errBody.message || `Presign request failed (${presignRes.status})`);
       }
 
-      const presignData = await presignRes.json() as { data: { uploadUrl: string; bucket: string; key: string } };
+      const presignData = (await presignRes.json()) as {
+        data: { uploadUrl: string; bucket: string; key: string };
+      };
       const { uploadUrl, bucket, key } = presignData.data;
 
       setProgress(30);
@@ -152,11 +156,13 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       });
 
       if (!completeRes.ok) {
-        const errBody = await completeRes.json().catch(() => ({})) as { message?: string };
-        throw new Error(errBody.message || `Complete upload request failed (${completeRes.status})`);
+        const errBody = (await completeRes.json().catch(() => ({}))) as { message?: string };
+        throw new Error(
+          errBody.message || `Complete upload request failed (${completeRes.status})`
+        );
       }
 
-      const completeData = await completeRes.json() as { data: { id: string } };
+      const completeData = (await completeRes.json()) as { data: { id: string } };
       const documentId = completeData.data?.id;
 
       setProgress(100);

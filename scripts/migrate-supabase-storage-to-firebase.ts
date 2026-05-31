@@ -29,7 +29,9 @@ const isDryRun = args.includes('--dry-run');
 const isExecute = args.includes('--execute');
 
 if (!isDryRun && !isExecute) {
-  console.error('Usage: pnpm tsx scripts/migrate-supabase-storage-to-firebase.ts [--dry-run | --execute]');
+  console.error(
+    'Usage: pnpm tsx scripts/migrate-supabase-storage-to-firebase.ts [--dry-run | --execute]'
+  );
   process.exit(1);
 }
 
@@ -41,7 +43,14 @@ const FIREBASE_PRIVATE_KEY = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '
 const FIREBASE_STORAGE_BUCKET = process.env.FIREBASE_STORAGE_BUCKET!;
 const SUPABASE_UPLOADS_BUCKET = process.env.SUPABASE_UPLOADS_BUCKET || 'educonnect-uploads';
 
-for (const [name, val] of Object.entries({ SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY, FIREBASE_STORAGE_BUCKET })) {
+for (const [name, val] of Object.entries({
+  SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY,
+  FIREBASE_PROJECT_ID,
+  FIREBASE_CLIENT_EMAIL,
+  FIREBASE_PRIVATE_KEY,
+  FIREBASE_STORAGE_BUCKET,
+})) {
   if (!val) {
     console.error(`Missing required env var: ${name}`);
     process.exit(1);
@@ -56,7 +65,11 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 if (!admin.apps.length) {
   admin.initializeApp({
-    credential: admin.credential.cert({ projectId: FIREBASE_PROJECT_ID, clientEmail: FIREBASE_CLIENT_EMAIL, privateKey: FIREBASE_PRIVATE_KEY }),
+    credential: admin.credential.cert({
+      projectId: FIREBASE_PROJECT_ID,
+      clientEmail: FIREBASE_CLIENT_EMAIL,
+      privateKey: FIREBASE_PRIVATE_KEY,
+    }),
   });
 }
 
@@ -90,7 +103,9 @@ function buildFirebaseKey(doc: DocumentRow): string {
   const tenantId = (doc.data.tenantId || doc.data.schoolId || 'unknown') as string;
   const module = (doc.data.module || doc.collection || 'documents') as string;
   const entityId = (doc.data.entityId || doc.data.assignmentId || 'general') as string;
-  const filename = sanitizeFilename(doc.original_filename || doc.storage_key?.split('/').pop() || 'file');
+  const filename = sanitizeFilename(
+    doc.original_filename || doc.storage_key?.split('/').pop() || 'file'
+  );
   return `schools/${tenantId}/${module}/${entityId}/${randomUUID()}-${filename}`;
 }
 
@@ -100,14 +115,18 @@ function buildFirebaseKey(doc: DocumentRow): string {
 
 async function main() {
   console.log(`\n🔄 Supabase → Firebase Storage Migration`);
-  console.log(`   Mode: ${isDryRun ? 'DRY RUN (no changes will be made)' : 'EXECUTE (files will be moved)'}`);
+  console.log(
+    `   Mode: ${isDryRun ? 'DRY RUN (no changes will be made)' : 'EXECUTE (files will be moved)'}`
+  );
   console.log(`   Supabase bucket: ${SUPABASE_UPLOADS_BUCKET}`);
   console.log(`   Firebase bucket: ${FIREBASE_STORAGE_BUCKET}\n`);
 
   // Fetch all documents using Supabase Storage
   const { data: docs, error } = await supabase
     .from('documents')
-    .select('collection, id, data, storage_provider, storage_bucket, storage_key, mime_type, file_size_bytes, original_filename')
+    .select(
+      'collection, id, data, storage_provider, storage_bucket, storage_key, mime_type, file_size_bytes, original_filename'
+    )
     .eq('storage_provider', 'supabase');
 
   if (error) {
