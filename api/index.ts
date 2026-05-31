@@ -125,9 +125,8 @@ function handleFallback(req: IncomingMessage, res: ServerResponse) {
   }
 
   if (req.method === 'GET' && path === '/api/health') {
-    return sendJson(res, 200, {
-      status: 'healthy',
-      degraded: true,
+    return sendJson(res, 503, {
+      status: 'degraded',
       startupError,
       timestamp: new Date().toISOString(),
     });

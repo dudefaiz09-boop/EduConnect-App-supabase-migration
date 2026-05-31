@@ -15,7 +15,7 @@
     "demo:api-smoke": "tsx scripts/demo-api-smoke.ts",
     "export:demo-artifacts": "tsx scripts/export-demo-artifacts.ts",
     "demo:ready": "pnpm seed:supabase && pnpm seed:demo-extras && pnpm verify:demo-seed && pnpm export:demo-artifacts",
-    "test": "echo 'No tests yet' && exit 0"
+    "test": "npx jest --config ../../jest.config.cjs --testPathPattern=apps/functions/tests"
   },
   "dependencies": {
     "@educonnect/shared": "workspace:*",

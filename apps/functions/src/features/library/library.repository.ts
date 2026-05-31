@@ -147,12 +147,24 @@ export class LibraryRepository {
     return { id: ref.id, ...resource };
   }
 
-  static async borrow(resourceId: string, actor: Actor, tenantId: string) {
+  static async borrow(resourceId: string, actor: Actor, tenantId: string, user: any) {
     const resourceRef = db.collection('library').doc(resourceId);
     const resourceSnapshot = await resourceRef.get();
     if (!resourceSnapshot.exists) throw new AppError('Resource not found', 404);
     const resource = resourceSnapshot.data() as LibraryResource;
     if (!isTenantResource(resource, tenantId)) throw new AppError('Tenant access denied', 403);
+
+    // Users may only borrow resources they are permitted to see
+    if (!canSeeResource({ ...resource, id: resourceId }, user)) {
+      throw new AppError('Forbidden: resource is not visible to this user', 403);
+    }
+
+    // Enforce copy limit
+    const availableCopies = resource.availableCopies ?? Infinity;
+    const borrowedCount = resource.borrowedCount ?? 0;
+    if (borrowedCount >= availableCopies) {
+      throw new AppError('No copies available for borrowing', 409);
+    }
 
     const activeBorrows = await db
       .collection('borrowRecords')

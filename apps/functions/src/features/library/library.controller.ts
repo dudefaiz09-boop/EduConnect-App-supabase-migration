@@ -51,7 +51,8 @@ export class LibraryController {
       const result = await LibraryRepository.borrow(
         req.body.resourceId,
         { uid: req.user!.uid, email: req.user!.email, schoolId: req.user!.schoolId },
-        req.tenantId!
+        req.tenantId!,
+        req.user!
       );
       res.status(201).json(result);
     } catch (error) {

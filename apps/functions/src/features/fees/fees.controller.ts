@@ -72,6 +72,8 @@ export class FeesController {
     try {
       const { uid } = req.params;
       if (!canViewStudentFees(req.user!, uid)) throw new AppError('Forbidden', 403);
+      // Fee managers (admin, accountant, manageFees) can access all records in the tenant.
+      // Other users (students, parents, teachers) must pass the student-level access check.
       if (!hasFeeAccess(req.user)) {
         await assertCanAccessStudent(req.user!, uid, req.tenantId!);
       }
