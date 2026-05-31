@@ -1,9 +1,21 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Assignments End-to-End Workflow', () => {
-  // We skip these by default unless we are running against a seeded emulator or dev project
-  // because it requires logging in and interacting with live DB.
-  // We can write it to document the process and run it safely with mocks.
+  // TODO: This test remains skipped because:
+  // 1. It requires a live seeded Supabase instance with specific demo credentials
+  //    (teacher@educonnect.app / student@educonnect.app) that don't exist in CI.
+  // 2. It is NOT picked up by any test runner:
+  //    - Jest config matches **/tests/**/*.test.ts (this file is .spec.ts)
+  //    - Playwright uses testDir: ./qa/e2e (this file is in tests/)
+  // 3. Hardcoded login flow and URLs will not work across environments.
+  //
+  // Reliable assignment test coverage (permission checks, schema validation, etc.)
+  // is in tests/assignments.test.ts (Jest, no DB required).
+  //
+  // To enable this spec, you would need to:
+  //   a. Move it to qa/e2e/ and rename to .spec.ts
+  //   b. Use the credential injection pattern from qa/e2e/auth.setup.ts
+  //   c. Run against a seeded demo environment
 
   test.skip('Teacher creates assignment with rubric and student submits', async ({ page }) => {
     // 1. Login as Teacher

@@ -2,26 +2,9 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import type { Request, Response, NextFunction } from 'express';
 import { AppError } from '../middleware/error.js';
+import type { UserContext } from '@educonnect/shared';
 
-export interface UserContext {
-  uid: string;
-  email?: string;
-  displayName?: string;
-  role: string;
-  roles: string[];
-  isAdmin?: boolean;
-  isSuperAdmin?: boolean;
-  managedTenantIds?: string[];
-  schoolId: string | null;
-  classId?: string | null;
-  classIds: string[];
-  subjectIds?: string[];
-  sectionIds?: string[];
-  linkedStudentIds: string[];
-  assignedModules?: string[];
-  permissions: Record<string, boolean>;
-  status?: 'active' | 'inactive';
-}
+export type { UserContext };
 
 export interface AppContext {
   correlationId: string;

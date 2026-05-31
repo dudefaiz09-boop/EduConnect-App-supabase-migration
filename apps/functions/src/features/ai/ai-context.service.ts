@@ -69,6 +69,7 @@ export class AiContextService {
       displayName: user?.displayName,
       role: user?.role || user?.roles?.[0] || fallbackRole,
       roles: user?.roles || [fallbackRole],
+      isAdmin: false,
       schoolId: tenantId,
       classId: user?.classId,
       classIds: user?.classIds || [],
@@ -138,7 +139,7 @@ export class AiContextService {
       return 'No tenant context was available for school records.';
     }
 
-    const canAccess = (m: AiModule) => AI_MODULE_PERMISSIONS[m].includes(context.role);
+    const canAccess = (m: AiModule) => AI_MODULE_PERMISSIONS[m].includes(context.role || '');
 
     const activeModules = modules.filter(canAccess);
 

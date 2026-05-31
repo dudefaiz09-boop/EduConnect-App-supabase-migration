@@ -7,7 +7,7 @@ export class FeesProvider implements AiModuleProvider {
     const { uid, role, linkedStudentIds } = user;
     const supabase = getSupabaseAdmin();
 
-    if (['admin', 'principal', 'accountant'].includes(role)) {
+    if (role === 'admin' || role === 'principal' || role === 'accountant') {
       const { data, error } = await supabase
         .from('fees')
         .select('*')

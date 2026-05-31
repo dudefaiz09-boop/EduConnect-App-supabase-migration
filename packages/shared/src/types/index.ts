@@ -4,18 +4,20 @@ export interface UserContext {
   uid: string;
   email?: string;
   displayName?: string;
-  role?: Role;
-  roles: Role[];
+  role?: string;
+  roles: string[];
   isAdmin: boolean;
-  classId: string | null;
-  classIds?: string[];
+  isSuperAdmin?: boolean;
+  managedTenantIds?: string[];
+  classId?: string | null;
+  classIds: string[];
   subjectIds?: string[];
   sectionIds?: string[];
-  linkedStudentIds?: string[];
-  assignedModules?: ModuleKey[];
+  linkedStudentIds: string[];
+  assignedModules?: string[];
   permissions: Record<string, boolean>;
   permissionKeys?: PermissionKey[];
-  schoolId?: string | null;
+  schoolId: string | null;
   status?: 'active' | 'inactive';
 }
 

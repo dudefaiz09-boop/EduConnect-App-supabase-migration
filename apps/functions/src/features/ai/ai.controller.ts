@@ -130,7 +130,7 @@ export class AiController {
       // 4. Generate AI response
       const { id, response } = await AiService.getChatbotResponse(
         userContext.uid,
-        userContext.role,
+        userContext.role || 'student',
         query,
         mode,
         context

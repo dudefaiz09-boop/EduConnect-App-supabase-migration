@@ -18,14 +18,9 @@ export interface UserContext {
   status: 'active' | 'inactive';
 }
 
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Express {
-    interface Request {
-      user?: UserContext;
-    }
-  }
-}
+// Note: Express.Request augmentation is in apps/functions/src/middleware/auth.ts
+// to avoid duplicate UserContext definitions. Keep this file for
+// AttendanceRecord and Announcement types used by shared-analytics.
 
 export interface Announcement {
   id: string;
