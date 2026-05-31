@@ -15,6 +15,7 @@ const presignUploadSchema = z.object({
 });
 
 const completeUploadSchema = z.object({
+  uploadId: z.string().min(1),
   provider: z.string().min(1),
   bucket: z.string().min(1),
   key: z.string().min(1),
@@ -24,6 +25,55 @@ const completeUploadSchema = z.object({
   module: z.string().min(1),
   entityId: z.string().min(1),
 });
+
+type UploadSessionData = {
+  tenantId: string;
+  schoolId: string;
+  provider: string;
+  bucket: string;
+  key: string;
+  filename: string;
+  contentType: string;
+  sizeBytes: number;
+  module: string;
+  entityId: string;
+  uploadedBy?: string;
+  status: 'pending' | 'completed';
+  expiresAt: string;
+  createdAt: string;
+  completedDocumentId?: string;
+  completedAt?: string;
+};
+
+function getConfiguredStorageProviderName() {
+  return process.env.STORAGE_PROVIDER || 'supabase';
+}
+
+function uploadSessionTtlSeconds() {
+  return Number(
+    process.env.UPLOAD_SESSION_TTL_SECONDS || process.env.FIREBASE_SIGNED_URL_TTL_SECONDS || '900'
+  );
+}
+
+function matchesUploadSession(
+  session: UploadSessionData,
+  body: z.infer<typeof completeUploadSchema>,
+  tenantId: string,
+  userId?: string
+) {
+  return (
+    session.tenantId === tenantId &&
+    (!session.uploadedBy || session.uploadedBy === userId) &&
+    session.provider === body.provider &&
+    session.bucket === body.bucket &&
+    session.key === body.key &&
+    session.filename === body.filename &&
+    session.contentType === body.contentType &&
+    Number(session.sizeBytes) === Number(body.sizeBytes) &&
+    session.module === body.module &&
+    session.entityId === body.entityId
+  );
+}
 
 export class DocumentsController {
   static async presignUpload(req: Request, res: Response) {
@@ -44,9 +94,41 @@ export class DocumentsController {
       body.sizeBytes
     );
 
+    const supabaseAdmin = getSupabaseAdmin();
+    const uploadId = randomUUID();
+    const now = new Date();
+    const session: UploadSessionData = {
+      tenantId,
+      schoolId: tenantId,
+      provider: getConfiguredStorageProviderName(),
+      bucket: result.bucket,
+      key: result.key,
+      filename: body.filename,
+      contentType: body.contentType,
+      sizeBytes: body.sizeBytes,
+      module: body.module,
+      entityId: body.entityId,
+      uploadedBy: req.user?.uid,
+      status: 'pending',
+      createdAt: now.toISOString(),
+      expiresAt: new Date(now.getTime() + uploadSessionTtlSeconds() * 1000).toISOString(),
+    };
+
+    const { error } = await supabaseAdmin.from('documents').insert({
+      collection: 'uploadSessions',
+      id: uploadId,
+      data: session,
+      created_at: session.createdAt,
+      updated_at: session.createdAt,
+    });
+
+    if (error) {
+      throw new AppError(`Failed to save upload session: ${error.message}`, 500);
+    }
+
     return res.json({
       status: 'success',
-      data: result,
+      data: { ...result, provider: session.provider, uploadId },
     });
   }
 
@@ -58,12 +140,37 @@ export class DocumentsController {
 
     const body = completeUploadSchema.parse(req.body);
 
-    // Verify key belongs to tenant
     if (!body.key.startsWith(`schools/${tenantId}/`)) {
       throw new AppError('Storage key does not belong to the current tenant', 403);
     }
 
     const supabaseAdmin = getSupabaseAdmin();
+
+    const { data: uploadSessionRow, error: sessionError } = await supabaseAdmin
+      .from('documents')
+      .select('id,data')
+      .eq('collection', 'uploadSessions')
+      .eq('id', body.uploadId)
+      .maybeSingle<{ id: string; data: UploadSessionData | null }>();
+
+    if (sessionError) {
+      throw new AppError(`Failed to load upload session: ${sessionError.message}`, 500);
+    }
+
+    const session = uploadSessionRow?.data;
+    if (!session) {
+      throw new AppError('Upload session not found', 404);
+    }
+    if (session.status !== 'pending') {
+      throw new AppError('Upload session has already been completed', 409);
+    }
+    if (Date.parse(session.expiresAt) <= Date.now()) {
+      throw new AppError('Upload session has expired', 410);
+    }
+    if (!matchesUploadSession(session, body, tenantId, req.user?.uid)) {
+      throw new AppError('Upload completion does not match the server-issued upload session', 403);
+    }
+
     const id = randomUUID();
 
     const { data, error } = await supabaseAdmin
@@ -90,6 +197,24 @@ export class DocumentsController {
 
     if (error) {
       throw new AppError(`Failed to save document metadata: ${error.message}`, 500);
+    }
+
+    const { error: updateSessionError } = await supabaseAdmin
+      .from('documents')
+      .update({
+        data: {
+          ...session,
+          status: 'completed',
+          completedAt: new Date().toISOString(),
+          completedDocumentId: id,
+        },
+        updated_at: new Date().toISOString(),
+      })
+      .eq('collection', 'uploadSessions')
+      .eq('id', body.uploadId);
+
+    if (updateSessionError) {
+      throw new AppError(`Failed to update upload session: ${updateSessionError.message}`, 500);
     }
 
     return res.json({
