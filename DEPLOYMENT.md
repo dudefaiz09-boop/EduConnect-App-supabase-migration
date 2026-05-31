@@ -1,9 +1,11 @@
 # EduConnect Deployment Architecture
 
-This migration branch targets free-tier friendly hosting with Vercel and Supabase only. Deployment uses two Vercel projects from the same GitHub repository:
+This migration branch targets free-tier friendly hosting with Vercel and Supabase only. The
+recommended deployment is one combined Vercel project from the repository root. A split web/API
+deployment is supported for teams that need separate projects.
 
-- `educonnect-web`
-- `educonnect-api`
+- Recommended: one `educonnect` project, web served from `apps/web/dist`, API served from `/api`.
+- Advanced: separate `educonnect-web` and `educonnect-api` projects.
 
 For the production checklist, see [PRODUCTION_SETUP.md](./PRODUCTION_SETUP.md).
 
@@ -18,6 +20,58 @@ For the production checklist, see [PRODUCTION_SETUP.md](./PRODUCTION_SETUP.md).
 | Mobile        | React Native      | Local / App Store / Play Store | Uses the same Supabase backend      |
 
 ## Vercel Projects
+
+### Recommended Combined Project
+
+Create one Vercel project from this GitHub repository with these settings:
+
+- Framework Preset: Other
+- Root Directory: repo root / empty
+- Install Command: `corepack pnpm install --frozen-lockfile`
+- Build Command: `corepack pnpm --filter @educonnect/functions build && corepack pnpm --filter @educonnect/web build`
+- Output Directory: `apps/web/dist`
+
+The root [vercel.json](./vercel.json) builds the compiled Express app first, builds the Vite web
+app second, rewrites `/api` requests to [api/index.ts](./api/index.ts), and rewrites all other
+routes to the SPA.
+
+Set these browser-safe environment variables:
+
+```bash
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_API_BASE_URL=/api
+VITE_ENABLE_AI_FEATURES=true
+VITE_ENVIRONMENT=production
+```
+
+Set the API/server environment variables on the same project:
+
+```bash
+NODE_ENV=production
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+SUPABASE_UPLOADS_BUCKET=educonnect-uploads
+CORS_ORIGINS=https://your-combined-project.vercel.app
+OPENROUTER_API_KEY=your_openrouter_key
+OPENROUTER_MODEL=google/gemma-3-4b-it:free
+PUBLIC_APP_URL=https://your-combined-project.vercel.app
+
+# Firebase Storage (new uploads, backend only)
+STORAGE_PROVIDER=firebase
+FIREBASE_PROJECT_ID=your-firebase-project-id
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_KEY\n-----END PRIVATE KEY-----\n"
+FIREBASE_STORAGE_BUCKET=your-firebase-project.appspot.com
+FIREBASE_SIGNED_URL_TTL_SECONDS=900
+MAX_UPLOAD_BYTES=52428800
+```
+
+Never add `SUPABASE_SERVICE_ROLE_KEY` or Firebase service account credentials to a browser-only
+project.
+
+### Advanced Split Projects
 
 ### Web Project: educonnect-web
 
@@ -37,7 +91,6 @@ Set these browser-safe environment variables:
 ```bash
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-VITE_SUPABASE_UPLOADS_BUCKET=educonnect-uploads
 VITE_API_BASE_URL=https://your-api-project.vercel.app/api
 VITE_ENABLE_AI_FEATURES=true
 VITE_ENVIRONMENT=production
@@ -105,14 +158,15 @@ supabase db push
 Optionally seed demo data:
 
 ```bash
-pnpm seed:supabase
+CONFIRM_RESET_DEMO_DATA=tenant-a,tenant-b pnpm seed:supabase
 ```
 
 Keep `SUPABASE_SERVICE_ROLE_KEY` only in local backend `.env` files or backend hosting secrets.
 
 ## Firebase Storage Setup
 
-New file uploads go to Firebase Storage. Supabase Storage is kept only for backward compatibility with existing files.
+New file uploads go to Firebase Storage. Supabase Storage is kept only for legacy read/delete
+migration of existing files; new Supabase Storage uploads are intentionally rejected by the API.
 
 1. Go to [console.firebase.google.com](https://console.firebase.google.com) and create a new project.
 2. Enable **Firebase Storage** (Spark free plan).
@@ -133,7 +187,6 @@ Create `apps/web/.env.local`:
 ```bash
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-VITE_SUPABASE_UPLOADS_BUCKET=educonnect-uploads
 VITE_API_BASE_URL=/api
 VITE_ENABLE_AI_FEATURES=true
 VITE_ENVIRONMENT=development

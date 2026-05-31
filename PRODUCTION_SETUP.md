@@ -29,7 +29,7 @@ Optionally seed demo data from your local machine:
 
 ```bash
 pnpm seed:supabase -- --dry-run
-pnpm seed:supabase
+CONFIRM_RESET_DEMO_DATA=tenant-a,tenant-b pnpm seed:supabase
 ```
 
 Or seed from GitHub Actions:
@@ -49,7 +49,24 @@ grant select on public.documents to authenticated;
 
 Keep `SUPABASE_SERVICE_ROLE_KEY` only in local backend `.env` files or backend hosting secrets. Never add it to the web project.
 
-## 2. Vercel API
+## 2. Vercel
+
+### Recommended Combined Project
+
+Create one Vercel project from the repository root.
+
+Use these settings:
+
+- Framework Preset: Other
+- Root Directory: repo root / empty
+- Install Command: `corepack pnpm install --frozen-lockfile`
+- Build Command: `corepack pnpm --filter @educonnect/functions build && corepack pnpm --filter @educonnect/web build`
+- Output Directory: `apps/web/dist`
+
+Set `VITE_API_BASE_URL=/api` for this mode. The root `vercel.json` builds the API bundle before
+the web bundle and serves API routes from the same origin.
+
+### Advanced Split API Project
 
 Create a Vercel project named `educonnect-api` from this repository.
 
@@ -94,7 +111,7 @@ After deploy, verify:
 curl https://your-api-project.vercel.app/api/health
 ```
 
-## 3. Vercel Web
+### Advanced Split Web Project
 
 Create a second Vercel project named `educonnect-web` from the same repository.
 
@@ -114,7 +131,6 @@ Set these browser-safe Vercel environment variables:
 ```bash
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-VITE_SUPABASE_UPLOADS_BUCKET=educonnect-uploads
 VITE_API_BASE_URL=https://your-api-project.vercel.app/api
 VITE_ENABLE_AI_FEATURES=true
 VITE_ENVIRONMENT=production
@@ -124,7 +140,7 @@ Never add `SUPABASE_SERVICE_ROLE_KEY` to the web project.
 
 The [apps/web/vercel.json](./apps/web/vercel.json) file provides the Vite build and SPA routing settings for this layout.
 
-## 4. Final Smoke Tests
+## 3. Final Smoke Tests
 
 Run these checks after both production deployments are live:
 
@@ -143,7 +159,7 @@ In the browser:
 - Open any old file and confirm backward compatibility (old Supabase Storage files still open).
 - Create one announcement and confirm it appears.
 
-## 5. Firebase Storage Setup
+## 4. Firebase Storage Setup
 
 1. Go to [console.firebase.google.com](https://console.firebase.google.com).
 2. Create a new project (or reuse an existing one).

@@ -27,8 +27,9 @@ type SeedUser = {
 
 const dryRun = process.argv.includes('--dry-run');
 const now = new Date().toISOString();
-const demoPassword = 'Test@123456';
 const activeDemoTenantIds = ['tenant-a', 'tenant-b'] as const;
+const requiredResetConfirmation = [...activeDemoTenantIds].sort().join(',');
+const demoPassword = process.env.DEMO_PASSWORD?.trim() || 'Test@123456';
 const cleanupDemoTenantIds = [...activeDemoTenantIds, 'tenant-c'];
 const demoEmailDomain = '@educonnect.test';
 const staleDemoEmails = ['test@test.com'];
@@ -36,6 +37,33 @@ const staleDemoNames = ['TEST', 'Student Demo', 'Student A', 'Student B'];
 
 // This script only cleans and regenerates known demo tenants/users. Never point these
 // IDs or the @educonnect.test domain at real production schools.
+
+function normalizeTenantConfirmation(value: string | undefined) {
+  return (value || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .sort()
+    .join(',');
+}
+
+function assertDemoResetConfirmed() {
+  if (dryRun) return;
+
+  const actual = normalizeTenantConfirmation(process.env.CONFIRM_RESET_DEMO_DATA);
+  if (actual === requiredResetConfirmation) return;
+
+  throw new Error(
+    `Refusing to reset demo data without CONFIRM_RESET_DEMO_DATA=${requiredResetConfirmation}. ` +
+      'Run with --dry-run first, then set the confirmation only for a disposable demo project.'
+  );
+}
+
+function shouldPrintDemoPassword() {
+  if (process.env.CI || process.env.GITHUB_ACTIONS || process.env.VERCEL) return false;
+  const environment = (process.env.NODE_ENV || 'development').toLowerCase();
+  return ['development', 'dev', 'local', 'test'].includes(environment);
+}
 
 function deterministicUuid(input: string) {
   const hash = createHash('sha256').update(input).digest('hex').slice(0, 32);
@@ -1087,6 +1115,8 @@ async function main() {
     return;
   }
 
+  assertDemoResetConfirmed();
+
   const supabase = getSupabase();
   const idsByEmail = new Map<string, string>();
 
@@ -1115,6 +1145,11 @@ async function main() {
 
   await printSeedVerificationSummary(supabase);
   console.log('Seed complete!');
+  if (shouldPrintDemoPassword()) {
+    console.log(`Demo password: ${demoPassword}`);
+  } else {
+    console.log('Demo password not printed outside local/dev. Set DEMO_PASSWORD to override it.');
+  }
 }
 
 main().catch((error) => {

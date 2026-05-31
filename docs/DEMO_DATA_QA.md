@@ -34,7 +34,7 @@ The seed script creates demo data for:
 
 ```powershell
 cd "D:\Educonnect-Migration\EduConnect-App-supabase-migration"
-pnpm --filter @educonnect/functions seed:supabase
+CONFIRM_RESET_DEMO_DATA=tenant-a,tenant-b pnpm --filter @educonnect/functions seed:supabase
 ```
 
 Required environment variables:
