@@ -34,6 +34,13 @@ function getEffectiveRole(target: { role?: string; roles?: readonly string[] }):
   return target.role || target.roles?.[0] || '';
 }
 
+function getAllRoles(user: { role?: string; roles?: readonly string[] }): string[] {
+  const roleSet = new Set<string>();
+  if (user.role) roleSet.add(user.role);
+  if (user.roles) user.roles.forEach((r) => r && roleSet.add(r));
+  return Array.from(roleSet);
+}
+
 function getEffectiveClassIds(target: {
   classId?: string | null;
   classIds?: readonly string[];
@@ -45,20 +52,17 @@ function getEffectiveClassIds(target: {
 
 const LEADERSHIP_ROLES = new Set<string>([ROLES.ADMIN, ROLES.PRINCIPAL, 'president']);
 
-export function canMessageUser(
+function checkRole(
+  actorRole: string,
   actor: ChatPermissionActor,
-  target: ChatPermissionTarget
-): ChatPermissionResult {
-  const actorRole = actor.role || actor.roles?.[0] || '';
-  if (!actorRole) return { allowed: false };
-
+  target: ChatPermissionTarget,
+  targetRole: string,
+  targetClassIds: string[],
+  actorClassIds: string[]
+): ChatPermissionResult | null {
   if (actorRole === ROLES.ADMIN || actorRole === ROLES.PRINCIPAL || actor.isAdmin) {
     return { allowed: true, reason: 'Admin/Principal access' };
   }
-
-  const targetRole = getEffectiveRole(target);
-  const targetClassIds = getEffectiveClassIds(target);
-  const actorClassIds = getEffectiveClassIds(actor);
 
   if (actorRole === ROLES.STUDENT) {
     if (targetRole === ROLES.TEACHER && targetClassIds.some((c) => actorClassIds.includes(c)))
@@ -82,9 +86,7 @@ export function canMessageUser(
       return { allowed: true, reason: 'Your Student' };
     if (targetRole === ROLES.PARENT) {
       const targetChildClassIds = getEffectiveClassIds(target);
-      const hasLinkedChildInClass =
-        targetChildClassIds.some((c) => actorClassIds.includes(c)) ||
-        (target.linkedStudentIds?.length ?? 0) > 0;
+      const hasLinkedChildInClass = targetChildClassIds.some((c) => actorClassIds.includes(c));
       if (hasLinkedChildInClass) return { allowed: true, reason: "Student's Parent" };
     }
     if (
@@ -110,6 +112,26 @@ export function canMessageUser(
     if (targetRole === ROLES.STUDENT || targetRole === ROLES.PARENT)
       return { allowed: true, reason: 'Fee Management' };
     return { allowed: false };
+  }
+
+  return null;
+}
+
+export function canMessageUser(
+  actor: ChatPermissionActor,
+  target: ChatPermissionTarget
+): ChatPermissionResult {
+  const roles = getAllRoles(actor);
+  if (roles.length === 0) return { allowed: false };
+
+  const targetRole = getEffectiveRole(target);
+  const targetClassIds = getEffectiveClassIds(target);
+  const actorClassIds = getEffectiveClassIds(actor);
+
+  for (const actorRole of roles) {
+    const result = checkRole(actorRole, actor, target, targetRole, targetClassIds, actorClassIds);
+    if (result === null) continue;
+    if (result.allowed) return result;
   }
 
   return { allowed: false };

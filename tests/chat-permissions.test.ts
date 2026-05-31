@@ -161,6 +161,22 @@ describe('canMessageUser', () => {
       expect(result.allowed).toBe(true);
       expect(result.reason).toBe('Colleague');
     });
+
+    it('denies teacher messaging parent when linked student is outside teacher classes', () => {
+      const result = canMessageUser(
+        actor({ role: 'teacher', classIds: ['10B'] }),
+        target({ role: 'parent', classIds: ['10A'], linkedStudentIds: ['student-1'] })
+      );
+      expect(result.allowed).toBe(false);
+    });
+
+    it('allows teacher messaging parent when linked child is in teacher class', () => {
+      const result = canMessageUser(
+        actor({ role: 'teacher', classIds: ['10A'] }),
+        target({ role: 'parent', classIds: ['10A'], linkedStudentIds: ['student-1'] })
+      );
+      expect(result.allowed).toBe(true);
+    });
   });
 
   describe('librarian', () => {
@@ -233,6 +249,45 @@ describe('canMessageUser', () => {
     it('cannot message anyone by default (no specific rules)', () => {
       const result = canMessageUser(actor({ role: 'staff' }), target({ role: 'student' }));
       expect(result.allowed).toBe(false);
+    });
+  });
+
+  describe('multi-role actor', () => {
+    it('teacher+librarian can message student (librarian allows it)', () => {
+      const result = canMessageUser(
+        actor({ role: 'teacher', roles: ['teacher', 'librarian'], classIds: ['10B'] }),
+        target({ role: 'student', classIds: ['10A'] })
+      );
+      expect(result.allowed).toBe(true);
+      expect(result.reason).toBe('Library Services');
+    });
+
+    it('teacher+parent can message principal (parent allows admin messaging)', () => {
+      const result = canMessageUser(
+        actor({ role: 'teacher', roles: ['teacher', 'parent'] }),
+        target({ role: 'principal' })
+      );
+      expect(result.allowed).toBe(true);
+    });
+
+    it('student+parent uses union of permissions', () => {
+      const result = canMessageUser(
+        actor({
+          role: 'student',
+          roles: ['student', 'parent'],
+          linkedStudentClassIds: ['10A'],
+        }),
+        target({ role: 'teacher', classIds: ['10A'] })
+      );
+      expect(result.allowed).toBe(true);
+    });
+
+    it('librarian+accountant can message student', () => {
+      const result = canMessageUser(
+        actor({ role: 'librarian', roles: ['librarian', 'accountant'] }),
+        target({ role: 'student' })
+      );
+      expect(result.allowed).toBe(true);
     });
   });
 
