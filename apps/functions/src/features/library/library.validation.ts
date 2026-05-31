@@ -17,7 +17,7 @@ export const uploadLibraryResourceSchema = z.object({
       visibility: z.enum(['all', 'roles', 'classes']),
       targetRoles: z.array(z.string()).optional(),
       targetClassIds: z.array(z.string()).optional(),
-      availableCopies: z.number().optional(),
+      availableCopies: z.number().int().nonnegative().optional(),
     })
     .strict(),
 });
@@ -67,7 +67,7 @@ export const updateLibraryResourceSchema = z.object({
       targetRoles: z.array(z.string()).optional(),
       targetClassIds: z.array(z.string()).optional(),
       classIds: z.array(z.string()).optional(),
-      availableCopies: z.number().optional(),
+      availableCopies: z.number().int().nonnegative().optional(),
     })
     .strict(),
 });
