@@ -23,12 +23,18 @@ describe('production hardening guardrails', () => {
     const createManagedUser = source.slice(
       source.indexOf('export async function createManagedUser')
     );
+    const rollbackCreatedUser = source.slice(
+      source.indexOf('async function rollbackCreatedUser'),
+      source.indexOf('async function countActiveAdmins')
+    );
 
     expect(createManagedUser).toContain('try {');
     expect(createManagedUser).toContain('catch (error)');
-    expect(createManagedUser).toContain('auth.deleteUser(userRecord.uid)');
-    expect(createManagedUser).toContain(".from('documents').delete()");
-    expect(createManagedUser).toContain(".from('user_tenants').delete()");
+    expect(createManagedUser).toContain('rollbackCreatedUser(userRecord.uid');
+    expect(rollbackCreatedUser).toContain('auth.deleteUser(uid)');
+    expect(rollbackCreatedUser).toContain('userRef.delete()');
+    expect(rollbackCreatedUser).toContain(".from('profiles').delete()");
+    expect(rollbackCreatedUser).toContain(".from('user_tenants').delete()");
   });
 
   it('authorizes requested tenants before creating managed users', () => {
