@@ -24,10 +24,6 @@ export const ROLES = {
   ACCOUNTANT: 'accountant',
 } as const;
 
-export const SYSTEM_ROLES = {
-  SUPER_ADMIN: 'super_admin',
-} as const;
-
 export type UserRole = (typeof ROLES)[keyof typeof ROLES];
 
 export const PERMISSIONS = {
@@ -52,5 +48,9 @@ export const PERMISSIONS = {
 
 export const API_VERSION = 'v1';
 export const MIN_MOBILE_VERSION = '1.0.0';
+
+export const SYSTEM_ROLES = {
+  SUPER_ADMIN: 'super_admin',
+} as const;
 
 export * from './notifications.js';

@@ -9,8 +9,6 @@ import {
   assertStudentsBelongToClass,
 } from '../src/lib/authorization.js';
 
-type DeepMock<T> = { [K in keyof T]: jest.Mock };
-
 function mockDoc(exists: boolean, data: Record<string, unknown> = {}) {
   return {
     exists,
@@ -45,25 +43,19 @@ function makeActor(overrides: Record<string, unknown> = {}) {
   };
 }
 
-jest.mock('../src/lib/documents.js', () => {
-  const mockDb = {
-    collection: jest.fn(),
-  };
+const mockDocRef = { get: jest.fn() };
+const mockCollectionRef = {
+  doc: jest.fn(() => mockDocRef),
+  where: jest.fn(),
+  get: jest.fn(),
+};
+mockCollectionRef.where.mockReturnValue(mockCollectionRef);
 
-  const mockDocRef = {
-    get: jest.fn(),
-  };
+jest.mock('../src/lib/documents.js', () => ({
+  db: { collection: jest.fn(() => mockCollectionRef) },
+}));
 
-  const mockCollectionRef = {
-    doc: jest.fn(() => mockDocRef),
-    where: jest.fn(() => mockCollectionRef),
-    get: jest.fn(),
-  };
-
-  mockDb.collection.mockReturnValue(mockCollectionRef);
-
-  return { db: mockDb };
-});
+import { db } from '../src/lib/documents.js';
 
 async function expectReject(fn: () => Promise<unknown>, match: string | RegExp) {
   let error: Error | null = null;
@@ -86,7 +78,6 @@ beforeEach(() => {
   userDocs.clear();
   classDocs = [];
 
-  const { db } = require('../src/lib/documents.js') as { db: any };
   const collectionRef = db.collection();
 
   collectionRef.doc.mockImplementation((id: string) => {
