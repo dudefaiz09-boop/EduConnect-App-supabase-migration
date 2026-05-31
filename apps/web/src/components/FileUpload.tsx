@@ -44,7 +44,7 @@ function parsePath(path: string): { module: string; entityId: string } {
 
 const MAX_FILE_SIZE_BYTES = 52428800; // 50 MB
 
-const ALLOWED_MIME_TYPES = new Set([
+const _ALLOWED_MIME_TYPES = new Set([
   'application/pdf',
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
