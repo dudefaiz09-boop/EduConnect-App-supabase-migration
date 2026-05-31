@@ -118,9 +118,15 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       }
 
       const presignData = (await presignRes.json()) as {
-        data: { uploadUrl: string; bucket: string; key: string };
+        data: {
+          uploadUrl: string;
+          provider: string;
+          bucket: string;
+          key: string;
+          uploadId: string;
+        };
       };
-      const { uploadUrl, bucket, key } = presignData.data;
+      const { uploadUrl, provider, bucket, key, uploadId } = presignData.data;
 
       setProgress(30);
 
@@ -144,7 +150,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         method: 'POST',
         headers,
         body: JSON.stringify({
-          provider: 'firebase',
+          uploadId,
+          provider,
           bucket,
           key,
           filename: file.name,
