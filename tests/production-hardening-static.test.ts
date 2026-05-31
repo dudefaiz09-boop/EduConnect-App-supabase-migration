@@ -31,6 +31,37 @@ describe('production hardening guardrails', () => {
     expect(createManagedUser).toContain(".from('user_tenants').delete()");
   });
 
+  it('authorizes requested tenants before creating managed users', () => {
+    const repository = read('apps/functions/src/features/users/users.repository.ts');
+    const createMethod = repository.slice(repository.indexOf('static async create'));
+
+    expect(createMethod).toContain('requestedTenantId');
+    expect(createMethod).toContain('typeof data.tenantId');
+    expect(createMethod).toContain('typeof data.schoolId');
+    expect(createMethod).toContain('assertCanManageTenant(req, requestedTenantId)');
+    expect(createMethod).toContain('tenantId: requestedTenantId');
+  });
+
+  it('defaults new backend uploads to Firebase Storage', () => {
+    const storageIndex = read('apps/functions/src/lib/storage/index.ts');
+    const config = read('apps/functions/src/lib/config.ts');
+
+    expect(storageIndex).toContain("process.env.STORAGE_PROVIDER || 'firebase'");
+    expect(config).toContain(
+      "STORAGE_PROVIDER: z.enum(['firebase', 'supabase']).default('firebase')"
+    );
+  });
+
+  it('does not leave broad authenticated Supabase Storage object policies in the latest migration', () => {
+    const migration = read('supabase/migrations/20260531010000_harden_storage_object_policies.sql');
+
+    expect(migration).toContain('drop policy if exists "authenticated select educonnect files"');
+    expect(migration).toContain('drop policy if exists "authenticated delete educonnect files"');
+    expect(migration).toContain('private.auth_profile_school_id()');
+    expect(migration).toContain('private.auth_managed_tenant_ids()');
+    expect(migration).not.toContain("using (bucket_id = 'educonnect-uploads');");
+  });
+
   it('standardizes workspace Node version on 22', () => {
     const rootPackage = JSON.parse(read('package.json'));
     const mobilePackage = JSON.parse(read('apps/mobile/package.json'));

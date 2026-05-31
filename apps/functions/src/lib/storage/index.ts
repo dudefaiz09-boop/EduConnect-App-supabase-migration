@@ -6,7 +6,7 @@ let firebaseInstance: StorageProvider | null = null;
 let supabaseInstance: StorageProvider | null = null;
 
 export function getStorageProvider(forceProvider?: string): StorageProvider {
-  const providerName = forceProvider || process.env.STORAGE_PROVIDER || 'supabase';
+  const providerName = forceProvider || process.env.STORAGE_PROVIDER || 'firebase';
 
   if (providerName === 'firebase') {
     if (!firebaseInstance) firebaseInstance = new FirebaseStorageProvider();

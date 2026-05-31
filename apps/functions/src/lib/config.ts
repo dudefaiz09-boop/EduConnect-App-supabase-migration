@@ -18,7 +18,7 @@ const envSchema = z.object({
   // Storage provider configuration.
   // "firebase" = Firebase Storage for new uploads (recommended).
   // "supabase" = legacy Supabase Storage (backward compat reads only).
-  STORAGE_PROVIDER: z.enum(['firebase', 'supabase']).default('supabase'),
+  STORAGE_PROVIDER: z.enum(['firebase', 'supabase']).default('firebase'),
 
   // Firebase Storage (required when STORAGE_PROVIDER=firebase).
   FIREBASE_PROJECT_ID: z.string().optional(),
