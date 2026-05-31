@@ -173,6 +173,112 @@ function getChangedKeys(before: Record<string, any>, after: Record<string, any>)
   ].filter((key) => JSON.stringify(before?.[key]) !== JSON.stringify(after?.[key]));
 }
 
+function throwIfSupabaseError(
+  result: {
+    error?: { message?: string; status?: number; statusCode?: number; code?: string } | null;
+  },
+  operation: string
+) {
+  if (!result.error) return;
+
+  throw Object.assign(
+    new Error(`${operation} failed: ${result.error.message || 'unknown error'}`),
+    {
+      statusCode: result.error.statusCode || result.error.status || 500,
+      providerCode: result.error.code,
+    }
+  );
+}
+
+async function syncNormalizedUserTables(uid: string, profile: Record<string, any>) {
+  const supabase = (auth as any).getSupabaseAdmin ? (auth as any).getSupabaseAdmin() : null;
+  if (!supabase) return;
+
+  throwIfSupabaseError(
+    await supabase.from('profiles').upsert({
+      id: uid,
+      school_id: profile.schoolId,
+      email: profile.email,
+      display_name: profile.displayName,
+      role: profile.role,
+      roles: profile.roles,
+      permissions: profile.permissions,
+      class_ids: profile.classIds,
+      linked_student_ids: profile.linkedStudentIds,
+      assigned_modules: profile.assignedModules,
+      status: profile.status,
+      updated_at: profile.updatedAt,
+    }),
+    'profiles sync'
+  );
+
+  throwIfSupabaseError(
+    await supabase.from('user_tenants').upsert(
+      {
+        user_id: uid,
+        email: profile.email,
+        tenant_id: profile.schoolId,
+        role: profile.role,
+        is_default: true,
+        is_active: profile.status === 'active',
+        updated_at: profile.updatedAt,
+      },
+      { onConflict: 'email,tenant_id' }
+    ),
+    'user_tenants sync'
+  );
+}
+
+async function rollbackCreatedUser(
+  uid: string,
+  cause: unknown,
+  userRef?: { delete: () => Promise<void> } | null
+) {
+  const rollbackErrors: string[] = [];
+  const supabase = (auth as any).getSupabaseAdmin ? (auth as any).getSupabaseAdmin() : null;
+
+  try {
+    await auth.deleteUser(uid);
+  } catch (error) {
+    rollbackErrors.push(error instanceof Error ? error.message : String(error));
+  }
+
+  if (userRef) {
+    try {
+      await userRef.delete();
+    } catch (error) {
+      rollbackErrors.push(error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  if (supabase) {
+    const cleanupResults = await Promise.allSettled([
+      supabase.from('profiles').delete().eq('id', uid),
+      supabase.from('user_tenants').delete().eq('user_id', uid),
+    ]);
+
+    for (const result of cleanupResults) {
+      if (result.status === 'rejected') {
+        rollbackErrors.push(
+          result.reason instanceof Error ? result.reason.message : String(result.reason)
+        );
+        continue;
+      }
+      if (result.value?.error) {
+        rollbackErrors.push(result.value.error.message || 'normalized user cleanup failed');
+      }
+    }
+  }
+
+  if (rollbackErrors.length > 0) {
+    throw Object.assign(new Error('User provisioning failed and rollback was incomplete'), {
+      statusCode: 500,
+      cause,
+      rollbackErrors,
+    });
+  }
+}
+
 async function countActiveAdmins() {
   const snapshot = await db.collection('users').get();
   return snapshot.docs.filter((doc) => {
@@ -332,35 +438,7 @@ export async function updateManagedUser(
 
   // Keep Supabase Auth/Profile state aligned with the document profile.
   // Disabled users keep their records for referential integrity, but middleware denies access.
-  const supabase = (auth as any).getSupabaseAdmin ? (auth as any).getSupabaseAdmin() : null;
-  if (supabase) {
-    await supabase.from('profiles').upsert({
-      id: uid,
-      school_id: after.schoolId,
-      email: after.email,
-      display_name: after.displayName,
-      role: after.role,
-      roles: after.roles,
-      permissions: after.permissions,
-      class_ids: after.classIds,
-      linked_student_ids: after.linkedStudentIds,
-      assigned_modules: after.assignedModules,
-      status: after.status,
-      updated_at: after.updatedAt,
-    });
-    await supabase.from('user_tenants').upsert(
-      {
-        user_id: uid,
-        email: after.email,
-        tenant_id: after.schoolId,
-        role: after.role,
-        is_default: true,
-        is_active: after.status === 'active',
-        updated_at: after.updatedAt,
-      },
-      { onConflict: 'email,tenant_id' }
-    );
-  }
+  await syncNormalizedUserTables(uid, after);
 
   const changedKeys = getChangedKeys(before, after);
   await writeAuditLog({
@@ -391,51 +469,31 @@ export async function createManagedUser(payload: ManagedUserPayload, actor: Acto
     displayName: payload.displayName,
   });
 
-  const profile = buildManagedUserProfile(userRecord.uid, payload, actor);
+  const userRef = db.collection('users').doc(userRecord.uid);
+  let profileDocumentCreated = false;
 
-  const supabase = (auth as any).getSupabaseAdmin ? (auth as any).getSupabaseAdmin() : null;
   try {
-    await db.collection('users').doc(userRecord.uid).set(profile);
+    const profile = buildManagedUserProfile(userRecord.uid, payload, actor);
+    await userRef.set(profile);
+    profileDocumentCreated = true;
     await auth.setCustomUserClaims(userRecord.uid, buildClaims(profile));
+    await syncNormalizedUserTables(userRecord.uid, profile);
 
-    // Link user to tenant in user_tenants table
-    if (supabase) {
-      await supabase.from('user_tenants').upsert(
-        {
-          user_id: userRecord.uid,
-          email: profile.email,
-          tenant_id: profile.schoolId,
-          role: profile.role,
-          is_default: true,
-          is_active: profile.status === 'active',
-        },
-        { onConflict: 'email,tenant_id' }
-      );
-    }
+    await writeAuditLog({
+      action: 'user_created',
+      targetUid: userRecord.uid,
+      performedBy: actor.uid,
+      details: `Created ${profile.role} account for ${profile.email}`,
+      before: null,
+      after: profile,
+      schoolId: profile.schoolId,
+    });
+
+    return profile;
   } catch (error) {
-    await Promise.allSettled([
-      auth.deleteUser(userRecord.uid),
-      supabase
-        ? supabase.from('documents').delete().eq('collection', 'users').eq('id', userRecord.uid)
-        : Promise.resolve(),
-      supabase
-        ? supabase.from('user_tenants').delete().eq('user_id', userRecord.uid)
-        : Promise.resolve(),
-    ]);
+    await rollbackCreatedUser(userRecord.uid, error, profileDocumentCreated ? userRef : null);
     throw error;
   }
-
-  await writeAuditLog({
-    action: 'user_created',
-    targetUid: userRecord.uid,
-    performedBy: actor.uid,
-    details: `Created ${profile.role} account for ${profile.email}`,
-    before: null,
-    after: profile,
-    schoolId: profile.schoolId,
-  });
-
-  return profile;
 }
 
 export const ROLE_PERMISSION_KEYS = ALL_PERMISSIONS as readonly PermissionKey[];
