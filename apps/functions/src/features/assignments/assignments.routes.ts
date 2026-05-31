@@ -7,9 +7,14 @@ import {
   assignmentSubmissionsParamsSchema,
   assignmentHistoryParamsSchema,
   assignmentClassReportParamsSchema,
+  submitAssignmentSchema,
   recheckAssignmentSchema,
 } from './assignments.validation.js';
-import { requireAnyPermission, requirePermission } from '../../middleware/permissions.js';
+import {
+  requireAnyPermission,
+  requirePermission,
+  requireRole,
+} from '../../middleware/permissions.js';
 
 const router: Router = Router();
 
@@ -43,7 +48,12 @@ router.delete(
   validate(assignmentIdParamsSchema),
   AssignmentsController.archive
 );
-router.post(['/:id/submit', '/submit'], AssignmentsController.submit);
+router.post(
+  ['/:id/submit', '/submit'],
+  requireRole('student'),
+  validate(submitAssignmentSchema),
+  AssignmentsController.submit
+);
 router.post(
   '/recheck',
   requirePermission('manageAssignments'),
