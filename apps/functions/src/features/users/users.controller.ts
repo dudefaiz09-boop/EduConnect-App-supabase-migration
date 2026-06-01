@@ -20,6 +20,15 @@ export class UsersController {
     }
   }
 
+  static async createTenant(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await UsersRepository.createTenant(req.body, req);
+      res.status(201).json({ success: true, tenant: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async getAuditLogs(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await UsersRepository.getAuditLogs(req.query as any, req.tenantId!);

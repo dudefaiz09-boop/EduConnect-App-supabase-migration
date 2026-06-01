@@ -8,6 +8,8 @@ import { logger } from '@educonnect/logger';
 // Middleware
 import { authMiddleware, requireAuth } from './middleware/auth.js';
 import { tenantMiddleware } from './middleware/tenant.js';
+import { requirePermission } from './middleware/permissions.js';
+import { validate } from './middleware/validate.js';
 import { globalErrorHandler } from './middleware/error.js';
 import { enterpriseCorsMiddleware } from './middleware/cors.js';
 import { idempotencyMiddleware } from './middleware/idempotency.js';
@@ -38,6 +40,8 @@ import rolesRouter from './features/roles/roles.routes.js';
 import usersRouter from './features/users/users.routes.js';
 import notificationsRouter from './features/notifications/notifications.routes.js';
 import documentsRouter from './features/documents/documents.routes.js';
+import { UsersController } from './features/users/users.controller.js';
+import { createTenantSchema } from './features/users/users.validation.js';
 
 const app: Express = express();
 app.set('trust proxy', 1);
@@ -206,6 +210,12 @@ protectedRouter.use(authMiddleware);
 protectedRouter.use(requireAuth);
 protectedRouter.use('/auth', authProfileRouter);
 protectedRouter.use('/users/profile', ownProfileRouter);
+protectedRouter.post(
+  '/users/tenants',
+  requirePermission('manageUsers'),
+  validate(createTenantSchema),
+  UsersController.createTenant
+);
 protectedRouter.use(tenantMiddleware);
 protectedRouter.use(idempotencyMiddleware);
 
