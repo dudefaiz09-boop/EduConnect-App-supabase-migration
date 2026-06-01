@@ -50,9 +50,6 @@ export class AiController {
 
       const { query, mode } = req.body || {};
       const tenantId = req.tenantId || (req.headers['x-school-id'] as string | undefined);
-      const fallbackRole =
-        typeof req.headers['x-user-role'] === 'string' ? req.headers['x-user-role'] : 'student';
-
       if (!tenantId) {
         logger.warn({}, '[AI] Missing tenant header (x-school-id) for public query');
         return res.status(400).json({
@@ -71,7 +68,7 @@ export class AiController {
 
       const { id, response } = await AiService.getChatbotResponse(
         `tenant:${tenantId}:ai-user`,
-        fallbackRole,
+        'student',
         query.trim(),
         mode
       );
@@ -90,16 +87,13 @@ export class AiController {
 
       const { query, mode } = req.body;
       const user = req.user;
-      const tenantId = req.tenantId || (req.headers['x-school-id'] as string | undefined);
 
-      if (!user && !tenantId) {
+      if (!user) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const fallbackRole =
-        typeof req.headers['x-user-role'] === 'string' ? req.headers['x-user-role'] : 'student';
-      const userId = user?.uid || `tenant:${tenantId}:ai-user`;
-      const role = user?.role || user?.roles?.[0] || fallbackRole || 'student';
+      const userId = user.uid;
+      const role = user.role || user.roles?.[0] || 'student';
 
       const { id, response } = await AiService.getChatbotResponse(userId, role, query, mode);
 
@@ -159,6 +153,21 @@ export class AiController {
   static async getHistory(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.params.userId;
+      const user = req.user;
+      const canReadHistory =
+        user?.uid === userId ||
+        user?.isAdmin ||
+        user?.isSuperAdmin ||
+        user?.roles?.includes('admin') ||
+        user?.roles?.includes('principal');
+
+      if (!canReadHistory) {
+        return res.status(403).json({
+          error: 'AI_HISTORY_FORBIDDEN',
+          message: 'You can only read your own AI chat history.',
+        });
+      }
+
       const history = await AiService.getHistory(userId);
       res.json(history);
     } catch (error) {

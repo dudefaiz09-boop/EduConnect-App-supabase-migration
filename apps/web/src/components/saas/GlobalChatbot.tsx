@@ -153,9 +153,8 @@ export const GlobalChatbot = () => {
     return {
       'x-school-id': tenantId,
       'x-tenant-id': tenantId,
-      'x-user-role': role || 'student',
     };
-  }, [resolveAiTenantId, role]);
+  }, [resolveAiTenantId]);
 
   const rolePrompts = useMemo(
     () => ({
@@ -179,7 +178,6 @@ export const GlobalChatbot = () => {
           ? {
               'x-school-id': tenantId,
               'x-tenant-id': tenantId,
-              'x-user-role': role || 'student',
             }
           : undefined,
       });
@@ -187,7 +185,7 @@ export const GlobalChatbot = () => {
     } catch (err) {
       console.error('Error loading AI status:', err);
     }
-  }, [resolveAiTenantId, role]);
+  }, [resolveAiTenantId]);
 
   useEffect(() => {
     if (!isOpen) return;

@@ -31,10 +31,6 @@ function resolveHeaderValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function resolveFallbackRole(req?: Request) {
-  return resolveHeaderValue(req?.headers['x-user-role']) || 'student';
-}
-
 export class AiContextService {
   /**
    * Resolve user context using AsyncLocalStorage.
@@ -61,15 +57,16 @@ export class AiContextService {
       throw new Error('AI request failed because tenant context was not sent.');
     }
 
-    const fallbackRole = resolveFallbackRole(req);
+    const role = user?.role || user?.roles?.[0] || 'student';
 
     const context: UserContext = {
       uid: user?.uid || `tenant:${tenantId}:ai-user`,
       email: user?.email,
       displayName: user?.displayName,
-      role: user?.role || user?.roles?.[0] || fallbackRole,
-      roles: user?.roles || [fallbackRole],
-      isAdmin: false,
+      role,
+      roles: user?.roles || [role],
+      isAdmin: user?.isAdmin || false,
+      isSuperAdmin: user?.isSuperAdmin || false,
       schoolId: tenantId,
       classId: user?.classId,
       classIds: user?.classIds || [],
