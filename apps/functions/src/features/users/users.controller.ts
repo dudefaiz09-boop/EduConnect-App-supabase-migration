@@ -20,6 +20,15 @@ export class UsersController {
     }
   }
 
+  static async listGlobalProfiles(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await UsersRepository.listGlobalProfiles(req.query as any, req);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async createTenant(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await UsersRepository.createTenant(req.body, req);

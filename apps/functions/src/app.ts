@@ -210,6 +210,12 @@ protectedRouter.use(authMiddleware);
 protectedRouter.use(requireAuth);
 protectedRouter.use('/auth', authProfileRouter);
 protectedRouter.use('/users/profile', ownProfileRouter);
+protectedRouter.get('/users/tenants', requirePermission('manageUsers'), UsersController.listTenants);
+protectedRouter.get(
+  '/users/global',
+  requirePermission('manageUsers'),
+  UsersController.listGlobalProfiles
+);
 protectedRouter.post(
   '/users/tenants',
   requirePermission('manageUsers'),

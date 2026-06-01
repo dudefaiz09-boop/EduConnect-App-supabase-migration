@@ -131,16 +131,28 @@ describe('production hardening guardrails', () => {
     const repository = read('apps/functions/src/features/users/users.repository.ts');
 
     expect(adminConsole).toContain("apiUrl(apiBase, '/users/tenants')");
+    expect(adminConsole).toContain("apiUrl(apiBase, '/users/global')");
+    expect(adminConsole).toContain("apiUrl(apiBase, '/auth/profile')");
     expect(adminConsole).toContain("apiUrl(apiBase, '/users/create')");
     expect(adminConsole).toContain("apiUrl(apiBase, '/health')");
     expect(adminConsole).toContain("'X-School-Id': newSchoolId");
+    expect(adminConsole).not.toContain(".from('documents')");
     expect(adminConsole).not.toContain("supabase.from('documents').insert");
     expect(adminConsole).not.toContain("supabase.from('tenants').insert");
+    expect(app).toContain("protectedRouter.get('/users/tenants'");
+    expect(app).toContain("'/users/global'");
     expect(app).toContain("protectedRouter.post(\n  '/users/tenants'");
+    expect(app.indexOf("protectedRouter.get('/users/tenants'")).toBeLessThan(
+      app.indexOf('protectedRouter.use(tenantMiddleware)')
+    );
+    expect(app.indexOf("'/users/global'")).toBeLessThan(
+      app.indexOf('protectedRouter.use(tenantMiddleware)')
+    );
     expect(app.indexOf("protectedRouter.post(\n  '/users/tenants'")).toBeLessThan(
       app.indexOf('protectedRouter.use(tenantMiddleware)')
     );
     expect(repository).toContain('Only super admins can create tenants');
+    expect(repository).toContain('Only super admins can list all users');
     expect(repository).toContain('return Boolean(req.user!.isSuperAdmin)');
     expect(repository).toContain(".from('tenants')");
     expect(repository).toContain(".from('documents').upsert");

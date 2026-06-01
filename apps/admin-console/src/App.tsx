@@ -58,6 +58,15 @@ interface UserProfile {
   assignedModules?: string[];
 }
 
+interface TenantRow {
+  id: string;
+  name?: string;
+  slug?: string;
+  status?: string;
+  created_at?: string;
+  createdAt?: string;
+}
+
 export const AdminApp = () => {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -139,18 +148,21 @@ export const AdminApp = () => {
     }
 
     const appMetadata = currentSession.user?.app_metadata || {};
-    const userId = currentSession.user?.id;
 
     try {
-      // Validate Super Admin privileges
-      const { data: profileDoc } = await supabase
-        .from('documents')
-        .select('data')
-        .eq('collection', 'users')
-        .eq('id', userId)
-        .maybeSingle();
+      if (!apiBase) {
+        throw new Error('VITE_API_BASE_URL is required for admin-console session validation.');
+      }
 
-      const profile = profileDoc?.data || {};
+      // Validate Super Admin privileges
+      const profileRes = await fetch(apiUrl(apiBase, '/auth/profile'), {
+        headers: { Authorization: `Bearer ${currentSession.access_token}` },
+      });
+      if (!profileRes.ok) {
+        throw new Error(`Profile validation failed: ${await profileRes.text()}`);
+      }
+
+      const profile = await profileRes.json();
       const isSuperAdmin =
         !!profile.isSuperAdmin || !!profile.is_super_admin || !!appMetadata.isSuperAdmin;
 
@@ -167,7 +179,9 @@ export const AdminApp = () => {
       }
     } catch (err) {
       console.error('Session validation error:', err);
-      setSession(currentSession);
+      setAuthError('Access Denied: Unable to validate global administrator privileges.');
+      await supabase.auth.signOut();
+      setSession(null);
     } finally {
       setLoading(false);
     }
@@ -213,34 +227,41 @@ export const AdminApp = () => {
   async function loadData() {
     setDataLoading(true);
     try {
-      const { data: docSchools, error: schoolErr } = await supabase
-        .from('documents')
-        .select('id, data')
-        .eq('collection', 'schools');
-      if (schoolErr) throw schoolErr;
-      const loadedSchools = (docSchools || []).map((row) => ({
+      if (!apiBase) {
+        throw new Error('VITE_API_BASE_URL is required for admin-console data loading.');
+      }
+      const token = session?.access_token;
+      if (!token) throw new Error('Authenticated admin session required.');
+
+      const headers = { Authorization: `Bearer ${token}` };
+      const [schoolsRes, usersRes] = await Promise.all([
+        fetch(apiUrl(apiBase, '/users/tenants'), { headers }),
+        fetch(apiUrl(apiBase, '/users/global'), { headers }),
+      ]);
+
+      if (!schoolsRes.ok) throw new Error(`School list failed: ${await schoolsRes.text()}`);
+      if (!usersRes.ok) throw new Error(`User list failed: ${await usersRes.text()}`);
+
+      const schoolRows = (await schoolsRes.json()) as TenantRow[];
+      const loadedSchools = (schoolRows || []).map((row) => ({
         id: row.id,
-        name: String(row.data?.name || ''),
-        slug: String(row.data?.slug || ''),
-        status: (row.data?.status === 'inactive' ? 'inactive' : 'active') as 'active' | 'inactive',
-        createdAt: String(row.data?.createdAt || ''),
+        name: String(row.name || ''),
+        slug: String(row.slug || ''),
+        status: (row.status === 'inactive' ? 'inactive' : 'active') as 'active' | 'inactive',
+        createdAt: String(row.created_at || row.createdAt || ''),
       }));
       setSchools(loadedSchools);
 
-      const { data: docUsers, error: userErr } = await supabase
-        .from('documents')
-        .select('id, data')
-        .eq('collection', 'users');
-      if (userErr) throw userErr;
-      const loadedUsers = (docUsers || []).map((row) => ({
-        id: row.id,
-        email: String(row.data?.email || ''),
-        displayName: String(row.data?.displayName || ''),
-        role: String(row.data?.role || ''),
-        roles: Array.isArray(row.data?.roles) ? row.data.roles : [],
-        schoolId: String(row.data?.schoolId || row.data?.tenantId || ''),
-        status: String(row.data?.status || 'active'),
-        assignedModules: Array.isArray(row.data?.assignedModules) ? row.data.assignedModules : [],
+      const userRows = (await usersRes.json()) as UserProfile[];
+      const loadedUsers = (userRows || []).map((row) => ({
+        id: row.id || '',
+        email: String(row.email || ''),
+        displayName: String(row.displayName || ''),
+        role: String(row.role || ''),
+        roles: Array.isArray(row.roles) ? row.roles : [],
+        schoolId: String(row.schoolId || row.tenantId || ''),
+        status: String(row.status || 'active'),
+        assignedModules: Array.isArray(row.assignedModules) ? row.assignedModules : [],
       }));
       setUsers(loadedUsers);
     } catch (err) {
