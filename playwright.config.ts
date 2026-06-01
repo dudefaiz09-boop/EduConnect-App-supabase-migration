@@ -17,10 +17,6 @@ const previewEnv = {
     process.env.VITE_SUPABASE_ANON_KEY ||
     process.env.SUPABASE_ANON_KEY ||
     'qa-placeholder-anon-key',
-  VITE_SUPABASE_UPLOADS_BUCKET:
-    process.env.VITE_SUPABASE_UPLOADS_BUCKET ||
-    process.env.SUPABASE_UPLOADS_BUCKET ||
-    'educonnect-uploads',
   VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || '/api',
 };
 
