@@ -340,7 +340,7 @@ export function DirectoryScreen({ type }: { type: 'student' | 'teacher' | 'all' 
   const subtitle =
     type === 'all'
       ? 'Role, status, tenant, and module visibility from shared profile data.'
-      : 'Profiles and assignments synced from the same user documents as the website.';
+      : 'Profiles and assignments synced from the same shared API data as the website.';
 
   return (
     <View style={styles.flex}>

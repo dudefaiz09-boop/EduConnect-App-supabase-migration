@@ -32,6 +32,6 @@ Tenant rules:
 | Regular user               | Uses profile `schoolId`/`tenantId`; mismatched `x-school-id` returns `TENANT_MISMATCH` |
 | Super admin                | Can switch only to `managedTenantIds`; unmanaged header returns `TENANT_DENIED`        |
 | Missing tenant             | Returns `TENANT_REQUIRED`                                                              |
-| Production tenant registry | `documents/tenants/{tenantId}` must exist and not be inactive                          |
+| Production tenant registry | `public.tenants.id = tenantId` must exist and `status` must not be `inactive`          |
 
 Demo tenant IDs are valid only when `VITE_DEMO_MODE=true` in the web app. Backend tenant middleware no longer has a hardcoded `tenant-a` exception.
