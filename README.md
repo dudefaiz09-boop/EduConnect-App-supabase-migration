@@ -52,7 +52,7 @@ For production web deployments on Vercel, choose one API mode and keep it consis
 
 - Recommended combined project: use the root `vercel.json` and set `VITE_API_BASE_URL=/api`.
 - Advanced split projects: set `VITE_API_BASE_URL` to the deployed API URL ending in `/api`,
-  for example `https://educonnect-api-sigma.vercel.app/api`.
+  for example `https://your-api-project.vercel.app/api`.
 
 Local development can use `/api` because `apps/web/vite.config.ts` proxies it to the local API.
 Redeploy the web app after changing any `VITE_*` variable because Vite embeds them at build time.

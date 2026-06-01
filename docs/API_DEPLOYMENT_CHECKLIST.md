@@ -34,7 +34,7 @@ Set these variables on the API Vercel project:
 
 - `SUPABASE_URL=<project URL>`
 - `SUPABASE_SERVICE_ROLE_KEY=<service role key>`
-- `CORS_ORIGINS=https://educonnect-web-iota.vercel.app`
+- `CORS_ORIGINS=https://your-web-project.vercel.app`
 - `NODE_ENV=production`
 - `OPENROUTER_API_KEY` optional
 - `OPENROUTER_MODEL` optional/free only
@@ -46,7 +46,7 @@ Do not expose `SUPABASE_SERVICE_ROLE_KEY` to the web project.
 Set these variables on the web Vercel project:
 
 - Combined project: `VITE_API_BASE_URL=/api`
-- Split projects: `VITE_API_BASE_URL=https://educonnect-api-sigma.vercel.app/api`
+- Split projects: `VITE_API_BASE_URL=https://your-api-project.vercel.app/api`
 - `VITE_SUPABASE_URL=<Supabase project URL>`
 - `VITE_SUPABASE_ANON_KEY=<Supabase anon key>`
 
@@ -82,23 +82,23 @@ Verify in `apps/functions/src/app.ts`:
 
 ## Post-Deploy Checks
 
-1. `https://educonnect-api-sigma.vercel.app/api/version`
+1. `https://your-api-project.vercel.app/api/version`
    Expected: JSON 200.
 
-2. `https://educonnect-api-sigma.vercel.app/api/health`
+2. `https://your-api-project.vercel.app/api/health`
    Expected: JSON 200.
 
-3. `https://educonnect-api-sigma.vercel.app/api/ready`
+3. `https://your-api-project.vercel.app/api/ready`
    Expected: JSON 200 if envs and Supabase connectivity are good, JSON 503 if envs are missing or Supabase is unreachable. Never a Vercel crash page.
 
-4. `https://educonnect-api-sigma.vercel.app/api/notifications`
+4. `https://your-api-project.vercel.app/api/notifications`
    Expected without login: JSON 401. Never a Vercel crash page.
 
 ## PowerShell CORS Check
 
 ```powershell
-curl.exe -i -X OPTIONS "https://educonnect-api-sigma.vercel.app/api/notifications" `
-  -H "Origin: https://educonnect-web-iota.vercel.app" `
+curl.exe -i -X OPTIONS "https://your-api-project.vercel.app/api/notifications" `
+  -H "Origin: https://your-web-project.vercel.app" `
   -H "Access-Control-Request-Method: GET" `
   -H "Access-Control-Request-Headers: authorization,x-school-id,content-type"
 ```
@@ -107,7 +107,7 @@ Expected:
 
 ```txt
 HTTP 204
-access-control-allow-origin: https://educonnect-web-iota.vercel.app
+access-control-allow-origin: https://your-web-project.vercel.app
 access-control-allow-credentials: true
 ```
 

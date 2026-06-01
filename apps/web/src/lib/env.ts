@@ -81,7 +81,7 @@ function validateApiBaseUrlForRuntime(env: WebEnv): WebEnv {
       `[WebEnv] VITE_API_BASE_URL is ${reason} in a production build. ` +
         'Relative /api only works when the API is served from the same origin as the web app. ' +
         'For the separate EduConnect API Vercel project, set ' +
-        'VITE_API_BASE_URL=https://educonnect-api-sigma.vercel.app/api and redeploy the web app.'
+        'VITE_API_BASE_URL=https://your-api-project.vercel.app/api and redeploy the web app.'
     );
   }
 

@@ -89,4 +89,22 @@ describe('production hardening guardrails', () => {
     expect(workflow).not.toContain('http://localhost*/api');
     expect(workflow).not.toContain('http://127.*/api');
   });
+
+  it('keeps deployment docs generic and aligned with normalized tenant lookup', () => {
+    const deploymentDocs = [
+      read('README.md'),
+      read('docs/API_DEPLOYMENT_CHECKLIST.md'),
+      read('apps/web/.env.example'),
+      read('apps/web/src/lib/env.ts'),
+    ].join('\n');
+    const tenantDocs = read('docs/AUTH_TENANT_MIDDLEWARE.md');
+    const tenantMiddleware = read('apps/functions/src/middleware/tenant.ts');
+
+    expect(deploymentDocs).toContain('https://your-api-project.vercel.app/api');
+    expect(deploymentDocs).not.toContain('educonnect-api-sigma.vercel.app');
+    expect(deploymentDocs).not.toContain('educonnect-web-iota.vercel.app');
+    expect(tenantDocs).toContain('public.tenants.id = tenantId');
+    expect(tenantDocs).not.toContain('documents/tenants');
+    expect(tenantMiddleware).toContain(".from('tenants')");
+  });
 });
