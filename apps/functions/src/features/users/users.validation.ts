@@ -38,6 +38,17 @@ export const auditLogsQuerySchema = z.object({
   }),
 });
 
+export const createTenantSchema = z.object({
+  body: z
+    .object({
+      id: z.string().trim().min(1),
+      name: z.string().trim().min(1),
+      slug: z.string().trim().min(1),
+      status: z.enum(['active', 'inactive']).optional().default('active'),
+    })
+    .strict(),
+});
+
 export const createManagedUserSchema = z.object({
   body: z
     .object({

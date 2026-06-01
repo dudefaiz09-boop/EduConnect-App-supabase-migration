@@ -30,6 +30,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '');
 
+function apiUrl(apiBase: string, path: string) {
+  const base = apiBase.replace(/\/$/, '');
+  const suffix = path.startsWith('/') ? path : `/${path}`;
+  return `${base}${suffix}`;
+}
+
 type Tab = 'dashboard' | 'schools' | 'users';
 
 interface SchoolData {
@@ -86,7 +92,7 @@ export const AdminApp = () => {
   useEffect(() => {
     if (!apiBase) return;
     let cancelled = false;
-    fetch(`${apiBase}/api/health`, { signal: AbortSignal.timeout(5000) })
+    fetch(apiUrl(apiBase, '/health'), { signal: AbortSignal.timeout(5000) })
       .then((r) => {
         if (cancelled) return null;
         if (!r.ok) {
@@ -251,41 +257,40 @@ export const AdminApp = () => {
     setOnboardSuccess(false);
 
     try {
-      // 1. Register tenant in legacy documents table
-      const { error: docError } = await supabase.from('documents').insert({
-        collection: 'schools',
-        id: newSchoolId,
-        data: {
-          id: newSchoolId,
-          name: newSchoolName,
-          slug: newSchoolSlug,
-          status: 'active',
-          createdAt: new Date().toISOString(),
-        },
-      });
-
-      if (docError) throw docError;
-
-      // 2. Register tenant in public.tenants schema table
-      const { error: tenantError } = await supabase.from('tenants').insert({
-        id: newSchoolId,
-        name: newSchoolName,
-        slug: newSchoolSlug,
-        status: 'active',
-        metadata: {},
-      });
-
-      if (tenantError) {
-        console.warn('Tenants table insert warning:', tenantError.message);
+      if (!apiBase) {
+        throw new Error('VITE_API_BASE_URL is required for school onboarding.');
       }
 
-      // 3. Provision the primary Admin user via the backend API
       const token = session.access_token;
-      const res = await fetch('/api/users/create', {
+
+      // 1. Register tenant through the trusted backend so normalized tenants and legacy
+      // school documents stay aligned.
+      const tenantRes = await fetch(apiUrl(apiBase, '/users/tenants'), {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: newSchoolId,
+          name: newSchoolName,
+          slug: newSchoolSlug,
+          status: 'active',
+        }),
+      });
+
+      if (!tenantRes.ok) {
+        const body = await tenantRes.text();
+        throw new Error(`Tenant registration failed: ${body}`);
+      }
+
+      // 2. Provision the primary Admin user via the backend API
+      const res = await fetch(apiUrl(apiBase, '/users/create'), {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'X-School-Id': newSchoolId,
         },
         body: JSON.stringify({
           email: newAdminEmail,

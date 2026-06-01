@@ -10,10 +10,17 @@ type ManagedUserInput = Record<string, unknown> & {
   schoolId?: unknown;
 };
 
+type TenantInput = {
+  id: string;
+  name: string;
+  slug: string;
+  status?: 'active' | 'inactive';
+};
+
 function canManageTenant(req: Request, tenantId?: string | null) {
   if (!tenantId) return false;
   if (tenantId === req.tenantId) return true;
-  return Boolean(req.user!.isSuperAdmin && req.user!.managedTenantIds?.includes(tenantId));
+  return Boolean(req.user!.isSuperAdmin);
 }
 
 function assertCanManageTenant(req: Request, tenantId?: string | null) {
@@ -65,6 +72,47 @@ export class UsersRepository {
       .in('id', allowedTenantIds);
     if (error) throw error;
     return data || [];
+  }
+
+  static async createTenant(data: TenantInput, req: Request) {
+    if (!req.user?.isSuperAdmin) throw new AppError('Only super admins can create tenants', 403);
+
+    const now = new Date().toISOString();
+    const tenant = {
+      id: data.id,
+      name: data.name,
+      slug: data.slug,
+      status: data.status || 'active',
+      metadata: {},
+      updated_at: now,
+    };
+    const supabaseAdmin = auth.getSupabaseAdmin();
+
+    const { error: tenantError } = await supabaseAdmin
+      .from('tenants')
+      .upsert(tenant, { onConflict: 'id' });
+    if (tenantError) throw tenantError;
+
+    const { error: documentError } = await supabaseAdmin.from('documents').upsert(
+      {
+        collection: 'schools',
+        id: data.id,
+        data: {
+          id: data.id,
+          name: data.name,
+          slug: data.slug,
+          status: data.status || 'active',
+          tenantId: data.id,
+          schoolId: data.id,
+          createdAt: now,
+          updatedAt: now,
+        },
+      },
+      { onConflict: 'collection,id' }
+    );
+    if (documentError) throw documentError;
+
+    return tenant;
   }
 
   static async getAuditLogs(query: { targetUid?: string; limit?: number }, tenantId: string) {

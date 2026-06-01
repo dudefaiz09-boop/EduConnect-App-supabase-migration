@@ -71,35 +71,17 @@ async function resolveTenant(req: Request, next: NextFunction) {
   let resolvedTenantId: string | null = null;
 
   if (isSuperAdmin && headerTenantId) {
-    if (managedTenantIds.includes(headerTenantId)) {
-      resolvedTenantId = headerTenantId;
-      if (headerTenantId !== userTenantId) {
-        logger.info(
-          {
-            uid: req.user.uid,
-            requested: headerTenantId,
-            correlationId: getCorrelationId(),
-          },
-          'Super admin tenant switch'
-        );
-      }
-    } else {
-      logger.warn(
+    resolvedTenantId = headerTenantId;
+    if (headerTenantId !== userTenantId) {
+      logger.info(
         {
           uid: req.user.uid,
           requested: headerTenantId,
-          managedTenantIds,
           correlationId: getCorrelationId(),
         },
-        'Super admin tenant override denied'
-      );
-      return next(
-        new AppError({
-          code: 'TENANT_DENIED',
-          message: 'Tenant Access Denied',
-          statusCode: 403,
-          details: { requestedTenantId: headerTenantId },
-        })
+        managedTenantIds.includes(headerTenantId)
+          ? 'Super admin managed tenant switch'
+          : 'Super admin global tenant switch'
       );
     }
   }

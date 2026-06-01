@@ -124,4 +124,28 @@ describe('production hardening guardrails', () => {
     expect(storageDocs).not.toContain('VITE_SUPABASE_UPLOADS_BUCKET');
     expect(lhciServer).not.toContain('VITE_SUPABASE_UPLOADS_BUCKET');
   });
+
+  it('registers new tenants through trusted backend before onboarding tenant admins', () => {
+    const adminConsole = read('apps/admin-console/src/App.tsx');
+    const app = read('apps/functions/src/app.ts');
+    const repository = read('apps/functions/src/features/users/users.repository.ts');
+
+    expect(adminConsole).toContain("apiUrl(apiBase, '/users/tenants')");
+    expect(adminConsole).toContain("apiUrl(apiBase, '/users/create')");
+    expect(adminConsole).toContain("apiUrl(apiBase, '/health')");
+    expect(adminConsole).toContain("'X-School-Id': newSchoolId");
+    expect(adminConsole).not.toContain("supabase.from('documents').insert");
+    expect(adminConsole).not.toContain("supabase.from('tenants').insert");
+    expect(app).toContain("protectedRouter.post(\n  '/users/tenants'");
+    expect(app.indexOf("protectedRouter.post(\n  '/users/tenants'")).toBeLessThan(
+      app.indexOf('protectedRouter.use(tenantMiddleware)')
+    );
+    expect(repository).toContain('Only super admins can create tenants');
+    expect(repository).toContain('return Boolean(req.user!.isSuperAdmin)');
+    expect(repository).toContain(".from('tenants')");
+    expect(repository).toContain(".from('documents').upsert");
+    expect(read('apps/functions/src/middleware/tenant.ts')).toContain(
+      'Super admin global tenant switch'
+    );
+  });
 });
