@@ -8,7 +8,6 @@ const env = {
   VITE_DEMO_MODE: process.env.VITE_DEMO_MODE || 'true',
   VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL || 'https://example.supabase.co',
   VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY || 'qa-placeholder-anon-key',
-  VITE_SUPABASE_UPLOADS_BUCKET: process.env.VITE_SUPABASE_UPLOADS_BUCKET || 'educonnect-uploads',
   VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || '/api',
 };
 

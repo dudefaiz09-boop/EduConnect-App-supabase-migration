@@ -339,7 +339,7 @@ Created this document (`IBM_BOB_AUDIT_FINDINGS.md`).
 **Verified**:
 
 - ✅ Multiple resource types supported (PDF, eBook, web link, video, document)
-- ✅ File upload via Supabase Storage
+- ✅ File upload via backend-signed Firebase Storage sessions
 - ✅ External URL support
 - ✅ Class-wise visibility controls
 - ✅ Role-based filtering
