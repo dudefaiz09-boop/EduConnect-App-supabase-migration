@@ -31,7 +31,8 @@ Set this repository variable or secret:
 API_BASE_URL=https://your-api-host.example.com/api
 ```
 
-The value must end with `/api`.
+The value must be an HTTPS URL and must end with `/api`. GitHub-hosted smoke checks must target
+a deployed API, not `localhost`, `127.0.0.1`, or an emulator URL.
 
 ## Optional configuration
 
@@ -57,7 +58,8 @@ The manual `api_base_url` input overrides the configured `API_BASE_URL` variable
 
 ## Scheduled run
 
-The workflow also runs on a daily schedule. If `API_BASE_URL` is not configured, it logs a notice and skips safely.
+The workflow also runs on a daily schedule. If `API_BASE_URL` is not configured, or if it is not
+an HTTPS URL ending in `/api`, the workflow fails so deployment monitoring cannot silently go dark.
 
 ## Local run
 
