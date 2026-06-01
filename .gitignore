@@ -5,6 +5,7 @@ coverage/
 .corepack/
 .DS_Store
 *.log
+*.tsbuildinfo
 .env*
 !.env.example
 firebase-applet-config.json
@@ -15,6 +16,10 @@ apps/mobile/android/app/*.keystore
 apps/mobile/android/.idea/
 apps/mobile/android/gradle/gradle-daemon-jvm.properties
 apps/mobile/android/app/src/main/assets/index.android.bundle
+apps/mobile/android/full-educonnect-log.txt
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.js
+packages/*/src/**/*.js.map
 .turbo
 qa/.auth/
 qa/results/
