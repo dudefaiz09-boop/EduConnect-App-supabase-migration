@@ -4,7 +4,7 @@ export class ChatbotService {
   constructor(private client: ApiClient) {}
 
   async getHistory(uid: string) {
-    return this.client.get<any[]>(`/chatbot/history/${uid}`);
+    return this.client.get<any[]>(`/ai/history/${uid}`);
   }
 
   async query(query: string) {
@@ -20,6 +20,6 @@ export class ChatbotService {
 
   async sendFeedback(logId: string, feedback: 'helpful' | 'not_helpful') {
     // We allow offline queueing for feedback so users don't lose their input if they go in a tunnel
-    return this.client.post('/chatbot/feedback', { logId, feedback }, { allowOfflineQueue: true });
+    return this.client.post('/ai/feedback', { logId, feedback }, { allowOfflineQueue: true });
   }
 }

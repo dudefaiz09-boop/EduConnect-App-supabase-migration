@@ -178,7 +178,11 @@ export class AiController {
   static async saveFeedback(req: Request, res: Response, next: NextFunction) {
     try {
       const { logId, feedback } = req.body;
-      await AiService.saveFeedback(logId, feedback);
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      await AiService.saveFeedback(logId, feedback, req.user);
       res.json({ success: true });
     } catch (error) {
       next(error);

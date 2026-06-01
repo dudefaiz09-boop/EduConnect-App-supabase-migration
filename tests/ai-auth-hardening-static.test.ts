@@ -32,4 +32,23 @@ describe('AI auth hardening guardrails', () => {
     expect(getHistory).toContain("user?.roles?.includes('principal')");
     expect(getHistory).toContain('AI_HISTORY_FORBIDDEN');
   });
+
+  it('requires users to own AI feedback logs unless they are privileged staff', () => {
+    const service = read('apps/functions/src/features/ai/ai.service.ts');
+    const saveFeedback = service.slice(service.indexOf('static async saveFeedback'));
+
+    expect(saveFeedback).toContain('logRef.get()');
+    expect(saveFeedback).toContain('canManageAiLog(actor, log.userId)');
+    expect(saveFeedback).toContain('AI_FEEDBACK_FORBIDDEN');
+    expect(saveFeedback).toContain('logRef.update({ feedback })');
+  });
+
+  it('points shared chatbot clients at protected AI routes', () => {
+    const chatbotService = read('packages/shared-api/src/services/chatbot.ts');
+
+    expect(chatbotService).toContain('`/ai/history/${uid}`');
+    expect(chatbotService).toContain("'/ai/feedback'");
+    expect(chatbotService).not.toContain('/chatbot/history');
+    expect(chatbotService).not.toContain('/chatbot/feedback');
+  });
 });

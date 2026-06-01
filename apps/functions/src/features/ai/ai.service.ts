@@ -2,14 +2,32 @@ import { randomUUID } from 'node:crypto';
 import { logger } from '@educonnect/logger';
 import { generateSafeContent } from '../../lib/ai.js';
 import { db } from '../../lib/documents.js';
+import { AppError } from '../../middleware/error.js';
 
 type CachedAiResponse = {
   response: string;
   expires: number;
 };
 
+type AiFeedbackActor = {
+  uid: string;
+  isAdmin?: boolean;
+  isSuperAdmin?: boolean;
+  roles?: string[];
+};
+
 const AI_CACHE = new Map<string, CachedAiResponse>();
 const CACHE_TTL = 5 * 60 * 1000;
+
+function canManageAiLog(actor: AiFeedbackActor, logUserId: unknown) {
+  return (
+    actor.uid === logUserId ||
+    actor.isAdmin ||
+    actor.isSuperAdmin ||
+    actor.roles?.includes('admin') ||
+    actor.roles?.includes('principal')
+  );
+}
 
 export class AiService {
   static async getChatbotResponse(
@@ -159,8 +177,32 @@ export class AiService {
     }
   }
 
-  static async saveFeedback(logId: string, feedback: 'helpful' | 'not_helpful') {
-    await db.collection('chatbotLogs').doc(logId).update({ feedback });
+  static async saveFeedback(
+    logId: string,
+    feedback: 'helpful' | 'not_helpful',
+    actor: AiFeedbackActor
+  ) {
+    const logRef = db.collection('chatbotLogs').doc(logId);
+    const snapshot = await logRef.get();
+
+    if (!snapshot.exists) {
+      throw new AppError({
+        code: 'AI_LOG_NOT_FOUND',
+        message: 'AI chat log was not found.',
+        statusCode: 404,
+      });
+    }
+
+    const log = snapshot.data() || {};
+    if (!canManageAiLog(actor, log.userId)) {
+      throw new AppError({
+        code: 'AI_FEEDBACK_FORBIDDEN',
+        message: 'You can only leave feedback on your own AI chat logs.',
+        statusCode: 403,
+      });
+    }
+
+    await logRef.update({ feedback });
     return { success: true };
   }
 }
