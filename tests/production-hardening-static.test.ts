@@ -77,4 +77,16 @@ describe('production hardening guardrails', () => {
     expect(rootPackage.engines.node).toBe('>=22');
     expect(mobilePackage.engines.node).toBe('>=22');
   });
+
+  it('fails API smoke monitoring closed against real HTTPS deployments', () => {
+    const workflow = read('.github/workflows/api-smoke.yml');
+
+    expect(workflow).toContain('API_BASE_URL is required for API smoke checks');
+    expect(workflow).toContain('exit 1');
+    expect(workflow).toContain('https://*/api');
+    expect(workflow).toContain('API_BASE_URL must be an HTTPS URL ending in /api');
+    expect(workflow).not.toContain('skipping smoke test');
+    expect(workflow).not.toContain('http://localhost*/api');
+    expect(workflow).not.toContain('http://127.*/api');
+  });
 });
