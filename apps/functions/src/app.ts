@@ -155,9 +155,9 @@ publicRouter.get('/version', (req, res) => {
   });
 });
 
-// Safe public AI endpoints. These never expose provider keys.
+// Safe public AI endpoints. These never expose provider keys and do not load school records.
 publicRouter.get('/ai/status', AiController.getStatus);
-publicRouter.post('/ai/query', AiController.publicQueryChatbot);
+publicRouter.post('/ai/public-query', AiController.publicQueryChatbot);
 
 publicRouter.get('/ready', async (req, res) => {
   const missing = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'CORS_ORIGINS'].filter(

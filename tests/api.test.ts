@@ -34,4 +34,14 @@ describe('API Smoke Tests', () => {
       .send({});
     expect(res.status).toBe(401);
   });
+
+  it('POST /api/ai/query is protected even when tenant headers are present', async () => {
+    const res = await request(app)
+      .post('/api/ai/query')
+      .set('x-school-id', 'test-school')
+      .set('x-user-role', 'admin')
+      .send({ query: 'summarize fees' });
+
+    expect(res.status).toBe(401);
+  });
 });
