@@ -125,6 +125,22 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
+const tenantProvisioningLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS',
+  handler: (_req, res) =>
+    res.status(429).json({
+      status: 'error',
+      code: 'RATE_LIMITED',
+      message: 'Too many tenant provisioning requests, please try again later.',
+      details: { retryAfter: res.getHeader('Retry-After') },
+      correlationId: getCorrelationId(),
+    }),
+});
+
 // 3. Public Router
 const publicRouter = express.Router();
 publicRouter.get('/', (req, res) => {
@@ -218,6 +234,8 @@ protectedRouter.get(
 );
 protectedRouter.post(
   '/users/tenants',
+  tenantProvisioningLimiter,
+  idempotencyMiddleware,
   requirePermission('manageUsers'),
   validate(createTenantSchema),
   UsersController.createTenant

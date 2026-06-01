@@ -127,7 +127,7 @@ describe('production hardening guardrails', () => {
 
   it('registers new tenants through trusted backend before onboarding tenant admins', () => {
     const adminConsole = read('apps/admin-console/src/App.tsx');
-    const app = read('apps/functions/src/app.ts');
+    const app = read('apps/functions/src/app.ts').replace(/\r\n/g, '\n');
     const repository = read('apps/functions/src/features/users/users.repository.ts');
 
     expect(adminConsole).toContain("apiUrl(apiBase, '/users/tenants')");
@@ -142,6 +142,13 @@ describe('production hardening guardrails', () => {
     expect(app).toContain("protectedRouter.get('/users/tenants'");
     expect(app).toContain("'/users/global'");
     expect(app).toContain("protectedRouter.post(\n  '/users/tenants'");
+    const tenantCreateRoute = app.slice(
+      app.indexOf("protectedRouter.post(\n  '/users/tenants'"),
+      app.indexOf('protectedRouter.use(tenantMiddleware)')
+    );
+    expect(tenantCreateRoute).toContain('tenantProvisioningLimiter');
+    expect(tenantCreateRoute).toContain('idempotencyMiddleware');
+    expect(tenantCreateRoute).toContain("requirePermission('manageUsers')");
     expect(app.indexOf("protectedRouter.get('/users/tenants'")).toBeLessThan(
       app.indexOf('protectedRouter.use(tenantMiddleware)')
     );
