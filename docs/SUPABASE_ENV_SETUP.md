@@ -5,7 +5,7 @@ Backend required:
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `SUPABASE_ANON_KEY` for backend anon helper paths
-- `SUPABASE_UPLOADS_BUCKET`
+- `SUPABASE_UPLOADS_BUCKET` only for legacy Supabase Storage reads/deletes
 - `CORS_ORIGINS`
 
 Frontend/mobile required:

@@ -28,13 +28,18 @@ This document provides a comprehensive checklist for deploying EduConnect to pro
 NODE_ENV=production
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+STORAGE_PROVIDER=firebase
+FIREBASE_PROJECT_ID=your_firebase_project_id
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk@example.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
 ```
 
 **Optional but Recommended**:
 
 ```env
 SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_UPLOADS_BUCKET=educonnect-uploads
+SUPABASE_UPLOADS_BUCKET=educonnect-uploads # legacy Supabase Storage reads/deletes only
 CORS_ORIGINS=https://your-web-project.vercel.app
 OPENROUTER_API_KEY=your_openrouter_key
 OPENROUTER_MODEL=mistralai/mistral-7b-instruct:free
@@ -55,7 +60,6 @@ VITE_API_BASE_URL=https://your-api-project.vercel.app/api
 **Optional**:
 
 ```env
-VITE_SUPABASE_UPLOADS_BUCKET=educonnect-uploads
 VITE_ENABLE_AI_FEATURES=true
 VITE_ENVIRONMENT=production
 ```
@@ -169,7 +173,7 @@ All write endpoints enforce permissions server-side:
 ### 5.2 Library
 
 - ✅ Multiple resource types: PDF, eBook, web link, video, document
-- ✅ File upload via Supabase Storage
+- ✅ File upload via backend-signed Firebase Storage sessions
 - ✅ External URL support
 - ✅ Class-wise visibility controls
 - ✅ Role-based filtering

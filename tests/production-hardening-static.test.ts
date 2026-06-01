@@ -107,4 +107,21 @@ describe('production hardening guardrails', () => {
     expect(tenantDocs).not.toContain('documents/tenants');
     expect(tenantMiddleware).toContain(".from('tenants')");
   });
+
+  it('keeps storage docs aligned with Firebase-backed upload sessions', () => {
+    const storageDocs = [
+      read('PRODUCTION_READINESS_CHECKLIST.md'),
+      read('RELEASE_GUIDE.md'),
+      read('docs/SUPABASE_ENV_SETUP.md'),
+      read('docs/WEB_ENVIRONMENT.md'),
+      read('IBM_BOB_AUDIT_FINDINGS.md'),
+    ].join('\n');
+    const lhciServer = read('scripts/lhci-start-server.cjs');
+
+    expect(storageDocs).toContain('File upload via backend-signed Firebase Storage sessions');
+    expect(storageDocs).toContain('legacy Supabase Storage reads/deletes');
+    expect(storageDocs).not.toContain('File upload via Supabase Storage');
+    expect(storageDocs).not.toContain('VITE_SUPABASE_UPLOADS_BUCKET');
+    expect(lhciServer).not.toContain('VITE_SUPABASE_UPLOADS_BUCKET');
+  });
 });

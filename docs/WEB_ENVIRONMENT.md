@@ -13,6 +13,6 @@ Required web env vars:
 
 Production rule: `VITE_API_BASE_URL` must be explicitly configured unless the build is a demo/preview. A missing or wrong value surfaces as actionable API diagnostics on module error states instead of fake empty data.
 
-Storage rule: new uploads go through the backend API and Firebase Storage. The web app no longer
-needs `VITE_SUPABASE_UPLOADS_BUCKET`; Supabase Storage bucket names are backend-only legacy
+Storage rule: new uploads go through the backend API and Firebase Storage. The web app does not
+need a Supabase uploads bucket env var; Supabase Storage bucket names are backend-only legacy
 read/delete migration settings.

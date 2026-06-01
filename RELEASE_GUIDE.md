@@ -1,6 +1,6 @@
 # EduConnect Release Guide
 
-This migration branch releases through Vercel for web and API hosting, with Supabase for Auth, Storage, and Postgres migrations.
+This migration branch releases through Vercel for web and API hosting, with Supabase for Auth/Postgres and Firebase Storage for new uploads.
 
 ## Supabase
 
@@ -37,7 +37,7 @@ Set:
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `SUPABASE_UPLOADS_BUCKET`
+- `SUPABASE_UPLOADS_BUCKET` only when legacy Supabase Storage reads/deletes are still required
 - `STORAGE_PROVIDER=firebase` (set to `supabase` only if fallback is needed)
 - `FIREBASE_PROJECT_ID`
 - `FIREBASE_CLIENT_EMAIL`
@@ -65,7 +65,6 @@ Set:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
-- `VITE_SUPABASE_UPLOADS_BUCKET`
 - `VITE_API_BASE_URL`
 - `VITE_ENABLE_AI_FEATURES`
 - `VITE_ENVIRONMENT`
