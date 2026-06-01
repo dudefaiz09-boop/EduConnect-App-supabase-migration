@@ -64,14 +64,51 @@ export class UsersRepository {
       : req.tenantId
         ? [req.tenantId]
         : [];
-    if (allowedTenantIds.length === 0) return [];
     const supabaseAdmin = auth.getSupabaseAdmin();
+
+    if (req.user!.isSuperAdmin && allowedTenantIds.length === 0) {
+      const { data, error } = await supabaseAdmin
+        .from('tenants')
+        .select('id,name,slug,status,metadata');
+      if (error) throw error;
+      return data || [];
+    }
+
+    if (allowedTenantIds.length === 0) return [];
     const { data, error } = await supabaseAdmin
       .from('tenants')
       .select('id,name,slug,status,metadata')
       .in('id', allowedTenantIds);
     if (error) throw error;
     return data || [];
+  }
+
+  static async listGlobalProfiles(
+    query: { role?: string; status?: string; search?: string; limit?: number },
+    req: Request
+  ) {
+    if (!req.user?.isSuperAdmin) throw new AppError('Only super admins can list all users', 403);
+
+    const supabaseAdmin = auth.getSupabaseAdmin();
+    const { data, error } = await supabaseAdmin.from('profiles').select('*');
+    if (error) throw error;
+
+    let users = (data || []).map((row) => normalizeProfileRow(row as any));
+    const requestedRole = query.role;
+    if (requestedRole) {
+      users = users.filter((p) => {
+        const roles = Array.isArray(p.roles) ? p.roles : [];
+        return p.role === requestedRole || roles.includes(requestedRole);
+      });
+    }
+    if (query.status) users = users.filter((p) => p.status === query.status);
+    if (query.search) {
+      const q = query.search.toLowerCase();
+      users = users.filter((p) =>
+        `${p.displayName || ''} ${p.email || ''} ${p.role || ''}`.toLowerCase().includes(q)
+      );
+    }
+    return users.slice(0, query.limit || 500);
   }
 
   static async createTenant(data: TenantInput, req: Request) {
