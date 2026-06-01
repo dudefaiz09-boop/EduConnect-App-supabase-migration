@@ -18,6 +18,27 @@ describe('production hardening guardrails', () => {
     expect(submitRoute).toContain('validate(submitAssignmentSchema)');
   });
 
+  it('does not call class-scoped attendance endpoints without a selected class', () => {
+    const source = read('apps/web/src/pages/Attendance.tsx');
+    const markingLoader = source.slice(
+      source.indexOf('const loadMarkingData'),
+      source.indexOf('const loadHistory')
+    );
+    const reportsStart = source.indexOf('const loadReports');
+    const reportsLoader = source.slice(
+      reportsStart,
+      source.indexOf('useEffect(() => {', reportsStart)
+    );
+
+    expect(source).toContain('userDocuments.forEach((profile)');
+    expect(markingLoader.indexOf('if (!selectedClass)')).toBeLessThan(
+      markingLoader.indexOf('`/api/attendance?classId=${selectedClass}')
+    );
+    expect(reportsLoader.indexOf('if (!selectedClass)')).toBeLessThan(
+      reportsLoader.indexOf('`/api/attendance/report/${selectedClass}`')
+    );
+  });
+
   it('rolls back Supabase Auth users when managed user provisioning fails mid-flight', () => {
     const source = read('apps/functions/src/lib/user-management.ts');
     const createManagedUser = source.slice(

@@ -111,13 +111,6 @@ export const AttendancePage = () => {
   } = useAuth();
   const { toast } = useToast();
   const activeTenantId = getActiveTenantId(schoolId);
-  const classOptions = React.useMemo(
-    () =>
-      Array.from(new Set(classIds.length ? classIds : userClassId ? [userClassId] : [])).map(
-        (id) => ({ id, label: `Class ${id}`, section: '' })
-      ),
-    [classIds, userClassId]
-  );
   const copy = getAttendanceCopy(role, canManageAttendance);
 
   const [view, setView] = useState<'marking' | 'history' | 'reports'>(
@@ -146,6 +139,28 @@ export const AttendancePage = () => {
   const { data: userDocuments, loading: studentsLoading } = useDocuments<StudentDocument>('users', {
     enabled: !!schoolId,
   });
+
+  const classOptions = React.useMemo(() => {
+    const ids = new Set(classIds.length ? classIds : userClassId ? [userClassId] : []);
+
+    if (canManageAttendance) {
+      userDocuments.forEach((profile) => {
+        const profileSchoolId = profile.schoolId || profile.tenantId;
+        const matchesSchool = !activeTenantId || profileSchoolId === activeTenantId;
+        const isStudent = profile.role === 'student' || profile.roles?.includes('student');
+        if (!matchesSchool || !isStudent) return;
+
+        const profileClassIds = profile.classIds || (profile.classId ? [profile.classId] : []);
+        profileClassIds.forEach((id) => {
+          if (id) ids.add(id);
+        });
+      });
+    }
+
+    return Array.from(ids)
+      .sort()
+      .map((id) => ({ id, label: `Class ${id}`, section: '' }));
+  }, [activeTenantId, canManageAttendance, classIds, userClassId, userDocuments]);
 
   const students = React.useMemo(() => {
     return userDocuments.filter((student) => {
@@ -178,6 +193,12 @@ export const AttendancePage = () => {
   }, [linkedStudentIds, role, selectedStudentId]);
 
   const loadMarkingData = useCallback(async () => {
+    if (!selectedClass) {
+      setDailyRecords({});
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       // Students are now handled by realtime sync in the background
@@ -215,6 +236,12 @@ export const AttendancePage = () => {
   }, [role, selectedStudentId, user]);
 
   const loadReports = useCallback(async () => {
+    if (!selectedClass) {
+      setReportData([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const data = await apiClient.request<AttendanceReportEntry[]>(
@@ -256,6 +283,15 @@ export const AttendancePage = () => {
   };
 
   const saveAttendance = async () => {
+    if (!selectedClass) {
+      toast({
+        tone: 'warning',
+        title: 'No class selected',
+        description: 'Select a class before saving attendance.',
+      });
+      return;
+    }
+
     if (students.length === 0) {
       toast({
         tone: 'warning',
@@ -525,6 +561,13 @@ export const AttendancePage = () => {
               {loading || studentsLoading ? (
                 <div className="p-20 flex justify-center">
                   <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : !selectedClass ? (
+                <div className="p-12 text-center">
+                  <p className="text-sm font-bold text-slate-700">No class selected</p>
+                  <p className="mt-2 text-sm text-slate-500">
+                    Add students to a class or assign a class before marking attendance.
+                  </p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
