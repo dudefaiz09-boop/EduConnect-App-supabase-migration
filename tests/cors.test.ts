@@ -2,7 +2,7 @@ import request from 'supertest';
 import app from '../apps/functions/src/app.ts';
 
 describe('CORS Integration Tests', () => {
-  const origin = 'https://educonnect-web-iota.vercel.app';
+  const origin = 'https://your-web-project.vercel.app';
 
   describe('OPTIONS /api/notifications', () => {
     it('should return 204 with correct CORS headers and no auth required', async () => {

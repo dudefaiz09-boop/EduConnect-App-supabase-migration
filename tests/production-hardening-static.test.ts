@@ -117,17 +117,21 @@ describe('production hardening guardrails', () => {
       read('IBM_BOB_AUDIT_FINDINGS.md'),
     ].join('\n');
     const lhciServer = read('scripts/lhci-start-server.cjs');
+    const turboConfig = read('turbo.json');
+    const playwrightConfig = read('playwright.config.ts');
 
     expect(storageDocs).toContain('File upload via backend-signed Firebase Storage sessions');
     expect(storageDocs).toContain('legacy Supabase Storage reads/deletes');
     expect(storageDocs).not.toContain('File upload via Supabase Storage');
     expect(storageDocs).not.toContain('VITE_SUPABASE_UPLOADS_BUCKET');
     expect(lhciServer).not.toContain('VITE_SUPABASE_UPLOADS_BUCKET');
+    expect(turboConfig).not.toContain('VITE_SUPABASE_UPLOADS_BUCKET');
+    expect(playwrightConfig).not.toContain('VITE_SUPABASE_UPLOADS_BUCKET');
   });
 
   it('registers new tenants through trusted backend before onboarding tenant admins', () => {
     const adminConsole = read('apps/admin-console/src/App.tsx');
-    const app = read('apps/functions/src/app.ts');
+    const app = read('apps/functions/src/app.ts').replace(/\r\n/g, '\n');
     const repository = read('apps/functions/src/features/users/users.repository.ts');
 
     expect(adminConsole).toContain("apiUrl(apiBase, '/users/tenants')");
