@@ -171,4 +171,13 @@ describe('production hardening guardrails', () => {
       'Super admin global tenant switch'
     );
   });
+
+  it('hydrates web auth profiles through backend or normalized profiles, not legacy documents', () => {
+    const authContext = read('apps/web/src/contexts/AuthContext.tsx');
+
+    expect(authContext).toContain('`${env.VITE_API_BASE_URL}/auth/profile`');
+    expect(authContext).toContain(".from('profiles')");
+    expect(authContext).not.toContain(".from('documents')");
+    expect(authContext).not.toContain('Firestore compatibility error');
+  });
 });
