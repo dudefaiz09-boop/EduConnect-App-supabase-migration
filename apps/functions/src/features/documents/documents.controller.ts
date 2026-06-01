@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { hasPermission as userHasPermission } from '@educonnect/shared';
 import { z } from 'zod';
 import { getStorageProvider } from '../../lib/storage/index.js';
 import { getSupabaseAdmin } from '../../lib/supabase.js';
@@ -38,11 +39,62 @@ type UploadSessionData = {
   module: string;
   entityId: string;
   uploadedBy?: string;
+  accessScope?: DocumentAccessScope;
   status: 'pending' | 'completed';
   expiresAt: string;
   createdAt: string;
   completedDocumentId?: string;
   completedAt?: string;
+};
+
+type DocumentAccessScope = 'module' | 'owner_and_staff';
+
+type DocumentActor = {
+  uid?: string;
+  role?: string;
+  roles?: string[];
+  isAdmin?: boolean;
+  isSuperAdmin?: boolean;
+  permissions?: Record<string, boolean>;
+  linkedStudentIds?: string[];
+};
+
+type DocumentRow = {
+  id?: string;
+  collection?: string;
+  data?: {
+    tenantId?: string;
+    schoolId?: string;
+    module?: string;
+    entityId?: string;
+    uploadedBy?: string;
+    ownerId?: string;
+    userId?: string;
+    studentId?: string;
+    accessScope?: DocumentAccessScope;
+  } | null;
+};
+
+const MODULE_READ_PERMISSIONS: Record<string, string[]> = {
+  announcements: ['manageAnnouncements', 'createAnnouncements'],
+  assignments: ['viewAssignments', 'manageAssignments'],
+  attendance: ['viewAttendance', 'manageAttendance'],
+  fees: ['viewFees', 'manageFees'],
+  library: ['manageLibrary'],
+  performance: ['viewPerformance', 'managePerformance'],
+  students: ['viewStudents', 'manageStudents'],
+  teachers: ['manageTeachers'],
+};
+
+const MODULE_MANAGE_PERMISSIONS: Record<string, string[]> = {
+  announcements: ['manageAnnouncements', 'createAnnouncements'],
+  assignments: ['manageAssignments'],
+  attendance: ['manageAttendance'],
+  fees: ['manageFees'],
+  library: ['manageLibrary'],
+  performance: ['managePerformance'],
+  students: ['manageStudents'],
+  teachers: ['manageTeachers'],
 };
 
 function getConfiguredStorageProviderName() {
@@ -73,6 +125,66 @@ function matchesUploadSession(
     session.module === body.module &&
     session.entityId === body.entityId
   );
+}
+
+function actorRoles(actor?: DocumentActor) {
+  return new Set([actor?.role, ...(actor?.roles || [])].filter(Boolean));
+}
+
+function isPrivilegedDocumentActor(actor?: DocumentActor) {
+  const roles = actorRoles(actor);
+  return !!actor?.isAdmin || !!actor?.isSuperAdmin || roles.has('admin') || roles.has('principal');
+}
+
+function hasAnyPermission(actor: DocumentActor | undefined, permissions: string[]) {
+  return !!actor && permissions.some((permission) => userHasPermission(actor, permission));
+}
+
+function isOwnerOrLinkedStudent(doc: DocumentRow, actor?: DocumentActor) {
+  if (!actor?.uid) return false;
+
+  const candidateOwners = [
+    doc.data?.uploadedBy,
+    doc.data?.ownerId,
+    doc.data?.userId,
+    doc.data?.studentId,
+    doc.data?.entityId,
+  ].filter(Boolean);
+
+  if (candidateOwners.includes(actor.uid)) return true;
+  return (actor.linkedStudentIds || []).some((studentId) => candidateOwners.includes(studentId));
+}
+
+function documentModule(doc: DocumentRow) {
+  return String(doc.data?.module || doc.collection || 'documents');
+}
+
+function resolveAccessScope(module: string, actor?: DocumentActor): DocumentAccessScope {
+  if (
+    isPrivilegedDocumentActor(actor) ||
+    hasAnyPermission(actor, MODULE_MANAGE_PERMISSIONS[module] || [])
+  ) {
+    return 'module';
+  }
+
+  return 'owner_and_staff';
+}
+
+function canReadDocument(doc: DocumentRow, actor?: DocumentActor) {
+  if (isPrivilegedDocumentActor(actor) || isOwnerOrLinkedStudent(doc, actor)) return true;
+
+  const module = documentModule(doc);
+  const scope = doc.data?.accessScope || 'owner_and_staff';
+  if (scope === 'module') {
+    return hasAnyPermission(actor, MODULE_READ_PERMISSIONS[module] || []);
+  }
+
+  return hasAnyPermission(actor, MODULE_MANAGE_PERMISSIONS[module] || []);
+}
+
+function canDeleteDocument(doc: DocumentRow, actor?: DocumentActor) {
+  if (isPrivilegedDocumentActor(actor) || isOwnerOrLinkedStudent(doc, actor)) return true;
+  return hasAnyPermission(actor, MODULE_MANAGE_PERMISSIONS[documentModule(doc)] || []);
 }
 
 export class DocumentsController {
@@ -109,6 +221,7 @@ export class DocumentsController {
       module: body.module,
       entityId: body.entityId,
       uploadedBy: req.user?.uid,
+      accessScope: resolveAccessScope(body.module, req.user),
       status: 'pending',
       createdAt: now.toISOString(),
       expiresAt: new Date(now.getTime() + uploadSessionTtlSeconds() * 1000).toISOString(),
@@ -184,6 +297,7 @@ export class DocumentsController {
           module: body.module,
           entityId: body.entityId,
           uploadedBy: req.user?.uid,
+          accessScope: session.accessScope || resolveAccessScope(body.module, req.user),
         },
         storage_provider: body.provider,
         storage_bucket: body.bucket,
@@ -246,6 +360,13 @@ export class DocumentsController {
     if (doc.data?.tenantId && doc.data.tenantId !== tenantId) {
       throw new AppError('Unauthorized access to document', 403);
     }
+    if (!canReadDocument(doc, req.user)) {
+      throw new AppError({
+        code: 'DOCUMENT_ACCESS_DENIED',
+        message: 'You do not have access to this document',
+        statusCode: 403,
+      });
+    }
 
     const providerName = doc.storage_provider || 'supabase';
     const provider = getStorageProvider(providerName);
@@ -288,6 +409,13 @@ export class DocumentsController {
     if (doc.data?.tenantId && doc.data.tenantId !== tenantId) {
       throw new AppError('Unauthorized access to document', 403);
     }
+    if (!canDeleteDocument(doc, req.user)) {
+      throw new AppError({
+        code: 'DOCUMENT_DELETE_DENIED',
+        message: 'You do not have permission to delete this document',
+        statusCode: 403,
+      });
+    }
 
     const providerName = doc.storage_provider || 'supabase';
     const bucket =
@@ -298,8 +426,9 @@ export class DocumentsController {
       const provider = getStorageProvider(providerName);
       try {
         await provider.deleteObject(bucket, key);
-      } catch (err: any) {
-        console.warn(`Failed to delete object from storage: ${err.message}`);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.warn(`Failed to delete object from storage: ${message}`);
       }
     }
 
