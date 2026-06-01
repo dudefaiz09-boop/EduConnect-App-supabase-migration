@@ -74,11 +74,10 @@ describe('normalized identity sources', () => {
     expect(source).not.toContain(".eq('collection', 'tenants')");
   });
 
-  it('lets the web auth context read profiles before the compatibility document', () => {
+  it('hydrates web auth from the backend before normalized profile fallback', () => {
     const source = read('apps/web/src/contexts/AuthContext.tsx');
 
-    expect(source.indexOf(".from('profiles')")).toBeLessThan(
-      source.indexOf(".eq('collection', 'users')")
-    );
+    expect(source.indexOf('/auth/profile')).toBeLessThan(source.indexOf(".from('profiles')"));
+    expect(source).not.toContain(".eq('collection', 'users')");
   });
 });

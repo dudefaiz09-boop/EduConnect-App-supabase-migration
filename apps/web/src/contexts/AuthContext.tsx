@@ -11,6 +11,7 @@ import {
 import { getAuthErrorMessage } from '../lib/auth-errors';
 import { useToast } from '../components/saas/ToastProvider';
 import type { ProfileRow } from '../types/database';
+import { env } from '../lib/env';
 
 export enum OperationType {
   CREATE = 'create',
@@ -31,7 +32,7 @@ export interface AuthenticatedUser {
   getIdToken: () => Promise<string | null>;
 }
 
-export interface FirestoreErrorInfo {
+export interface DataAccessErrorInfo {
   error: string;
   operationType: OperationType;
   path: string | null;
@@ -43,20 +44,20 @@ export interface FirestoreErrorInfo {
   };
 }
 
-let latestAuthInfo: FirestoreErrorInfo['authInfo'] = {};
+let latestAuthInfo: DataAccessErrorInfo['authInfo'] = {};
 
-export function handleFirestoreError(
+export function handleDataAccessError(
   error: unknown,
   operationType: OperationType,
   path: string | null
 ) {
-  const errInfo: FirestoreErrorInfo = {
+  const errInfo: DataAccessErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     authInfo: latestAuthInfo,
     operationType,
     path,
   };
-  console.error('Firestore compatibility error: ', JSON.stringify(errInfo));
+  console.error('Data access error: ', JSON.stringify(errInfo));
   throw new Error(JSON.stringify(errInfo));
 }
 
@@ -127,10 +128,6 @@ type UserProfileData = {
   linked_student_ids?: string[];
 };
 
-type UserProfileRow = {
-  data: UserProfileData | null;
-};
-
 const AuthContext = createContext<AuthContextType>({
   user: null,
   role: null,
@@ -196,7 +193,29 @@ function resolveRoles(profile: UserProfileData, appMetadata: Record<string, unkn
   return [];
 }
 
-async function getProfile(uid: string) {
+async function fetchProfileFromApi(accessToken: string | null) {
+  if (!accessToken) throw new Error('Missing access token for profile request');
+
+  const response = await fetch(`${env.VITE_API_BASE_URL}/auth/profile`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Profile request failed with status ${response.status}`);
+  }
+
+  return (await response.json()) as UserProfileData;
+}
+
+async function getProfile(uid: string, accessToken: string | null) {
+  try {
+    return await fetchProfileFromApi(accessToken);
+  } catch (error) {
+    console.warn('Backend profile request failed; falling back to normalized profile read.', error);
+  }
+
   const { data: profile, error: profileError } = (await supabase
     .from('profiles')
     .select('*')
@@ -238,15 +257,8 @@ async function getProfile(uid: string) {
     } as UserProfileData;
   }
 
-  const { data, error } = (await supabase
-    .from('documents')
-    .select('data')
-    .eq('collection', 'users')
-    .eq('id', uid)
-    .maybeSingle()) as { data: UserProfileRow | null; error: Error | null };
-
-  if (error) throw profileError || error;
-  return (data?.data || {}) as UserProfileData;
+  if (profileError) throw profileError;
+  return {} as UserProfileData;
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -293,7 +305,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     try {
-      const profile = await getProfile(session.user.id);
+      const profile = await getProfile(session.user.id, session.access_token);
       if (profile.status === 'inactive') {
         toast({
           tone: 'error',
