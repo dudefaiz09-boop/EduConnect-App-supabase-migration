@@ -15,11 +15,69 @@ function envPrefix(role: QaRole) {
   return `WEB_QA_${role.toUpperCase().replace(/-/g, '_')}`;
 }
 
-export function missingCredentialNames(env: NodeJS.ProcessEnv = process.env) {
+function credentialNames(role: QaRole) {
+  const prefix = envPrefix(role);
+  return {
+    email: `${prefix}_EMAIL`,
+    password: `${prefix}_PASSWORD`,
+  };
+}
+
+function parseRequiredRoles(env: NodeJS.ProcessEnv = process.env) {
+  if (env.WEB_QA_REQUIRE_ALL_ROLES === 'true') return [...QA_ROLES];
+
+  const raw = env.WEB_QA_REQUIRED_ROLES;
+  if (!raw) return ['admin'] satisfies QaRole[];
+
+  const roles = raw
+    .split(',')
+    .map((role) => role.trim())
+    .filter(Boolean);
+
+  return roles.filter((role): role is QaRole => QA_ROLES.includes(role as QaRole));
+}
+
+export function invalidRequiredRoleNames(env: NodeJS.ProcessEnv = process.env) {
+  if (env.WEB_QA_REQUIRE_ALL_ROLES === 'true' || !env.WEB_QA_REQUIRED_ROLES) return [];
+
+  return env.WEB_QA_REQUIRED_ROLES.split(',')
+    .map((role) => role.trim())
+    .filter(Boolean)
+    .filter((role) => !QA_ROLES.includes(role as QaRole));
+}
+
+export function missingCredentialNames(
+  env: NodeJS.ProcessEnv = process.env,
+  requiredRoles: readonly QaRole[] = parseRequiredRoles(env)
+) {
+  return requiredRoles.flatMap((role) => {
+    const names = credentialNames(role);
+    return [names.email, names.password].filter((name) => !env[name]);
+  });
+}
+
+export function incompleteCredentialNames(env: NodeJS.ProcessEnv = process.env) {
   return QA_ROLES.flatMap((role) => {
+    const names = credentialNames(role);
+    const hasEmail = Boolean(env[names.email]);
+    const hasPassword = Boolean(env[names.password]);
+
+    if (hasEmail === hasPassword) return [];
+    return [names.email, names.password].filter((name) => !env[name]);
+  });
+}
+
+export function configuredRoles(env: NodeJS.ProcessEnv = process.env) {
+  return QA_ROLES.filter((role) => {
+    const names = credentialNames(role);
+    return Boolean(env[names.email] && env[names.password]);
+  });
+}
+
+export function skippedRoles(env: NodeJS.ProcessEnv = process.env) {
+  return QA_ROLES.filter((role) => {
     const prefix = envPrefix(role);
-    const required = [`${prefix}_EMAIL`, `${prefix}_PASSWORD`];
-    return required.filter((name) => !env[name]);
+    return !env[`${prefix}_EMAIL`] && !env[`${prefix}_PASSWORD`];
   });
 }
 
@@ -35,17 +93,45 @@ export function credentialSummary(env: NodeJS.ProcessEnv = process.env) {
 }
 
 export function main(env: NodeJS.ProcessEnv = process.env) {
-  const missing = missingCredentialNames(env);
+  const invalidRequiredRoles = invalidRequiredRoleNames(env);
+  if (invalidRequiredRoles.length > 0) {
+    console.error(`Invalid WEB_QA_REQUIRED_ROLES values: ${invalidRequiredRoles.join(', ')}`);
+    console.error(`Allowed roles: ${QA_ROLES.join(', ')}`);
+    return 1;
+  }
 
-  if (missing.length > 0) {
-    console.error('Role QA requires credentials for every role.');
-    console.error(`Missing environment variables: ${missing.join(', ')}`);
+  const incomplete = incompleteCredentialNames(env);
+  if (incomplete.length > 0) {
+    console.error('Role QA credential pairs must be complete when a role is configured.');
+    console.error(`Missing environment variables: ${incomplete.join(', ')}`);
     console.error(
-      'Set the missing WEB_QA_<ROLE>_EMAIL and WEB_QA_<ROLE>_PASSWORD variables, or run qa:pr for admin-only PR smoke coverage.'
+      'Set both WEB_QA_<ROLE>_EMAIL and WEB_QA_<ROLE>_PASSWORD, or leave both unset to skip that role.'
     );
     return 1;
   }
 
-  console.log(`Role QA credentials configured for ${QA_ROLES.length} roles.`);
+  const requiredRoles = parseRequiredRoles(env);
+  const missing = missingCredentialNames(env, requiredRoles);
+  if (missing.length > 0) {
+    console.error(`Role QA requires credentials for: ${requiredRoles.join(', ')}.`);
+    console.error(`Missing environment variables: ${missing.join(', ')}`);
+    console.error(
+      'Set required WEB_QA_<ROLE>_EMAIL and WEB_QA_<ROLE>_PASSWORD variables, or run qa:pr for admin-only PR smoke coverage.'
+    );
+    return 1;
+  }
+
+  const configured = configuredRoles(env);
+  const skipped = skippedRoles(env);
+
+  console.log(
+    `Role QA credentials configured for ${configured.length} roles: ${configured.join(', ')}`
+  );
+  if (skipped.length > 0) {
+    console.warn(`Role QA will skip roles without credentials: ${skipped.join(', ')}`);
+    console.warn(
+      'Set WEB_QA_REQUIRE_ALL_ROLES=true or WEB_QA_REQUIRED_ROLES=role,role to make missing role credentials fail preflight.'
+    );
+  }
   return 0;
 }
