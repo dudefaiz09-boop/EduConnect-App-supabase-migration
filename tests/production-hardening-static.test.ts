@@ -201,4 +201,39 @@ describe('production hardening guardrails', () => {
     expect(authContext).not.toContain(".from('documents')");
     expect(authContext).not.toContain('Firestore compatibility error');
   });
+
+  it('keeps full UI QA role logout checks on existing storage state', () => {
+    const rolesSpec = read('qa/e2e/roles.spec.ts');
+    const logoutTest = rolesSpec.slice(rolesSpec.indexOf('test(`${role} can log out`'));
+
+    expect(logoutTest).not.toContain('loginAsRole(page, role)');
+    expect(logoutTest).toContain('await page.goto("/")');
+    expect(logoutTest).toContain('page.waitForURL(/\\/auth\\/login/');
+  });
+
+  it('keeps full UI QA card actions accessible to axe', () => {
+    const libraryPage = read('apps/web/src/pages/Library.tsx');
+    const studentsPage = read('apps/web/src/pages/Students.tsx');
+    const teachersPage = read('apps/web/src/pages/Teachers.tsx');
+    const usersPage = read('apps/web/src/pages/Users.tsx');
+
+    expect(libraryPage).toContain('aria-label={`Download ${res.title}`}');
+    expect(libraryPage).toContain('aria-label={`Borrow ${res.title}`}');
+    expect(libraryPage).toContain('aria-label={`Edit ${res.title}`}');
+    expect(libraryPage).toContain('aria-label={`Delete ${res.title}`}');
+    expect(studentsPage).toContain(
+      "aria-label={`Manage ${student.displayName || student.email || 'student'}`}"
+    );
+    expect(studentsPage).toContain(
+      "aria-label={`Delete ${student.displayName || student.email || 'student'}`}"
+    );
+    expect(teachersPage).toContain(
+      "aria-label={`Manage ${teacher.displayName || teacher.email || 'teacher'}`}"
+    );
+    expect(teachersPage).toContain(
+      "aria-label={`Delete ${teacher.displayName || teacher.email || 'teacher'}`}"
+    );
+    expect(usersPage).toContain('bg-red-100 text-red-800');
+    expect(usersPage).not.toContain('bg-red-50 text-red-600 rounded-xl text-xs');
+  });
 });

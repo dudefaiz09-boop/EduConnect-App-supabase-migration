@@ -450,6 +450,8 @@ export const StudentsPage = () => {
                         });
                       }}
                       className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                      aria-label={`Manage ${student.displayName || student.email || 'student'}`}
+                      title={`Manage ${student.displayName || student.email || 'student'}`}
                     >
                       <MoreVertical size={20} />
                     </button>
@@ -497,6 +499,8 @@ export const StudentsPage = () => {
                     <button
                       onClick={() => handleDeleteStudent(uid)}
                       className="px-4 py-3 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                      aria-label={`Delete ${student.displayName || student.email || 'student'}`}
+                      title={`Delete ${student.displayName || student.email || 'student'}`}
                     >
                       <Trash2 size={18} />
                     </button>
@@ -751,6 +755,8 @@ export const StudentsPage = () => {
                 <button
                   onClick={() => setIsAuditModalOpen(false)}
                   className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-600 transition-all"
+                  aria-label="Close activity logs"
+                  title="Close activity logs"
                 >
                   <X size={24} />
                 </button>

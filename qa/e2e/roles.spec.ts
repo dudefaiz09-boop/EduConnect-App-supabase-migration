@@ -3,7 +3,6 @@ import {
   assertAccessState,
   attachConsoleErrorGuard,
   hasRoleCredentials,
-  loginAsRole,
   stabilizePage,
   storageStatePath,
   visitRoute,
@@ -55,7 +54,6 @@ for (const role of qaRoles) {
     }
 
     test(`${role} can log out`, async ({ page }) => {
-      await loginAsRole(page, role);
       await page.goto("/");
       await page.waitForLoadState("domcontentloaded");
       await stabilizePage(page);
