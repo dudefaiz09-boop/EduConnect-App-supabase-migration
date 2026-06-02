@@ -275,11 +275,11 @@ export const GlobalChatbot = () => {
 
   return (
     <>
-      <div className="fixed bottom-6 right-6 z-[200]">
+      <div className="fixed bottom-4 right-4 z-[200] sm:bottom-6 sm:right-6">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
-            'w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 cursor-pointer relative overflow-hidden group',
+            'group relative flex h-12 w-12 cursor-pointer items-center justify-center overflow-hidden rounded-full text-white shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 sm:h-14 sm:w-14',
             isOpen
               ? 'bg-slate-900 border border-slate-800 dark:bg-slate-800 dark:border-slate-700'
               : 'bg-gradient-to-tr from-blue-600 via-violet-600 to-indigo-600'
@@ -308,7 +308,7 @@ export const GlobalChatbot = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.95 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="fixed bottom-24 right-6 z-[200] w-[92vw] md:w-[440px] h-[600px] flex flex-col rounded-[30px] border border-white/70 bg-white/90 shadow-3xl backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90 overflow-hidden"
+            className="fixed bottom-20 right-3 z-[200] flex h-[min(600px,calc(100dvh-6rem))] w-[calc(100vw-1.5rem)] max-w-[440px] flex-col overflow-hidden rounded-[26px] border border-white/70 bg-white/90 shadow-3xl backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90 sm:bottom-24 sm:right-6 sm:w-[92vw] sm:rounded-[30px] md:w-[440px]"
           >
             <header className="relative shrink-0 overflow-hidden bg-slate-950 p-4 text-white">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.4),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(6,182,212,0.25),transparent_35%)]" />

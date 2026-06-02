@@ -32,25 +32,29 @@ export function StatCard({
     <motion.article
       whileHover={{ y: -4, scale: 1.01 }}
       transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-      className="relative overflow-hidden rounded-[28px] border border-white/70 bg-white/80 p-5 shadow-xl shadow-slate-200/60 backdrop-blur"
+      className="relative min-w-0 overflow-hidden rounded-3xl border border-white/70 bg-white/80 p-4 shadow-xl shadow-slate-200/60 backdrop-blur sm:p-5"
     >
       <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-br from-white via-blue-50/70 to-transparent" />
-      <div className="relative flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">{title}</p>
-          <div className="mt-3 flex items-end gap-2">
-            <span className="text-3xl font-black tracking-tight text-slate-950">{value}</span>
+      <div className="relative flex min-w-0 items-start justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <p className="truncate text-xs font-black uppercase tracking-[0.14em] text-slate-400 sm:tracking-[0.18em]">
+            {title}
+          </p>
+          <div className="mt-2 flex min-w-0 items-end gap-2 sm:mt-3">
+            <span className="truncate text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+              {value}
+            </span>
             {trend && (
-              <span className="mb-1 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-black text-emerald-700">
+              <span className="mb-1 shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-black text-emerald-700">
                 {trend}
               </span>
             )}
           </div>
-          <p className="mt-2 text-sm font-medium text-slate-500">{detail}</p>
+          <p className="mt-2 line-clamp-2 text-sm font-medium text-slate-500">{detail}</p>
         </div>
         <div
           className={cn(
-            'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg',
+            'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg sm:h-12 sm:w-12',
             tones[tone]
           )}
         >
