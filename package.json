@@ -24,6 +24,7 @@
     "qa:roles:preflight": "tsx scripts/check-qa-role-credentials.ts",
     "qa:full": "pnpm qa:deps && pnpm qa:roles:preflight && pnpm exec playwright test -c playwright.config.ts --grep @full --grep-invert @visual && pnpm test:lighthouse",
     "qa:roles": "pnpm qa:deps && pnpm qa:roles:preflight && pnpm exec playwright test -c playwright.config.ts qa/e2e/roles.spec.ts",
+    "qa:summary": "node scripts/qa-summary.cjs",
     "qa:ui": "pnpm qa:pr",
     "qa:ui:install": "pnpm qa:deps && pnpm exec playwright install --with-deps chromium",
     "verify": "bash scripts/verify-all.sh",
