@@ -436,10 +436,10 @@ export const PerformancePage = () => {
           className={cn(
             'text-[10px] font-black uppercase px-3 py-1 rounded-full',
             record.score >= 80
-              ? 'bg-emerald-50 text-emerald-600'
+              ? 'bg-emerald-50 text-emerald-700'
               : record.score >= 60
-                ? 'bg-amber-50 text-amber-600'
-                : 'bg-red-50 text-red-600'
+                ? 'bg-amber-50 text-amber-800'
+                : 'bg-red-50 text-red-700'
           )}
         >
           {record.grade}
@@ -459,7 +459,7 @@ export const PerformancePage = () => {
                 className={cn(
                   'px-4 py-2 rounded-xl text-sm font-bold transition-all',
                   view === 'analytics'
-                    ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-800 dark:text-indigo-400'
+                    ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-800 dark:text-indigo-300'
                     : 'text-slate-500'
                 )}
               >
@@ -471,7 +471,7 @@ export const PerformancePage = () => {
                 className={cn(
                   'px-4 py-2 rounded-xl text-sm font-bold transition-all',
                   view === 'management'
-                    ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-800 dark:text-indigo-400'
+                    ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-800 dark:text-indigo-300'
                     : 'text-slate-500'
                 )}
               >
@@ -527,7 +527,7 @@ export const PerformancePage = () => {
                 </p>
                 <div className="flex items-baseline gap-2">
                   <h3 className="text-4xl font-black text-slate-900">{avgScore}%</h3>
-                  <span className="text-xs font-bold text-emerald-500 flex items-center gap-0.5">
+                  <span className="text-xs font-bold text-emerald-700 flex items-center gap-0.5">
                     <TrendingUp size={12} /> +2.4%
                   </span>
                 </div>
@@ -605,19 +605,19 @@ export const PerformancePage = () => {
                 <div className="relative z-10 space-y-6">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center">
-                      <Brain className="text-indigo-400" size={20} />
+                      <Brain className="text-indigo-300" size={20} />
                     </div>
                     <h3 className="text-lg font-bold">AI Study Plan</h3>
                   </div>
                   <div className="space-y-4">
                     <div className="bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
-                      <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mb-1">
+                      <p className="text-xs text-slate-300 font-bold uppercase tracking-widest mb-1">
                         Focus Area
                       </p>
                       <p className="text-sm font-medium">Advanced Calculus & Integration</p>
                     </div>
                     <div className="bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
-                      <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mb-1">
+                      <p className="text-xs text-slate-300 font-bold uppercase tracking-widest mb-1">
                         Suggested Goal
                       </p>
                       <p className="text-sm font-medium">Increase Chemistry score by 15%</p>
@@ -714,7 +714,7 @@ export const PerformancePage = () => {
                     <p className="text-xl font-black text-slate-900">{report.classAverage}%</p>
                   </div>
                   <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-100">
-                    <p className="text-[10px] font-black text-indigo-400 uppercase mb-1">
+                    <p className="text-[10px] font-black text-indigo-700 uppercase mb-1">
                       Top Subject
                     </p>
                     <p className="text-xl font-black text-indigo-700">{report.topSubject}</p>
@@ -775,8 +775,8 @@ export const PerformancePage = () => {
                         {chartData.map((entry, index) => (
                           <Cell
                             key={index}
-                            fill={entry.score >= 80 ? '#4f46e5' : '#818cf8'}
-                            fillOpacity={0.8}
+                            fill={entry.score >= 80 ? '#4338ca' : '#4f46e5'}
+                            fillOpacity={1}
                           />
                         ))}
                       </Bar>
@@ -862,7 +862,7 @@ export const PerformancePage = () => {
                     <span className="text-2xl">✓</span>
                   </div>
                   <div>
-                    <h4 className="text-xl font-bold text-emerald-600">Upload Successful!</h4>
+                    <h4 className="text-xl font-bold text-emerald-700">Upload Successful!</h4>
                     <p className="text-sm text-slate-500 mt-1">
                       Performance records have been imported.
                     </p>

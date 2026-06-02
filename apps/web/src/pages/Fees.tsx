@@ -364,7 +364,7 @@ export const FeesPage = () => {
     () =>
       report
         ? [
-            { name: 'Paid', value: report.totalPaid, color: '#10b981' },
+            { name: 'Paid', value: report.totalPaid, color: '#047857' },
             { name: 'Pending', value: report.pending, color: '#ef4444' },
           ]
         : [],
@@ -434,7 +434,7 @@ export const FeesPage = () => {
       header: 'Paid',
       align: 'right',
       render: (record) => (
-        <span className="font-black text-emerald-600">{formatCurrency(record.amountPaid)}</span>
+        <span className="font-black text-emerald-700">{formatCurrency(record.amountPaid)}</span>
       ),
     },
     {
@@ -445,7 +445,7 @@ export const FeesPage = () => {
         <span
           className={cn(
             'text-[9px] font-black uppercase px-2 py-1 rounded-full',
-            record.status === 'paid' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+            record.status === 'paid' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
           )}
         >
           {record.status}
@@ -603,8 +603,8 @@ export const FeesPage = () => {
                         className={cn(
                           'w-14 h-14 rounded-2xl flex items-center justify-center transition-all',
                           fee.status === 'paid'
-                            ? 'bg-emerald-50 text-emerald-600'
-                            : 'bg-amber-50 text-amber-600'
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : 'bg-amber-50 text-amber-800'
                         )}
                       >
                         <DollarSign size={24} />
@@ -695,13 +695,13 @@ export const FeesPage = () => {
             {report && (
               <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-4">
                 <h4 className="font-bold text-slate-900 flex items-center gap-2">
-                  <TrendingUp size={18} className="text-emerald-600" />
+                  <TrendingUp size={18} className="text-emerald-700" />
                   Class Revenue
                 </h4>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-slate-500 font-medium">Collected</span>
-                    <span className="font-bold text-emerald-600">
+                    <span className="font-bold text-emerald-700">
                       {formatCurrency(report.totalPaid)}
                     </span>
                   </div>
@@ -853,7 +853,7 @@ export const FeesPage = () => {
                     <span className="text-2xl">✓</span>
                   </div>
                   <div>
-                    <h4 className="text-xl font-bold text-emerald-600">Upload Successful!</h4>
+                    <h4 className="text-xl font-bold text-emerald-700">Upload Successful!</h4>
                     <p className="text-sm text-slate-500 mt-1">
                       Your fee records have been imported.
                     </p>

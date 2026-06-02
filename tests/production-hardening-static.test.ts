@@ -224,6 +224,7 @@ describe('production hardening guardrails', () => {
     expect(app).toContain('aria-label="Sign Out"');
     expect(app).toContain('onClick={handleLogout}');
     expect(app).toContain('className="lg:hidden rounded-xl p-2');
+    expect(app).toContain('className="hidden lg:flex items-center gap-3');
     expect(apiClient).toContain("env.VITE_DEMO_MODE === 'true' ? { scope: 'local' }");
   });
 
@@ -237,6 +238,9 @@ describe('production hardening guardrails', () => {
     expect(feesPage).toContain('if (!selectedClass)');
     expect(feesPage).toContain('Array.isArray(data?.fees) ? data.fees : []');
     expect(feesPage).toContain('report && report.totalDue > 0');
+    expect(feesPage).toContain("color: '#047857'");
+    expect(feesPage).toContain('text-emerald-700');
+    expect(feesPage).toContain('text-amber-800');
 
     expect(performancePage).toContain('function normalizePerformanceReport');
     expect(performancePage).toContain('function normalizePerformanceRecords');
@@ -244,6 +248,8 @@ describe('production hardening guardrails', () => {
     expect(performancePage).toContain('apiClient.request<PerformanceReportResponse>');
     expect(performancePage).toContain('setRecords(normalizePerformanceRecords');
     expect(performancePage).toContain('if (!selectedClass)');
+    expect(performancePage).toContain('text-indigo-700 uppercase mb-1');
+    expect(performancePage).toContain("fill={entry.score >= 80 ? '#4338ca' : '#4f46e5'}");
   });
 
   it('keeps full UI QA card actions accessible to axe', () => {
