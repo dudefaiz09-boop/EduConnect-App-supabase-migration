@@ -247,7 +247,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           <button
             onClick={handleLogout}
             disabled={isSigningOut}
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-slate-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200 dark:text-slate-300 dark:hover:bg-red-950/40"
+            className="hidden lg:flex items-center gap-3 w-full px-4 py-3 rounded-xl text-slate-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200 dark:text-slate-300 dark:hover:bg-red-950/40"
           >
             {isSigningOut ? <LoadingSpinner className="text-red-600" /> : <LogOut size={20} />}
             <span className="font-medium">{isSigningOut ? 'Signing out...' : 'Sign Out'}</span>
