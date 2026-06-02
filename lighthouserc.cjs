@@ -22,6 +22,9 @@ const chromeFlags = [
   `--user-data-dir=${chromeUserDataDir}`,
 ].join(' ');
 
+const prelaunchedChromePort = Number(process.env.LHCI_CHROME_PORT);
+const usePrelaunchedChrome = Number.isInteger(prelaunchedChromePort) && prelaunchedChromePort > 0;
+
 module.exports = {
   ci: {
     collect: {
@@ -37,7 +40,7 @@ module.exports = {
       numberOfRuns: 1,
       settings: {
         preset: 'desktop',
-        chromeFlags,
+        ...(usePrelaunchedChrome ? { port: prelaunchedChromePort } : { chromeFlags }),
       },
     },
     assert: {

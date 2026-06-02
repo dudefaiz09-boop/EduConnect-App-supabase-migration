@@ -156,16 +156,24 @@ describe('production hardening guardrails', () => {
 
     expect(lhciConfig).toContain('chrome-user-data-${process.pid}');
     expect(lhciConfig).toContain('rmSync(chromeUserDataDir');
+    expect(lhciConfig).toContain('process.env.LHCI_CHROME_PORT');
+    expect(lhciConfig).toContain('port: prelaunchedChromePort');
+    expect(lhciConfig).toContain('usePrelaunchedChrome ? { port: prelaunchedChromePort }');
     expect(lhciConfig).toContain("'--headless=new'");
     expect(lhciConfig).toContain("'--no-sandbox'");
     expect(lhciConfig).toContain("'--disable-setuid-sandbox'");
     expect(lhciConfig).toContain("'--disable-dev-shm-usage'");
     expect(lhciConfig).toContain("'--disable-cpu-frequency-scaling'");
     expect(lhciConfig).toContain("'--disable-crash-reporter'");
-    expect(lhciConfig).toContain('chromeFlags,');
+    expect(lhciConfig).toContain(': { chromeFlags }');
     expect(lhciAutorun).toContain("require('@playwright/test')");
-    expect(lhciAutorun).toContain('CHROME_PATH');
-    expect(lhciAutorun).toContain('[LHCI] Chrome executable:');
+    expect(lhciAutorun).toContain('chromium.launch');
+    expect(lhciAutorun).toContain('getFreePort');
+    expect(lhciAutorun).toContain('/json/version');
+    expect(lhciAutorun).toContain('webSocketDebuggerUrl');
+    expect(lhciAutorun).toContain('LHCI_CHROME_PORT');
+    expect(lhciAutorun).toContain('[LHCI] Playwright Chromium DevTools:');
+    expect(lhciAutorun).toContain('openBrowser.close()');
     expect(lhciAutorun).toContain('XDG_RUNTIME_DIR');
     expect(lhciAutorun).toContain("path.join(lhciTempDir, 'runtime')");
   });
