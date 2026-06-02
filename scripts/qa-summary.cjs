@@ -59,7 +59,9 @@ function latestFilesByRoute(files) {
     }
   }
 
-  return [...latest.values()].sort((a, b) => a.data.requestedUrl.localeCompare(b.data.requestedUrl));
+  return [...latest.values()].sort((a, b) =>
+    a.data.requestedUrl.localeCompare(b.data.requestedUrl)
+  );
 }
 
 function score(category) {
@@ -114,12 +116,17 @@ function printPlaywrightSummary() {
   const artifactsDir = path.join(resultsRoot, 'playwright-artifacts');
   const reportHtml = path.join(resultsRoot, 'playwright-report', 'index.html');
   const lastRun = readJson(path.join(artifactsDir, '.last-run.json'));
-  const errorContexts = listFiles(artifactsDir, (file) => path.basename(file) === 'error-context.md');
+  const errorContexts = listFiles(
+    artifactsDir,
+    (file) => path.basename(file) === 'error-context.md'
+  );
   const screenshots = listFiles(artifactsDir, (file) => /\.(png|jpg|jpeg)$/i.test(file));
 
   console.log('\nPlaywright');
   console.log(`- Last run: ${lastRun?.status || 'unknown'}`);
-  console.log(`- HTML report: ${exists(reportHtml) ? path.relative(repoRoot, reportHtml) : 'not found'}`);
+  console.log(
+    `- HTML report: ${exists(reportHtml) ? path.relative(repoRoot, reportHtml) : 'not found'}`
+  );
   console.log(`- Failure contexts retained: ${errorContexts.length}`);
   console.log(`- Screenshots retained: ${screenshots.length}`);
 }
@@ -147,7 +154,9 @@ function printRuntimeSummary() {
   const apiBaseUrl =
     process.env.API_BASE_URL ||
     process.env.VITE_API_BASE_URL ||
-    (process.env.PLAYWRIGHT_WEB_SERVER_COMMAND ? '(custom server command)' : 'http://127.0.0.1:3000/api');
+    (process.env.PLAYWRIGHT_WEB_SERVER_COMMAND
+      ? '(custom server command)'
+      : 'http://127.0.0.1:3000/api');
 
   console.log('QA runtime');
   console.log(`- Web URL: ${process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:4173'}`);

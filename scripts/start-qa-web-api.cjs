@@ -36,6 +36,33 @@ const apiEnv = {
   PORT: apiPort,
   PUBLIC_APP_URL: process.env.PUBLIC_APP_URL || webOrigin,
   CORS_ORIGINS: process.env.CORS_ORIGINS || webOrigin,
+
+  VITE_DEMO_MODE: process.env.VITE_DEMO_MODE || 'true',
+  DEMO_MODE: process.env.DEMO_MODE || 'true',
+
+  SUPABASE_URL:
+    process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://example.supabase.co',
+
+  SUPABASE_ANON_KEY:
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY ||
+    'qa-placeholder-anon-key',
+
+  SUPABASE_SERVICE_ROLE_KEY:
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY ||
+    'qa-placeholder-service-role-key',
+
+  VITE_SUPABASE_URL:
+    process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://example.supabase.co',
+
+  VITE_SUPABASE_ANON_KEY:
+    process.env.VITE_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    'qa-placeholder-anon-key',
+
+  STORAGE_PROVIDER: process.env.STORAGE_PROVIDER || 'supabase',
 };
 
 function runBuild(label, args, env = process.env) {
@@ -64,7 +91,9 @@ function spawnChild(label, command, args, options) {
   child.on('exit', (code, signal) => {
     children.delete(child);
     if (shuttingDown || signal) return;
-    console.error(`[QA] ${label} exited before QA completed${code === null ? '' : ` with ${code}`}.`);
+    console.error(
+      `[QA] ${label} exited before QA completed${code === null ? '' : ` with ${code}`}.`
+    );
     shutdown(code || 1);
   });
 

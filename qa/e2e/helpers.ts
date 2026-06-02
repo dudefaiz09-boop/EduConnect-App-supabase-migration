@@ -89,9 +89,9 @@ async function waitForAuthenticatedShell(page: Page) {
   const signOutButton = page.getByRole('button', { name: /sign out/i }).first();
 
   await Promise.all([
-    page.waitForURL((url) => !url.pathname.startsWith('/auth/login'), { timeout: 15_000 }).catch(
-      () => undefined
-    ),
+    page
+      .waitForURL((url) => !url.pathname.startsWith('/auth/login'), { timeout: 15_000 })
+      .catch(() => undefined),
     signOutButton.waitFor({ state: 'visible', timeout: 15_000 }).catch(() => undefined),
     page.waitForLoadState('networkidle').catch(() => undefined),
   ]);

@@ -14,7 +14,11 @@ const protectedApiPaths = [
 ];
 
 function getApiBaseUrl() {
-  const configuredApiBaseUrl = (process.env.API_BASE_URL || process.env.VITE_API_BASE_URL || '').trim();
+  const configuredApiBaseUrl = (
+    process.env.API_BASE_URL ||
+    process.env.VITE_API_BASE_URL ||
+    ''
+  ).trim();
   if (configuredApiBaseUrl) {
     return configuredApiBaseUrl;
   }
