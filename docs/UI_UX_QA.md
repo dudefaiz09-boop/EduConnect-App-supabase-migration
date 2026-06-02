@@ -7,6 +7,7 @@ This repo uses a lightweight UI/UX QA system for the React web app in `apps/web`
 - Frontend framework: React 19 with Vite and React Router.
 - Package manager: pnpm 11 in a TurboRepo monorepo.
 - Web start command: `pnpm --filter @educonnect/web dev` for dev, or `pnpm --filter @educonnect/web build && pnpm --filter @educonnect/web preview --host 127.0.0.1 --port 4173` for QA.
+- Playwright default runtime: `node scripts/start-qa-web-api.cjs`, which builds the web app and functions API, starts the API at `http://127.0.0.1:3000`, and starts the web preview at `http://127.0.0.1:4173`.
 - Routing: `apps/web/src/App.tsx` defines public auth routes and protected application routes.
 - Authentication: Supabase Auth via `apps/web/src/contexts/AuthContext.tsx`.
 - Roles: profile roles are read from the `documents` collection and Supabase app metadata in `AuthContext`.
@@ -138,6 +139,12 @@ Reports and screenshots are generated under:
 
 These paths are gitignored and uploaded as GitHub Actions artifacts.
 
+To summarize the latest local QA artifacts without opening the HTML reports:
+
+```bash
+pnpm qa:summary
+```
+
 ## Creating safe QA users
 
 Use non-production Supabase users dedicated to QA. Assign each user one role matching the role matrix in `qa/e2e/routes.ts`. The simplest setup is to create users through the app/admin tooling or demo seed process, then store their credentials only in local `.env` files or GitHub Actions secrets.
@@ -146,5 +153,6 @@ Use non-production Supabase users dedicated to QA. Assign each user one role mat
 
 - PR mode is intentionally small and fast.
 - Full role coverage depends on having all QA role credentials configured.
+- Staff role coverage is skipped when `WEB_QA_STAFF_EMAIL` and `WEB_QA_STAFF_PASSWORD` are not configured. Make that skip a failure by setting `WEB_QA_REQUIRE_ALL_ROLES=true` or by including `staff` in `WEB_QA_REQUIRED_ROLES`.
 - Percy is opt-in and requires `PERCY_TOKEN`.
 - Lighthouse currently audits public auth pages only. Authenticated Lighthouse audits can be added later if stable persisted auth state is needed.

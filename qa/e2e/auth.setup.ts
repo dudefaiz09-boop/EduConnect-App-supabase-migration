@@ -4,6 +4,8 @@ import { getRoleCredentials, loginAsRole, storageStatePath } from './helpers';
 import { qaRoles } from './routes';
 
 test.describe('role auth state setup @pr @full', () => {
+  test.describe.configure({ mode: 'serial' });
+
   for (const role of qaRoles) {
     test(`create ${role} browser state`, async ({ page }) => {
       const { email, password } = getRoleCredentials(role);

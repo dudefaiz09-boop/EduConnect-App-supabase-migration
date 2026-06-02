@@ -7,23 +7,29 @@ export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
     build: {
+      modulePreload: false,
       sourcemap: true,
       rollupOptions: {
         output: {
           manualChunks(id) {
             if (id.includes('node_modules')) {
-              if (
-                id.includes('react') ||
-                id.includes('react-dom') ||
-                id.includes('react-router-dom')
-              ) {
-                return 'react-vendor';
+              const normalizedId = id.replace(/\\/g, '/');
+              if (normalizedId.includes('/recharts/')) {
+                return 'charts-vendor';
               }
-              if (id.includes('@supabase')) {
+              if (normalizedId.includes('/motion') || normalizedId.includes('/lucide-react/')) {
+                return 'ui-vendor';
+              }
+              if (normalizedId.includes('/@supabase/')) {
                 return 'supabase-vendor';
               }
-              if (id.includes('motion') || id.includes('lucide-react') || id.includes('recharts')) {
-                return 'ui-vendor';
+              if (
+                normalizedId.includes('/react/') ||
+                normalizedId.includes('/react-dom/') ||
+                normalizedId.includes('/react-router/') ||
+                normalizedId.includes('/react-router-dom/')
+              ) {
+                return 'react-vendor';
               }
               return 'vendor';
             }

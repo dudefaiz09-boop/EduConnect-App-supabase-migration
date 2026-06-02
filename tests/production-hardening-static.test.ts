@@ -235,7 +235,7 @@ describe('production hardening guardrails', () => {
     const logoutTest = rolesSpec.slice(rolesSpec.indexOf('test(`${role} can log out`'));
     const authContext = read('apps/web/src/contexts/AuthContext.tsx');
     const helpers = read('qa/e2e/helpers.ts');
-    const app = read('apps/web/src/App.tsx');
+    const authenticatedApp = read('apps/web/src/AuthenticatedApp.tsx');
     const apiClient = read('apps/web/src/lib/api-client.ts');
 
     expect(logoutTest).toContain('loginAsRole(page, role)');
@@ -252,10 +252,11 @@ describe('production hardening guardrails', () => {
     expect(authContext).toContain("scope: 'local'");
     expect(helpers).toContain('Failed to load resource: the server responded with a status of 401');
     expect(helpers).toContain('await expect(page).not.toHaveURL(/\\/auth\\/login/)');
-    expect(app).toContain('aria-label="Sign Out"');
-    expect(app).toContain('onClick={handleLogout}');
-    expect(app).toContain('className="lg:hidden rounded-xl p-2');
-    expect(app).toContain('className="hidden lg:flex items-center gap-3');
+    expect(authenticatedApp).toContain('aria-label="Sign Out"');
+    expect(authenticatedApp).toContain('onClick={handleLogout}');
+    expect(authenticatedApp).toContain('className="rounded-xl p-2');
+    expect(authenticatedApp).toContain('lg:hidden');
+    expect(authenticatedApp).toContain('className="hidden lg:flex items-center gap-3');
     expect(apiClient).toContain("env.VITE_DEMO_MODE === 'true' ? { scope: 'local' }");
   });
 
