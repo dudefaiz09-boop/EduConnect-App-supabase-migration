@@ -49,7 +49,10 @@ export function AnalyticsChart({
         <h2 className="text-lg font-black text-slate-950">{title}</h2>
         <p className="text-sm font-medium text-slate-500">{subtitle}</p>
       </div>
-      <div ref={chartFrameRef} className="h-56 min-h-[14rem] w-full min-w-0 sm:h-72 sm:min-h-[18rem]">
+      <div
+        ref={chartFrameRef}
+        className="h-56 min-h-[14rem] w-full min-w-0 sm:h-72 sm:min-h-[18rem]"
+      >
         {chartSize.width > 0 && chartSize.height > 0 && (
           <Chart
             data={data}

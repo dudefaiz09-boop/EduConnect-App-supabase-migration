@@ -1,6 +1,10 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+overrides:
+  '@lhci/cli>tmp': 0.2.6
+  external-editor>tmp: 0.2.6
+  tmp: 0.2.6
 allowBuilds:
   '@percy/core': true
   '@google/genai': false
