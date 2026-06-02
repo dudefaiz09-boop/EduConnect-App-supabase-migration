@@ -53,6 +53,13 @@ interface PerformanceReport {
   records: PerformanceRecord[];
 }
 
+type PerformanceRecordsResponse =
+  | PerformanceRecord[]
+  | { success?: boolean; data?: PerformanceRecord[] };
+type PerformanceReportResponse =
+  | PerformanceReport
+  | { success?: boolean; data?: Partial<PerformanceReport> };
+
 type ChildProfile = {
   uid?: string;
   id?: string;
@@ -63,6 +70,56 @@ type StudentProfileResponse = ChildProfile | { success?: boolean; data?: ChildPr
 
 function unwrapStudentProfile(response: StudentProfileResponse): ChildProfile {
   return 'data' in response && response.data ? response.data : (response as ChildProfile);
+}
+
+function unwrapApiData<T>(response: T | { success?: boolean; data?: T } | null | undefined) {
+  if (response && typeof response === 'object' && 'data' in response) {
+    return response.data;
+  }
+  return response as T | null | undefined;
+}
+
+function safeText(value: unknown, fallback: string) {
+  return value === null || value === undefined || value === '' ? fallback : String(value);
+}
+
+function safeNumber(value: unknown) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function normalizePerformanceRecords(records: unknown): PerformanceRecord[] {
+  if (!Array.isArray(records)) return [];
+  return records.map((record, index) => {
+    const row = record && typeof record === 'object' ? (record as Record<string, unknown>) : {};
+    return {
+      id: safeText(row.id, `performance-${index + 1}`),
+      studentId: safeText(row.studentId, 'N/A'),
+      subject: safeText(row.subject, 'N/A'),
+      term: safeText(row.term, 'N/A'),
+      score: safeNumber(row.score),
+      grade: safeText(row.grade, 'N/A'),
+    };
+  });
+}
+
+function normalizePerformanceReport(
+  response: PerformanceReportResponse | null | undefined
+): PerformanceReport {
+  const source = unwrapApiData<Partial<PerformanceReport>>(response) || {};
+  const records = normalizePerformanceRecords(source.records);
+  const classAverage =
+    source.classAverage !== undefined
+      ? safeNumber(source.classAverage)
+      : records.length
+        ? Math.round(records.reduce((sum, record) => sum + record.score, 0) / records.length)
+        : 0;
+  return {
+    classAverage,
+    topSubject: safeText(source.topSubject, records[0]?.subject || 'N/A'),
+    globalRank: safeNumber(source.globalRank),
+    records,
+  };
 }
 
 export const PerformancePage = () => {
@@ -145,26 +202,38 @@ export const PerformancePage = () => {
         setRecords([]);
         return;
       }
-      const data = await apiClient.request<PerformanceRecord[]>(
+      const data = await apiClient.request<PerformanceRecordsResponse>(
         `/api/performance/${targetStudentId}`
       );
-      setRecords(data);
+      setRecords(normalizePerformanceRecords(unwrapApiData<PerformanceRecord[]>(data)));
     } catch (error) {
       console.error('Failed to load performance data:', error);
+      setRecords([]);
     } finally {
       setLoading(false);
     }
   }, [isParent, selectedStudentId, user]);
 
   const loadClassReport = useCallback(async () => {
+    setLoading(true);
     try {
-      const data = await apiClient.request<PerformanceReport>(
+      if (!selectedClass) {
+        const emptyReport = normalizePerformanceReport(null);
+        setReport(emptyReport);
+        setRecords([]);
+        return;
+      }
+      const data = await apiClient.request<PerformanceReportResponse>(
         `/api/performance/report/${selectedClass}`
       );
-      setReport(data);
-      if (view === 'management') setRecords(data.records);
+      const nextReport = normalizePerformanceReport(data);
+      setReport(nextReport);
+      if (view === 'management') setRecords(nextReport.records);
     } catch (error) {
       console.error('Failed to load class report:', error);
+      const emptyReport = normalizePerformanceReport(null);
+      setReport(emptyReport);
+      if (view === 'management') setRecords([]);
     } finally {
       setLoading(false);
     }
@@ -289,17 +358,18 @@ export const PerformancePage = () => {
       : 0;
 
   const globalRank = report?.globalRank || 0;
-  const filteredRecords = records.filter(
-    (record) => {
-      const query = scoreSearch.trim().toLowerCase();
-      if (!query) return true;
-      return (
-        record.studentId.toLowerCase().includes(query) ||
-        record.subject.toLowerCase().includes(query) ||
-        record.term.toLowerCase().includes(query) ||
-        record.grade.toLowerCase().includes(query)
-      );
-    },
+  const filteredRecords = React.useMemo(
+    () =>
+      records.filter((record) => {
+        const query = scoreSearch.trim().toLowerCase();
+        if (!query) return true;
+        return (
+          record.studentId.toLowerCase().includes(query) ||
+          record.subject.toLowerCase().includes(query) ||
+          record.term.toLowerCase().includes(query) ||
+          record.grade.toLowerCase().includes(query)
+        );
+      }),
     [records, scoreSearch]
   );
 

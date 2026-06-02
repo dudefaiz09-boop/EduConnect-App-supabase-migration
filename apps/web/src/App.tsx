@@ -276,6 +276,15 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           <div className="flex-1 md:hidden" />
 
           <div className="flex items-center gap-4">
+            <button
+              aria-label="Sign Out"
+              title="Sign Out"
+              onClick={handleLogout}
+              disabled={isSigningOut}
+              className="lg:hidden rounded-xl p-2 text-slate-600 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-60 dark:text-slate-300 dark:hover:bg-red-950/40"
+            >
+              {isSigningOut ? <LoadingSpinner className="text-red-600" /> : <LogOut size={20} />}
+            </button>
             <ThemeToggle />
             <NotificationDropdown />
             <div className="text-right hidden sm:block">

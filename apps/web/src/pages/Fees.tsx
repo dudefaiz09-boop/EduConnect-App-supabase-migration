@@ -72,6 +72,8 @@ interface FeeAccountResponse {
   payments?: PaymentRecord[];
 }
 
+type FeeReportResponse = FeeReport | { success?: boolean; data?: Partial<FeeReport> };
+
 type ChildProfile = {
   uid?: string;
   id?: string;
@@ -96,12 +98,54 @@ function formatDate(value: PaymentRecord['paidAt']) {
 const CURRENCY = 'INR';
 const CURRENCY_SYMBOL = CURRENCY === 'INR' ? '₹' : '$';
 
-function formatCurrency(amount: number): string {
-  return `${CURRENCY_SYMBOL}${amount.toLocaleString()}`;
+function safeNumber(value: unknown) {
+  const amount = Number(value);
+  return Number.isFinite(amount) ? amount : 0;
+}
+
+function formatCurrency(amount: unknown): string {
+  return `${CURRENCY_SYMBOL}${safeNumber(amount).toLocaleString()}`;
 }
 
 function createIdempotencyKey(prefix: string, id: string) {
   return `${prefix}-${id}-${Date.now()}`;
+}
+
+function unwrapApiData<T>(response: T | { success?: boolean; data?: T } | null | undefined) {
+  if (response && typeof response === 'object' && 'data' in response) {
+    return response.data;
+  }
+  return response as T | null | undefined;
+}
+
+function normalizeFeeRecords(records: unknown): FeeReport['records'] {
+  if (!Array.isArray(records)) return [];
+  return records.map((record, index) => {
+    const row = record && typeof record === 'object' ? (record as Record<string, unknown>) : {};
+    return {
+      studentId: String(row.studentId || `student-${index + 1}`),
+      amountDue: safeNumber(row.amountDue),
+      amountPaid: safeNumber(row.amountPaid),
+      dueDate: row.dueDate ? String(row.dueDate) : '',
+      status: row.status ? String(row.status) : 'pending',
+    };
+  });
+}
+
+function normalizeFeeReport(response: FeeReportResponse | null | undefined): FeeReport {
+  const source = unwrapApiData<Partial<FeeReport>>(response) || {};
+  const records = normalizeFeeRecords(source.records);
+  const calculatedDue = records.reduce((sum, row) => sum + row.amountDue, 0);
+  const calculatedPaid = records.reduce((sum, row) => sum + row.amountPaid, 0);
+  return {
+    totalPaid: safeNumber(source.totalPaid ?? calculatedPaid),
+    pending: safeNumber(
+      source.pending ??
+        records.reduce((sum, row) => sum + Math.max(row.amountDue - row.amountPaid, 0), 0)
+    ),
+    totalDue: safeNumber(source.totalDue ?? calculatedDue),
+    records,
+  };
 }
 
 export const FeesPage = () => {
@@ -189,8 +233,8 @@ export const FeesPage = () => {
       const data = (await feesService.getStudentAccount(
         String(targetStudentId)
       )) as FeeAccountResponse;
-      setFees(data.fees || []);
-      setPayments(data.payments || []);
+      setFees(Array.isArray(data?.fees) ? data.fees : []);
+      setPayments(Array.isArray(data?.payments) ? data.payments : []);
     } catch (error) {
       console.error('Failed to load student fees:', error);
     } finally {
@@ -201,10 +245,15 @@ export const FeesPage = () => {
   const loadReport = React.useCallback(async () => {
     setLoading(true);
     try {
-      const data = (await feesService.getClassReport(selectedClass)) as FeeReport;
-      setReport(data);
+      if (!selectedClass) {
+        setReport(normalizeFeeReport(null));
+        return;
+      }
+      const data = (await feesService.getClassReport(selectedClass)) as FeeReportResponse;
+      setReport(normalizeFeeReport(data));
     } catch (error) {
       console.error('Failed to load fee report:', error);
+      setReport(normalizeFeeReport(null));
     } finally {
       setLoading(false);
     }
@@ -325,7 +374,9 @@ export const FeesPage = () => {
   const filteredFeeRecords = React.useMemo(() => {
     const query = feeSearch.trim().toLowerCase();
     return (report?.records || []).filter((record) =>
-      record.studentId.toLowerCase().includes(query)
+      String(record.studentId || '')
+        .toLowerCase()
+        .includes(query)
     );
   }, [report, feeSearch]);
 
@@ -735,7 +786,10 @@ export const FeesPage = () => {
                           <span className="text-sm font-bold text-slate-600">Collection Rate</span>
                         </div>
                         <span className="text-xl font-black text-slate-900">
-                          {report ? Math.round((report.totalPaid / report.totalDue) * 100) : 0}%
+                          {report && report.totalDue > 0
+                            ? Math.round((report.totalPaid / report.totalDue) * 100)
+                            : 0}
+                          %
                         </span>
                       </div>
                       <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
