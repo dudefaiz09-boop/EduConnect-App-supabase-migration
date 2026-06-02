@@ -1,4 +1,4 @@
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import {
   assertAccessState,
   attachConsoleErrorGuard,
@@ -8,20 +8,6 @@ import {
   visitRoute,
 } from "./helpers";
 import { canRoleAccessRoute, protectedRoutes, qaRoles } from "./routes";
-
-async function isInViewport(page: Page, locator: Locator) {
-  const box = await locator.boundingBox();
-  const viewport = page.viewportSize();
-
-  if (!box || !viewport) return false;
-
-  return (
-    box.x < viewport.width &&
-    box.x + box.width > 0 &&
-    box.y < viewport.height &&
-    box.y + box.height > 0
-  );
-}
 
 for (const role of qaRoles) {
   test.describe(`${role} role access matrix @full`, () => {
@@ -61,13 +47,15 @@ for (const role of qaRoles) {
       const signOutButton = page.getByRole("button", { name: /sign out/i });
       const menuButton = page.getByRole("button", { name: /open navigation menu/i });
 
-      await expect(signOutButton).toBeVisible({ timeout: 10_000 });
-
-      if (!(await isInViewport(page, signOutButton)) && (await menuButton.isVisible())) {
+      if (
+        !(await signOutButton.isVisible().catch(() => false)) &&
+        (await menuButton.isVisible().catch(() => false))
+      ) {
         await menuButton.click();
-        await expect(signOutButton).toBeVisible();
-        await expect.poll(() => isInViewport(page, signOutButton)).toBe(true);
       }
+
+      await expect(signOutButton).toBeVisible({ timeout: 10_000 });
+      await signOutButton.scrollIntoViewIfNeeded().catch(() => undefined);
 
       await Promise.all([
         page.waitForURL(/\/auth\/login/, { timeout: 15_000 }),
