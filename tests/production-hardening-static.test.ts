@@ -160,8 +160,12 @@ describe('production hardening guardrails', () => {
     expect(lhciConfig).toContain("'--no-sandbox'");
     expect(lhciConfig).toContain("'--disable-setuid-sandbox'");
     expect(lhciConfig).toContain("'--disable-dev-shm-usage'");
+    expect(lhciConfig).toContain("'--disable-cpu-frequency-scaling'");
     expect(lhciConfig).toContain("'--disable-crash-reporter'");
     expect(lhciConfig).toContain('chromeFlags,');
+    expect(lhciAutorun).toContain("require('@playwright/test')");
+    expect(lhciAutorun).toContain('CHROME_PATH');
+    expect(lhciAutorun).toContain('[LHCI] Chrome executable:');
     expect(lhciAutorun).toContain('XDG_RUNTIME_DIR');
     expect(lhciAutorun).toContain("path.join(lhciTempDir, 'runtime')");
   });

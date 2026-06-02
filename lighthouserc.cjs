@@ -14,6 +14,7 @@ const chromeFlags = [
   '--disable-setuid-sandbox',
   '--disable-dev-shm-usage',
   '--disable-gpu',
+  '--disable-cpu-frequency-scaling',
   '--disable-crash-reporter',
   '--disable-breakpad',
   '--no-first-run',
