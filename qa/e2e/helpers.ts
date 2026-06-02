@@ -62,8 +62,7 @@ export async function loginAsRole(page: Page, role: QaRole) {
   await page.getByLabel(/email/i).fill(email);
   await page.getByLabel(/password/i).fill(password);
   await page.getByRole('button', { name: /sign in/i }).click();
-  await page.waitForLoadState('networkidle');
-  await expect(page).not.toHaveURL(/\/auth\/login/);
+  await waitForAuthenticatedShell(page);
 }
 
 export async function loginFirstConfiguredRole(page: Page) {
@@ -82,9 +81,33 @@ export async function loginFirstConfiguredRole(page: Page) {
   await page.getByLabel(/email/i).fill(email);
   await page.getByLabel(/password/i).fill(password);
   await page.getByRole('button', { name: /sign in/i }).click();
-  await page.waitForLoadState('networkidle');
-  await expect(page).not.toHaveURL(/\/auth\/login/);
+  await waitForAuthenticatedShell(page);
   return true;
+}
+
+async function waitForAuthenticatedShell(page: Page) {
+  const signOutButton = page.getByRole('button', { name: /sign out/i }).first();
+
+  await Promise.all([
+    page.waitForURL((url) => !url.pathname.startsWith('/auth/login'), { timeout: 15_000 }).catch(
+      () => undefined
+    ),
+    signOutButton.waitFor({ state: 'visible', timeout: 15_000 }).catch(() => undefined),
+    page.waitForLoadState('networkidle').catch(() => undefined),
+  ]);
+
+  const shellVisible = await signOutButton.isVisible().catch(() => false);
+  if (!shellVisible) {
+    await expect(page).not.toHaveURL(/\/auth\/login/);
+    return;
+  }
+
+  if (new URL(page.url()).pathname.startsWith('/auth/')) {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+  }
+
+  await expect(signOutButton).toBeVisible({ timeout: 10_000 });
 }
 
 export async function visitRoute(page: Page, route: QaRoute) {

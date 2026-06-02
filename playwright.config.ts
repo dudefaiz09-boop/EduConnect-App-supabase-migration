@@ -5,8 +5,7 @@ dotenv.config({ quiet: true });
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:4173';
 const webServerCommand =
-  process.env.PLAYWRIGHT_WEB_SERVER_COMMAND ||
-  'pnpm --filter @educonnect/web build && pnpm --filter @educonnect/web preview --host 127.0.0.1 --port 4173';
+  process.env.PLAYWRIGHT_WEB_SERVER_COMMAND || 'node scripts/start-qa-web-api.cjs';
 
 const previewEnv = {
   VITE_ENVIRONMENT: process.env.VITE_ENVIRONMENT || 'preview',
@@ -17,7 +16,7 @@ const previewEnv = {
     process.env.VITE_SUPABASE_ANON_KEY ||
     process.env.SUPABASE_ANON_KEY ||
     'qa-placeholder-anon-key',
-  VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || '/api',
+  VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:3000/api',
 };
 
 export default defineConfig({
