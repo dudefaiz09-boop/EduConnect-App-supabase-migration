@@ -544,6 +544,8 @@ export const LibraryPage = () => {
                         <button
                           onClick={() => window.open(res.fileUrl, '_blank')}
                           className="p-2.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                          aria-label={`Download ${res.title}`}
+                          title={`Download ${res.title}`}
                         >
                           <Download size={18} />
                         </button>
@@ -551,7 +553,8 @@ export const LibraryPage = () => {
                           <button
                             onClick={() => borrowBook(res.id)}
                             className="p-2.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
-                            title="Borrow Physical Book"
+                            aria-label={`Borrow ${res.title}`}
+                            title={`Borrow ${res.title}`}
                           >
                             <Layers size={18} />
                           </button>
@@ -560,7 +563,8 @@ export const LibraryPage = () => {
                           <button
                             onClick={() => startEdit(res)}
                             className="p-2.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
-                            title="Edit resource"
+                            aria-label={`Edit ${res.title}`}
+                            title={`Edit ${res.title}`}
                           >
                             <Edit2 size={18} />
                           </button>
@@ -569,7 +573,8 @@ export const LibraryPage = () => {
                           <button
                             onClick={() => deleteResource(res)}
                             className="p-2.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                            title="Delete resource"
+                            aria-label={`Delete ${res.title}`}
+                            title={`Delete ${res.title}`}
                           >
                             <Trash2 size={18} />
                           </button>

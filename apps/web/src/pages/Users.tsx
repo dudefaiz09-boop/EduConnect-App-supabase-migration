@@ -677,7 +677,7 @@ export const UsersPage = ({ type }: { type: 'student' | 'teacher' | 'all' }) => 
                     </button>
                     <button
                       onClick={() => requestUserDelete(profile)}
-                      className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-100"
+                      className="px-4 py-2 bg-red-100 text-red-800 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-200"
                     >
                       Delete Request
                     </button>
