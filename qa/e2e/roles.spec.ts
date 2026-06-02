@@ -3,6 +3,7 @@ import {
   assertAccessState,
   attachConsoleErrorGuard,
   hasRoleCredentials,
+  loginAsRole,
   stabilizePage,
   storageStatePath,
   visitRoute,
@@ -44,7 +45,28 @@ for (const role of qaRoles) {
       await page.waitForLoadState("domcontentloaded");
       await stabilizePage(page);
 
-      const signOutButton = page.getByRole("button", { name: /sign out/i });
+      let signOutButton = page.getByRole("button", { name: /sign out/i });
+      await signOutButton
+        .first()
+        .waitFor({ state: "visible", timeout: 10_000 })
+        .catch(() => undefined);
+
+      if (!(await signOutButton.isVisible().catch(() => false))) {
+        await page.goto("/auth/login");
+        await page.waitForLoadState("domcontentloaded");
+        await stabilizePage(page);
+
+        const signInButton = page.getByRole("button", { name: /sign in/i });
+        if (await signInButton.isVisible().catch(() => false)) {
+          await loginAsRole(page, role);
+        }
+
+        await page.goto("/");
+        await page.waitForLoadState("domcontentloaded");
+        await stabilizePage(page);
+        signOutButton = page.getByRole("button", { name: /sign out/i });
+      }
+
       const menuButton = page.getByRole("button", { name: /open navigation menu/i });
 
       if (

@@ -218,7 +218,7 @@ describe('production hardening guardrails', () => {
     expect(authContext).not.toContain('Firestore compatibility error');
   });
 
-  it('keeps full UI QA role logout checks on existing storage state', () => {
+  it('keeps full UI QA role logout checks resilient to expired storage state', () => {
     const rolesSpec = read('qa/e2e/roles.spec.ts');
     const logoutTest = rolesSpec.slice(rolesSpec.indexOf('test(`${role} can log out`'));
     const authContext = read('apps/web/src/contexts/AuthContext.tsx');
@@ -226,8 +226,11 @@ describe('production hardening guardrails', () => {
     const app = read('apps/web/src/App.tsx');
     const apiClient = read('apps/web/src/lib/api-client.ts');
 
-    expect(logoutTest).not.toContain('loginAsRole(page, role)');
+    expect(logoutTest).toContain('loginAsRole(page, role)');
     expect(logoutTest).toContain('await page.goto("/")');
+    expect(logoutTest).toContain('await page.goto("/auth/login")');
+    expect(logoutTest).toContain('getByRole("button", { name: /sign in/i })');
+    expect(logoutTest).toContain('if (await signInButton.isVisible().catch(() => false))');
     expect(logoutTest.indexOf('menuButton.click()')).toBeLessThan(
       logoutTest.indexOf('toBeVisible({ timeout: 10_000 })')
     );
