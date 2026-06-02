@@ -250,14 +250,14 @@ export function NotificationDropdown() {
   }, [open]);
 
   return (
-    <motion.div layout className="relative">
+    <motion.div layout className="relative shrink-0">
       <button
         ref={triggerRef}
         type="button"
         onClick={handleToggle}
         aria-label="Open notifications"
         aria-expanded={open}
-        className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+        className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 sm:h-11 sm:w-11 sm:rounded-2xl"
       >
         <Bell size={20} />
         {unread > 0 && (

@@ -44,12 +44,12 @@ export function AnalyticsChart({
   }, []);
 
   return (
-    <section className="rounded-[30px] border border-white/70 bg-white/85 p-5 shadow-xl shadow-slate-200/60 backdrop-blur">
-      <div className="mb-5">
+    <section className="min-w-0 overflow-hidden rounded-3xl border border-white/70 bg-white/85 p-4 shadow-xl shadow-slate-200/60 backdrop-blur sm:p-5">
+      <div className="mb-4 min-w-0 sm:mb-5">
         <h2 className="text-lg font-black text-slate-950">{title}</h2>
         <p className="text-sm font-medium text-slate-500">{subtitle}</p>
       </div>
-      <div ref={chartFrameRef} className="h-72 min-h-[18rem] w-full min-w-0">
+      <div ref={chartFrameRef} className="h-56 min-h-[14rem] w-full min-w-0 sm:h-72 sm:min-h-[18rem]">
         {chartSize.width > 0 && chartSize.height > 0 && (
           <Chart
             data={data}

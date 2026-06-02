@@ -193,7 +193,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex text-slate-950 dark:bg-slate-950 dark:text-slate-100">
+    <div className="flex min-h-screen max-w-full overflow-x-hidden bg-[#f8fafc] text-slate-950 dark:bg-slate-950 dark:text-slate-100">
       <CommandPalette />
       {/* Mobile Menu Overlay */}
       <AnimatePresence>
@@ -256,12 +256,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 relative z-0">
-        <header className="h-20 bg-white/75 border-b border-white/80 flex items-center justify-between px-6 lg:px-10 backdrop-blur-xl dark:bg-slate-950/75 dark:border-slate-800 sticky top-0 z-30">
+      <main className="relative z-0 flex min-w-0 max-w-full flex-1 flex-col overflow-x-hidden">
+        <header className="sticky top-0 z-30 flex h-16 max-w-full items-center justify-between gap-2 overflow-hidden border-b border-white/80 bg-white/75 px-3 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/75 sm:h-20 sm:px-5 lg:px-10">
           <button
             aria-label="Open navigation menu"
             onClick={() => setIsSidebarOpen(true)}
-            className="lg:hidden p-2 text-slate-600"
+            className="shrink-0 rounded-xl p-2 text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 lg:hidden"
           >
             <Menu size={24} />
           </button>
@@ -273,29 +273,29 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             </kbd>
           </button>
 
-          <div className="flex-1 md:hidden" />
+          <div className="min-w-0 flex-1 md:hidden" />
 
-          <div className="flex items-center gap-4">
+          <div className="flex min-w-0 shrink-0 items-center justify-end gap-1.5 sm:gap-3 lg:gap-4">
             <button
               aria-label="Sign Out"
               title="Sign Out"
               onClick={handleLogout}
               disabled={isSigningOut}
-              className="lg:hidden rounded-xl p-2 text-slate-600 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-60 dark:text-slate-300 dark:hover:bg-red-950/40"
+              className="rounded-xl p-2 text-slate-600 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-60 dark:text-slate-300 dark:hover:bg-red-950/40 lg:hidden"
             >
               {isSigningOut ? <LoadingSpinner className="text-red-600" /> : <LogOut size={20} />}
             </button>
             <ThemeToggle />
             <NotificationDropdown />
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-semibold text-slate-900 dark:text-white">
+            <div className="hidden min-w-0 max-w-36 text-right sm:block lg:max-w-48">
+              <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
                 {user?.displayName}
               </p>
               <p className="text-xs text-slate-500 capitalize dark:text-slate-400">{role}</p>
             </div>
             <button
               onClick={() => setIsProfileModalOpen(true)}
-              className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden ring-2 ring-slate-100 hover:ring-blue-400 dark:ring-slate-800 transition-all cursor-pointer"
+              className="h-9 w-9 shrink-0 cursor-pointer overflow-hidden rounded-full bg-slate-200 ring-2 ring-slate-100 transition-all hover:ring-blue-400 dark:ring-slate-800 sm:h-10 sm:w-10"
             >
               <img
                 src={user?.photoURL || `https://ui-avatars.com/api/?name=${user?.displayName}`}
@@ -306,7 +306,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(124,58,237,0.08),transparent_30%)] p-4 md:p-6 lg:p-8 space-y-8 dark:bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.18),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(6,182,212,0.12),transparent_30%)]">
+        <div className="flex-1 space-y-8 overflow-auto overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(124,58,237,0.08),transparent_30%)] p-3 dark:bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.18),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(6,182,212,0.12),transparent_30%)] sm:p-4 md:p-6 lg:p-8">
           {children}
         </div>
       </main>

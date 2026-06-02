@@ -146,24 +146,26 @@ export function DashboardPage() {
 
   return (
     <PageShell>
-      <section className="relative overflow-hidden rounded-[36px] border border-white/70 bg-slate-950 p-6 text-white shadow-2xl shadow-blue-950/20 md:p-8">
+      <section className="relative min-w-0 overflow-hidden rounded-3xl border border-white/70 bg-slate-950 p-4 text-white shadow-2xl shadow-blue-950/20 sm:p-6 md:rounded-[36px] md:p-8">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.45),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(6,182,212,0.28),transparent_32%)]" />
-        <div className="relative grid gap-8 lg:grid-cols-[1.4fr_0.8fr] lg:items-end">
-          <div>
-            <p className="mb-3 inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-cyan-100">
+        <div className="relative grid min-w-0 gap-4 sm:gap-8 lg:grid-cols-[1.4fr_0.8fr] lg:items-end">
+          <div className="min-w-0">
+            <p className="mb-3 inline-flex max-w-full rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-cyan-100 sm:text-xs sm:tracking-[0.18em]">
               {role || 'student'} workspace
             </p>
-            <h1 className="max-w-4xl text-4xl font-black tracking-tight md:text-6xl">
+            <h1 className="max-w-4xl text-3xl font-black tracking-tight sm:text-4xl md:text-6xl">
               {copy.title}
             </h1>
-            <p className="mt-4 max-w-2xl text-base font-medium leading-7 text-slate-300 md:text-lg">
+            <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-slate-300 sm:mt-4 md:text-lg md:leading-7">
               {copy.subtitle}
             </p>
           </div>
-          <div className="rounded-[28px] border border-white/15 bg-white/10 p-5 backdrop-blur">
-            <div className="mb-3 flex items-center gap-2 text-cyan-200">
+          <div className="min-w-0 rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur sm:rounded-[28px] sm:p-5">
+            <div className="mb-2 flex min-w-0 items-center gap-2 text-cyan-200 sm:mb-3">
               <Sparkles size={18} />
-              <span className="text-xs font-black uppercase tracking-[0.18em]">AI insight</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.16em] sm:text-xs sm:tracking-[0.18em]">
+                AI insight
+              </span>
             </div>
             <p className="text-sm font-medium leading-6 text-white">{copy.insight}</p>
           </div>
@@ -177,13 +179,13 @@ export function DashboardPage() {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid min-w-0 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
         {statsLoading ? (
           <>
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="h-28 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800"
+                className="h-24 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800 sm:h-28"
               />
             ))}
           </>
@@ -205,7 +207,7 @@ export function DashboardPage() {
         )}
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="grid min-w-0 gap-4 sm:gap-5 xl:grid-cols-[1.2fr_0.8fr]">
         <AnalyticsChart
           title={role === 'accountant' ? 'Fee Collection Velocity' : 'Attendance Intelligence'}
           subtitle={
@@ -227,10 +229,10 @@ export function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
-        <section className="rounded-[30px] border border-white/70 bg-white/85 p-5 shadow-xl shadow-slate-200/60 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-none">
-          <div className="mb-5 flex items-center justify-between">
-            <div>
+      <div className="grid min-w-0 gap-4 sm:gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+        <section className="min-w-0 rounded-3xl border border-white/70 bg-white/85 p-4 shadow-xl shadow-slate-200/60 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-none sm:p-5">
+          <div className="mb-4 flex min-w-0 items-center justify-between gap-3 sm:mb-5">
+            <div className="min-w-0">
               <h2 className="text-lg font-black text-slate-950 dark:text-white">Quick Actions</h2>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
                 Fast paths for today&apos;s work
@@ -250,9 +252,9 @@ export function DashboardPage() {
           </div>
         </section>
 
-        <section className="rounded-[30px] border border-white/70 bg-white/85 p-5 shadow-xl shadow-slate-200/60 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-none">
-          <div className="mb-5 flex items-center justify-between">
-            <div>
+        <section className="min-w-0 rounded-3xl border border-white/70 bg-white/85 p-4 shadow-xl shadow-slate-200/60 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-none sm:p-5">
+          <div className="mb-4 flex min-w-0 items-center justify-between gap-3 sm:mb-5">
+            <div className="min-w-0">
               <h2 className="text-lg font-black text-slate-950 dark:text-white">
                 Realtime Announcements
               </h2>
