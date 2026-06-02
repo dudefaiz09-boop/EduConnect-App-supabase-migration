@@ -1,6 +1,25 @@
+const { mkdirSync, rmSync } = require('node:fs');
 const path = require('node:path');
 
-const chromeUserDataDir = path.resolve('.lighthouseci/chrome-user-data').replace(/\\/g, '/');
+const chromeUserDataDir = path
+  .resolve(`.lighthouseci/tmp/chrome-user-data-${process.pid}`)
+  .replace(/\\/g, '/');
+
+rmSync(chromeUserDataDir, { recursive: true, force: true });
+mkdirSync(chromeUserDataDir, { recursive: true });
+
+const chromeFlags = [
+  '--headless=new',
+  '--no-sandbox',
+  '--disable-setuid-sandbox',
+  '--disable-dev-shm-usage',
+  '--disable-gpu',
+  '--disable-crash-reporter',
+  '--disable-breakpad',
+  '--no-first-run',
+  '--no-default-browser-check',
+  `--user-data-dir=${chromeUserDataDir}`,
+].join(' ');
 
 module.exports = {
   ci: {
@@ -17,7 +36,7 @@ module.exports = {
       numberOfRuns: 1,
       settings: {
         preset: 'desktop',
-        chromeFlags: `--user-data-dir=${chromeUserDataDir}`,
+        chromeFlags,
       },
     },
     assert: {

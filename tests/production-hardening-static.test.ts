@@ -150,6 +150,22 @@ describe('production hardening guardrails', () => {
     expect(playwrightConfig).not.toContain('VITE_SUPABASE_UPLOADS_BUCKET');
   });
 
+  it('launches Lighthouse Chrome with CI-safe isolation', () => {
+    const lhciConfig = read('lighthouserc.cjs');
+    const lhciAutorun = read('scripts/lhci-autorun.cjs');
+
+    expect(lhciConfig).toContain('chrome-user-data-${process.pid}');
+    expect(lhciConfig).toContain('rmSync(chromeUserDataDir');
+    expect(lhciConfig).toContain("'--headless=new'");
+    expect(lhciConfig).toContain("'--no-sandbox'");
+    expect(lhciConfig).toContain("'--disable-setuid-sandbox'");
+    expect(lhciConfig).toContain("'--disable-dev-shm-usage'");
+    expect(lhciConfig).toContain("'--disable-crash-reporter'");
+    expect(lhciConfig).toContain('chromeFlags,');
+    expect(lhciAutorun).toContain('XDG_RUNTIME_DIR');
+    expect(lhciAutorun).toContain("path.join(lhciTempDir, 'runtime')");
+  });
+
   it('registers new tenants through trusted backend before onboarding tenant admins', () => {
     const adminConsole = read('apps/admin-console/src/App.tsx');
     const app = read('apps/functions/src/app.ts').replace(/\r\n/g, '\n');
