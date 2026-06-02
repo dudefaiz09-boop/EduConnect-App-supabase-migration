@@ -205,10 +205,20 @@ describe('production hardening guardrails', () => {
   it('keeps full UI QA role logout checks on existing storage state', () => {
     const rolesSpec = read('qa/e2e/roles.spec.ts');
     const logoutTest = rolesSpec.slice(rolesSpec.indexOf('test(`${role} can log out`'));
+    const authContext = read('apps/web/src/contexts/AuthContext.tsx');
+    const helpers = read('qa/e2e/helpers.ts');
 
     expect(logoutTest).not.toContain('loginAsRole(page, role)');
     expect(logoutTest).toContain('await page.goto("/")');
+    expect(logoutTest.indexOf('menuButton.click()')).toBeLessThan(
+      logoutTest.indexOf('toBeVisible({ timeout: 10_000 })')
+    );
+    expect(logoutTest).toContain('scrollIntoViewIfNeeded');
     expect(logoutTest).toContain('page.waitForURL(/\\/auth\\/login/');
+    expect(authContext).toContain("env.VITE_DEMO_MODE === 'true'");
+    expect(authContext).toContain("scope: 'local'");
+    expect(helpers).toContain('Failed to load resource: the server responded with a status of 401');
+    expect(helpers).toContain('await expect(page).not.toHaveURL(/\\/auth\\/login/)');
   });
 
   it('keeps full UI QA card actions accessible to axe', () => {

@@ -2,6 +2,7 @@ import { expect, type Page, type TestInfo } from '@playwright/test';
 import type { QaRole, QaRoute } from './routes';
 
 const ignoredConsoleFragments = [
+  'Failed to load resource: the server responded with a status of 401',
   'Failed to load resource: the server responded with a status of 403',
   'Failed to load resource: the server responded with a status of 404',
   'Failed to load resource: the server responded with a status of 429',
@@ -118,6 +119,7 @@ export async function assertAccessState(page: Page, shouldHaveAccess: boolean) {
   );
 
   if (shouldHaveAccess) {
+    await expect(page).not.toHaveURL(/\/auth\/login/);
     await expect(body).not.toContainText(/Access denied/i);
   } else {
     await expect(body).toContainText(/Access denied/i);
