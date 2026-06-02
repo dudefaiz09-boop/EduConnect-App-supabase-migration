@@ -31,7 +31,7 @@ export const apiClient = new ApiClient({
     return getResolvedTenantId();
   },
   onUnauthorized: () => {
-    void supabase.auth.signOut();
+    void supabase.auth.signOut(env.VITE_DEMO_MODE === 'true' ? { scope: 'local' } : undefined);
   },
   debug: import.meta.env.DEV || import.meta.env.MODE === 'preview',
 });

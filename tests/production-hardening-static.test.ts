@@ -207,6 +207,8 @@ describe('production hardening guardrails', () => {
     const logoutTest = rolesSpec.slice(rolesSpec.indexOf('test(`${role} can log out`'));
     const authContext = read('apps/web/src/contexts/AuthContext.tsx');
     const helpers = read('qa/e2e/helpers.ts');
+    const app = read('apps/web/src/App.tsx');
+    const apiClient = read('apps/web/src/lib/api-client.ts');
 
     expect(logoutTest).not.toContain('loginAsRole(page, role)');
     expect(logoutTest).toContain('await page.goto("/")');
@@ -219,6 +221,29 @@ describe('production hardening guardrails', () => {
     expect(authContext).toContain("scope: 'local'");
     expect(helpers).toContain('Failed to load resource: the server responded with a status of 401');
     expect(helpers).toContain('await expect(page).not.toHaveURL(/\\/auth\\/login/)');
+    expect(app).toContain('aria-label="Sign Out"');
+    expect(app).toContain('onClick={handleLogout}');
+    expect(app).toContain('className="lg:hidden rounded-xl p-2');
+    expect(apiClient).toContain("env.VITE_DEMO_MODE === 'true' ? { scope: 'local' }");
+  });
+
+  it('keeps fees and performance pages resilient to empty QA class data', () => {
+    const feesPage = read('apps/web/src/pages/Fees.tsx');
+    const performancePage = read('apps/web/src/pages/Performance.tsx');
+
+    expect(feesPage).toContain('function normalizeFeeReport');
+    expect(feesPage).toContain('function normalizeFeeRecords');
+    expect(feesPage).toContain('function formatCurrency(amount: unknown)');
+    expect(feesPage).toContain('if (!selectedClass)');
+    expect(feesPage).toContain('Array.isArray(data?.fees) ? data.fees : []');
+    expect(feesPage).toContain('report && report.totalDue > 0');
+
+    expect(performancePage).toContain('function normalizePerformanceReport');
+    expect(performancePage).toContain('function normalizePerformanceRecords');
+    expect(performancePage).toContain('apiClient.request<PerformanceRecordsResponse>');
+    expect(performancePage).toContain('apiClient.request<PerformanceReportResponse>');
+    expect(performancePage).toContain('setRecords(normalizePerformanceRecords');
+    expect(performancePage).toContain('if (!selectedClass)');
   });
 
   it('keeps full UI QA card actions accessible to axe', () => {
