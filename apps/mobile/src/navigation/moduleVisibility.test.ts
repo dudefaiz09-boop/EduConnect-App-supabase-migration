@@ -1,10 +1,5 @@
 import { canAccessModule } from '@educonnect/shared';
-import {
-  isMoreModuleKey,
-  isPrimaryTabKey,
-  moreModuleOrder,
-  primaryTabOrder,
-} from './types';
+import { isMoreModuleKey, isPrimaryTabKey, moreModuleOrder, primaryTabOrder } from './types';
 
 describe('mobile module visibility', () => {
   it('keeps admin-only All Users hidden from students', () => {
