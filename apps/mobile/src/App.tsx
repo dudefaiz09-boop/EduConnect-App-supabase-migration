@@ -18,6 +18,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useNetworkStatus } from './hooks/useNetworkStatus';
 import { queryClient } from './lib/query-client';
 import { supabase, supabaseConfigured } from './lib/supabase';
+import { type ActiveRouteKey, primaryTabOrder } from './navigation/types';
 import { AiAssistantScreen } from './screens/AiAssistantScreen';
 import { ChatScreen } from './screens/ChatScreen';
 import {
@@ -583,7 +584,7 @@ const ModuleContent = ({
   onSignOut,
   signingOut,
 }: {
-  activeModule: ModuleKey | 'more' | 'profile' | 'settings';
+  activeModule: ActiveRouteKey;
   onOpenModule: (module: ModuleKey) => void;
   modulesForUser: ModuleDefinition[];
   onOpenProfile: () => void;
@@ -641,9 +642,7 @@ const ModuleContent = ({
 const AppContent = () => {
   const { user, loading, logout, role, roles, schoolId, assignedModules } = useAuth();
   const { isOffline, lastCheckedAt } = useNetworkStatus();
-  const [activeModule, setActiveModule] = useState<ModuleKey | 'more' | 'profile' | 'settings'>(
-    'dashboard'
-  );
+  const [activeModule, setActiveModule] = useState<ActiveRouteKey>('dashboard');
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [signingOut, setSigningOut] = useState(false);
 
@@ -695,13 +694,6 @@ const AppContent = () => {
 
   if (!user) return <AuthScreen mode={authMode} onModeChange={setAuthMode} />;
 
-  const primaryTabOrder: ModuleKey[] = [
-    'dashboard',
-    'announcements',
-    'assignments',
-    'aiAssistant',
-    'chat',
-  ];
   const primaryTabs = primaryTabOrder
     .map((key) => modulesForUser.find((item) => item.key === key))
     .filter((item): item is ModuleDefinition => Boolean(item));
