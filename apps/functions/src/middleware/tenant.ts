@@ -37,13 +37,6 @@ async function tenantExistsAndActive(tenantId: string) {
   if (error) throw error;
 
   if (!data) {
-    if (process.env.NODE_ENV !== 'production') {
-      logger.warn(
-        { tenantId, correlationId: getCorrelationId() },
-        'Tenant record missing; allowing in non-production for migration compatibility'
-      );
-      return true;
-    }
     return null;
   }
 
