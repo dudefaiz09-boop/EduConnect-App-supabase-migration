@@ -28,11 +28,13 @@ The protected route checks accept expected auth or tenant errors when no smoke t
 Set this repository variable or secret:
 
 ```text
-API_BASE_URL=https://your-api-host.example.com/api
+API_BASE_URL=https://educonnect-api-sigma.vercel.app/api
 ```
 
-The value must be an HTTPS URL and must end with `/api`. GitHub-hosted smoke checks must target
-a deployed API, not `localhost`, `127.0.0.1`, or an emulator URL.
+The value must be an HTTPS URL and must end with `/api`. GitHub-hosted smoke checks default to
+`https://educonnect-api-sigma.vercel.app/api` when no variable, secret, or manual input is set.
+Use a repository variable or workflow input to override that default for preview/staging APIs.
+GitHub-hosted smoke checks must target a deployed API, not `localhost`, `127.0.0.1`, or an emulator URL.
 
 ## Optional configuration
 
@@ -63,8 +65,32 @@ an HTTPS URL ending in `/api`, the workflow fails so deployment monitoring canno
 
 ## Local run
 
+Against a deployed API:
+
 ```powershell
-$env:API_BASE_URL="https://your-api-host.example.com/api"
+$env:API_BASE_URL="https://educonnect-api-sigma.vercel.app/api"
+pnpm smoke:web-api
+```
+
+Against the local standalone functions API, start the API in another terminal first:
+
+```powershell
+corepack pnpm --filter @educonnect/functions build
+$env:PORT="8080"
+node apps/functions/dist/standalone.js
+```
+
+Then run:
+
+```powershell
+$env:API_BASE_URL="http://localhost:8080/api"
+pnpm smoke:web-api
+```
+
+Against the QA web/API harness, keep `scripts/start-qa-web-api.cjs` running and use:
+
+```powershell
+$env:API_BASE_URL="http://127.0.0.1:3000/api"
 pnpm smoke:web-api
 ```
 
@@ -75,3 +101,7 @@ $env:SMOKE_TENANT_ID="tenant-a"
 $env:SMOKE_ACCESS_TOKEN="<short-lived test user access token>"
 pnpm smoke:web-api
 ```
+
+If the script cannot connect, it prints the resolved `API_BASE_URL` and points to the deployed,
+standalone-local, and QA-harness options above. Connection failures usually mean the API process is
+not running or `API_BASE_URL` points at the wrong port.

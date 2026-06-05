@@ -99,10 +99,14 @@ describe('production hardening guardrails', () => {
     expect(mobilePackage.engines.node).toBe('>=22');
   });
 
-  it('fails API smoke monitoring closed against real HTTPS deployments', () => {
+  it('defaults API smoke monitoring to the production HTTPS deployment', () => {
     const workflow = read('.github/workflows/api-smoke.yml');
 
-    expect(workflow).toContain('API_BASE_URL is required for API smoke checks');
+    expect(workflow).toContain('DEFAULT_API_BASE_URL: https://educonnect-api-sigma.vercel.app/api');
+    expect(workflow).toContain(
+      'API_BASE_URL="${INPUT_API_BASE_URL:-${CONFIG_API_BASE_URL:-$DEFAULT_API_BASE_URL}}"'
+    );
+    expect(workflow).toContain('using the production API smoke target');
     expect(workflow).toContain('exit 1');
     expect(workflow).toContain('https://*/api');
     expect(workflow).toContain('API_BASE_URL must be an HTTPS URL ending in /api');
@@ -111,7 +115,16 @@ describe('production hardening guardrails', () => {
     expect(workflow).not.toContain('http://127.*/api');
   });
 
-  it('keeps deployment docs generic and aligned with normalized tenant lookup', () => {
+  it('keeps deployment docs aligned with the production API and normalized tenant lookup', () => {
+    const genericDeploymentDocs = [read('README.md'), read('apps/web/src/lib/env.ts')].join('\n');
+    const productionApiDocs = [
+      read('.github/workflows/api-smoke.yml'),
+      read('docs/API_SMOKE_WORKFLOW.md'),
+      read('docs/API_DEPLOYMENT_CHECKLIST.md'),
+      read('apps/web/.env.example'),
+      read('apps/mobile/.env.example'),
+      read('apps/mobile/.env.mobile.example'),
+    ].join('\n');
     const deploymentDocs = [
       read('README.md'),
       read('docs/API_DEPLOYMENT_CHECKLIST.md'),
@@ -121,8 +134,8 @@ describe('production hardening guardrails', () => {
     const tenantDocs = read('docs/AUTH_TENANT_MIDDLEWARE.md');
     const tenantMiddleware = read('apps/functions/src/middleware/tenant.ts');
 
-    expect(deploymentDocs).toContain('https://your-api-project.vercel.app/api');
-    expect(deploymentDocs).not.toContain('educonnect-api-sigma.vercel.app');
+    expect(genericDeploymentDocs).toContain('https://your-api-project.vercel.app/api');
+    expect(productionApiDocs).toContain('https://educonnect-api-sigma.vercel.app/api');
     expect(deploymentDocs).not.toContain('educonnect-web-iota.vercel.app');
     expect(tenantDocs).toContain('public.tenants.id = tenantId');
     expect(tenantDocs).not.toContain('documents/tenants');
