@@ -28,11 +28,13 @@ The protected route checks accept expected auth or tenant errors when no smoke t
 Set this repository variable or secret:
 
 ```text
-API_BASE_URL=https://your-api-host.example.com/api
+API_BASE_URL=https://educonnect-api-sigma.vercel.app/api
 ```
 
-The value must be an HTTPS URL and must end with `/api`. GitHub-hosted smoke checks must target
-a deployed API, not `localhost`, `127.0.0.1`, or an emulator URL.
+The value must be an HTTPS URL and must end with `/api`. GitHub-hosted smoke checks default to
+`https://educonnect-api-sigma.vercel.app/api` when no variable, secret, or manual input is set.
+Use a repository variable or workflow input to override that default for preview/staging APIs.
+GitHub-hosted smoke checks must target a deployed API, not `localhost`, `127.0.0.1`, or an emulator URL.
 
 ## Optional configuration
 
@@ -66,7 +68,7 @@ an HTTPS URL ending in `/api`, the workflow fails so deployment monitoring canno
 Against a deployed API:
 
 ```powershell
-$env:API_BASE_URL="https://your-api-host.example.com/api"
+$env:API_BASE_URL="https://educonnect-api-sigma.vercel.app/api"
 pnpm smoke:web-api
 ```
 

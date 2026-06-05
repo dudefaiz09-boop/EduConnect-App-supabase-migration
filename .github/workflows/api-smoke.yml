@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       api_base_url:
-        description: 'API base URL ending with /api'
+        description: 'API base URL ending with /api; defaults to production'
         required: false
         type: string
   schedule:
@@ -29,11 +29,11 @@ jobs:
         env:
           INPUT_API_BASE_URL: ${{ inputs.api_base_url }}
           CONFIG_API_BASE_URL: ${{ secrets.API_BASE_URL || vars.API_BASE_URL }}
+          DEFAULT_API_BASE_URL: https://educonnect-api-sigma.vercel.app/api
         run: |
-          API_BASE_URL="${INPUT_API_BASE_URL:-$CONFIG_API_BASE_URL}"
-          if [ -z "$API_BASE_URL" ]; then
-            echo "::error::API_BASE_URL is required for API smoke checks. Configure a repository variable/secret or provide workflow_dispatch input."
-            exit 1
+          API_BASE_URL="${INPUT_API_BASE_URL:-${CONFIG_API_BASE_URL:-$DEFAULT_API_BASE_URL}}"
+          if [ "$API_BASE_URL" = "$DEFAULT_API_BASE_URL" ] && [ -z "$INPUT_API_BASE_URL" ] && [ -z "$CONFIG_API_BASE_URL" ]; then
+            echo "::notice::API_BASE_URL was not configured; using the production API smoke target."
           fi
           case "$API_BASE_URL" in
             https://*/api) ;;

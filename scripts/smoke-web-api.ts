@@ -33,7 +33,24 @@ let failed = false;
 let printedBaseUrlGuidance = false;
 
 function errorMessage(error: unknown) {
-  return error instanceof Error ? error.message : String(error);
+  if (!(error instanceof Error)) {
+    return String(error);
+  }
+
+  const details = [error.message];
+  const cause = error.cause;
+  if (cause instanceof Error) {
+    details.push(`cause=${cause.message}`);
+    const causeRecord = cause as NodeJS.ErrnoException;
+    for (const key of ['code', 'errno', 'syscall', 'hostname', 'address', 'port'] as const) {
+      const value = causeRecord[key];
+      if (value !== undefined) {
+        details.push(`${key}=${String(value)}`);
+      }
+    }
+  }
+
+  return details.join('; ');
 }
 
 function printBaseUrlGuidance() {
