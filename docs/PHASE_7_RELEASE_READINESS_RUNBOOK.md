@@ -87,9 +87,11 @@ If Vercel reports failures, classify them before blocking the release:
 Before demo:
 
 1. Confirm the project URL points to the intended demo Supabase project.
-2. Run the demo seed readiness command.
-3. Verify tenant isolation between `tenant-a` and `tenant-b`.
-4. Confirm service-role keys are only used in backend or local operator scripts.
+2. Complete the Supabase hardening flow in
+   `docs/SUPABASE_RELEASE_HARDENING_RUNBOOK.md`.
+3. Run the demo seed readiness command.
+4. Verify tenant isolation between `tenant-a` and `tenant-b`.
+5. Confirm service-role keys are only used in backend or local operator scripts.
 
 ## Web QA checks
 
