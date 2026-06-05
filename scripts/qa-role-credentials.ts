@@ -92,11 +92,30 @@ export function credentialSummary(env: NodeJS.ProcessEnv = process.env) {
   });
 }
 
+export function credentialChecklist() {
+  return QA_ROLES.map((role) => {
+    const names = credentialNames(role);
+    return {
+      role,
+      email: names.email,
+      password: names.password,
+    };
+  });
+}
+
+function printCredentialChecklist() {
+  console.error('Expected role credential variable pairs:');
+  for (const item of credentialChecklist()) {
+    console.error(`- ${item.role}: ${item.email}, ${item.password}`);
+  }
+}
+
 export function main(env: NodeJS.ProcessEnv = process.env) {
   const invalidRequiredRoles = invalidRequiredRoleNames(env);
   if (invalidRequiredRoles.length > 0) {
     console.error(`Invalid WEB_QA_REQUIRED_ROLES values: ${invalidRequiredRoles.join(', ')}`);
     console.error(`Allowed roles: ${QA_ROLES.join(', ')}`);
+    printCredentialChecklist();
     return 1;
   }
 
@@ -107,6 +126,7 @@ export function main(env: NodeJS.ProcessEnv = process.env) {
     console.error(
       'Set both WEB_QA_<ROLE>_EMAIL and WEB_QA_<ROLE>_PASSWORD, or leave both unset to skip that role.'
     );
+    printCredentialChecklist();
     return 1;
   }
 
@@ -118,6 +138,7 @@ export function main(env: NodeJS.ProcessEnv = process.env) {
     console.error(
       'Set required WEB_QA_<ROLE>_EMAIL and WEB_QA_<ROLE>_PASSWORD variables, or run qa:pr for admin-only PR smoke coverage.'
     );
+    printCredentialChecklist();
     return 1;
   }
 

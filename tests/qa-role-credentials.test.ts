@@ -1,6 +1,7 @@
 import {
   QA_ROLES,
   configuredRoles,
+  credentialChecklist,
   credentialSummary,
   incompleteCredentialNames,
   invalidRequiredRoleNames,
@@ -108,5 +109,14 @@ describe('QA role credential preflight', () => {
       hasPassword: true,
     });
     expect(JSON.stringify(credentialSummary(env))).not.toContain('correct-horse-battery-staple');
+  });
+
+  it('lists expected credential variable names without secret values', () => {
+    expect(credentialChecklist()).toContainEqual({
+      role: 'admin',
+      email: 'WEB_QA_ADMIN_EMAIL',
+      password: 'WEB_QA_ADMIN_PASSWORD',
+    });
+    expect(JSON.stringify(credentialChecklist())).not.toContain('correct-horse-battery-staple');
   });
 });

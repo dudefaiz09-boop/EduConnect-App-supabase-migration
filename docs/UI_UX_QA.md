@@ -119,6 +119,12 @@ Add the other `WEB_QA_<ROLE>_EMAIL` and `WEB_QA_<ROLE>_PASSWORD` secrets to enab
 
 Add `PERCY_TOKEN` to enable Percy visual regression uploads.
 
+For the full credential matrix and preflight behavior, see:
+
+```text
+docs/QA_ROLE_CREDENTIALS.md
+```
+
 ## Route list and role matrix
 
 The manually maintained QA route list and role matrix live in:
