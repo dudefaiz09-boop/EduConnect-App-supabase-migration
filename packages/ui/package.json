@@ -1,0 +1,26 @@
+{
+  "name": "@educonnect/ui",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/ui/src/index.d.ts",
+  "scripts": {
+    "build": "node ../../scripts/build-package.js && tsc --emitDeclarationOnly",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@educonnect/design-tokens": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "typescript": "~5.8.2"
+  }
+}
