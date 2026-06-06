@@ -13,13 +13,17 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
-    "prebuild:android": "pnpm --dir ../.. --filter @educonnect/shared-api... build",
+    "build:android:deps": "pnpm --dir ../.. --filter @educonnect/shared-api... --filter @educonnect/mobile-ui... build",
+    "prebuild:android": "pnpm run build:android:deps",
+    "prebuild:android:debug": "pnpm run build:android:deps",
+    "prebuild:android:release": "pnpm run build:android:deps",
     "build:android": "node scripts/run-gradle.mjs assembleDebug",
     "build:android:debug": "node scripts/run-gradle.mjs assembleDebug",
     "build:android:release": "node scripts/run-gradle.mjs assembleRelease bundleRelease",
     "verify:android-apk": "node scripts/verify-android-apk.mjs"
   },
   "dependencies": {
+    "@educonnect/mobile-ui": "workspace:*",
     "@educonnect/shared": "workspace:*",
     "@educonnect/shared-api": "workspace:*",
     "@react-native-async-storage/async-storage": "^1.24.0",
