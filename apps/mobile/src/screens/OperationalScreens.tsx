@@ -23,13 +23,13 @@ import { colors, formatCurrency } from '../theme';
 import {
   Card,
   EmptyState,
-  ErrorState,
   LoadingState,
+  ModuleErrorState as ErrorState,
   ModuleHeader,
   Pill,
   SearchInput,
   StatCard,
-} from '../components/ModuleUi';
+} from '@educonnect/mobile-ui';
 
 type FeeRecord = {
   id: string;

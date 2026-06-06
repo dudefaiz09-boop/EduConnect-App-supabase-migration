@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { ErrorState, ModuleHeader } from '../components/ModuleUi';
+import { ModuleErrorState as ErrorState, ModuleHeader } from '@educonnect/mobile-ui';
 import { useAuth } from '../contexts/AuthContext';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { apiClient } from '../lib/api-client';
