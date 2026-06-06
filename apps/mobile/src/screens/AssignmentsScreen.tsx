@@ -1,20 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, RefreshControl } from 'react-native';
+import { Card, EmptyState, LoadingState, ModuleErrorState, Pill } from '@educonnect/mobile-ui';
 import { useAssignments } from '@educonnect/shared-api';
 import { useAuth } from '../contexts/AuthContext';
 import { assignmentsService } from '../lib/api-client';
-
-const colors = {
-  background: '#020617',
-  border: '#24324a',
-  card: '#0f172a',
-  cardSoft: '#111c33',
-  danger: '#f87171',
-  muted: '#94a3b8',
-  primary: '#2563eb',
-  primarySoft: '#172554',
-  text: '#f8fafc',
-};
+import { colors } from '../theme';
 
 export const AssignmentsScreen = () => {
   const { schoolId } = useAuth();
@@ -31,29 +21,18 @@ export const AssignmentsScreen = () => {
   if (isLoading && !isRefetching) {
     return (
       <View style={styles.container}>
-        <View style={styles.skeletonCard}>
-          <View style={styles.skeletonTitle} />
-          <View style={styles.skeletonLine} />
-          <View style={styles.skeletonShort} />
-        </View>
-        <View style={styles.skeletonCard}>
-          <View style={styles.skeletonTitle} />
-          <View style={styles.skeletonLine} />
-        </View>
+        <LoadingState title="Loading assignments" />
       </View>
     );
   }
 
   if (isError) {
     return (
-      <View style={styles.emptyCard}>
-        <Text style={styles.errorTitle}>Assignments unavailable</Text>
-        <Text style={styles.emptyText}>
-          {(error as Error)?.message || 'Please check your connection and try again.'}
-        </Text>
-        <TouchableOpacity style={styles.retryButton} onPress={() => void refetch()}>
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </TouchableOpacity>
+      <View style={styles.container}>
+        <ModuleErrorState
+          message={(error as Error)?.message || 'Please check your connection and try again.'}
+          onRetry={() => void refetch()}
+        />
       </View>
     );
   }
@@ -74,11 +53,9 @@ export const AssignmentsScreen = () => {
         />
       }
       renderItem={({ item }) => (
-        <TouchableOpacity style={styles.card}>
+        <Card>
           <View style={styles.cardHeader}>
-            <View style={styles.statusPill}>
-              <Text style={styles.statusPillText}>{item.status}</Text>
-            </View>
+            <Pill label={item.status} />
             <Text style={styles.title}>{item.title}</Text>
           </View>
           <Text style={styles.description} numberOfLines={3}>
@@ -88,13 +65,13 @@ export const AssignmentsScreen = () => {
             <Text style={styles.dueDate}>Due {new Date(item.dueDate).toLocaleDateString()}</Text>
             <Text style={styles.points}>{item.pointsPossible} pts</Text>
           </View>
-        </TouchableOpacity>
+        </Card>
       )}
       ListEmptyComponent={
-        <View style={styles.emptyCard}>
-          <Text style={styles.emptyTitle}>No assignments found</Text>
-          <Text style={styles.emptyText}>New class work will show up here when available.</Text>
-        </View>
+        <EmptyState
+          title="No assignments found"
+          body="New class work will show up here when available."
+        />
       }
       ListFooterComponent={
         assignments.length > 0 ? (
@@ -116,14 +93,6 @@ export const AssignmentsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.card,
-    borderColor: colors.border,
-    borderRadius: 24,
-    borderWidth: 1,
-    marginBottom: 12,
-    padding: 16,
-  },
   cardHeader: {
     marginBottom: 10,
   },
@@ -140,32 +109,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
-  emptyCard: {
-    alignItems: 'center',
-    backgroundColor: colors.card,
-    borderColor: colors.border,
-    borderRadius: 22,
-    borderWidth: 1,
-    padding: 26,
-  },
-  emptyText: {
-    color: colors.muted,
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 6,
-    textAlign: 'center',
-  },
-  emptyTitle: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '900',
-  },
-  errorTitle: {
-    color: colors.danger,
-    fontSize: 16,
-    fontWeight: '900',
-    marginBottom: 6,
-  },
   footer: {
     borderTopColor: colors.border,
     borderTopWidth: 1,
@@ -178,61 +121,6 @@ const styles = StyleSheet.create({
     color: '#8bb7ff',
     fontSize: 12,
     fontWeight: '900',
-  },
-  retryButton: {
-    borderColor: '#4f8cff',
-    borderRadius: 12,
-    borderWidth: 1,
-    justifyContent: 'center',
-    marginTop: 16,
-    minHeight: 44,
-    paddingHorizontal: 18,
-  },
-  retryButtonText: {
-    color: '#8bb7ff',
-    fontWeight: '900',
-  },
-  skeletonCard: {
-    backgroundColor: colors.card,
-    borderColor: colors.border,
-    borderRadius: 20,
-    borderWidth: 1,
-    marginBottom: 12,
-    padding: 16,
-  },
-  skeletonLine: {
-    backgroundColor: '#1c2842',
-    borderRadius: 8,
-    height: 12,
-    marginTop: 12,
-    width: '90%',
-  },
-  skeletonShort: {
-    backgroundColor: '#1c2842',
-    borderRadius: 8,
-    height: 12,
-    marginTop: 12,
-    width: '52%',
-  },
-  skeletonTitle: {
-    backgroundColor: '#31415f',
-    borderRadius: 8,
-    height: 18,
-    width: '58%',
-  },
-  statusPill: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.primarySoft,
-    borderRadius: 999,
-    marginBottom: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  statusPillText: {
-    color: '#67e8f9',
-    fontSize: 10,
-    fontWeight: '900',
-    textTransform: 'uppercase',
   },
   syncedText: {
     color: colors.muted,
