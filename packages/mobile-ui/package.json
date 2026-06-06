@@ -5,6 +5,12 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/mobile-ui/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/mobile-ui/src/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "node ../../scripts/build-package.js && tsc --emitDeclarationOnly",
     "typecheck": "tsc --noEmit"
