@@ -10,7 +10,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { ModuleErrorState as ErrorState, ModuleHeader } from '@educonnect/mobile-ui';
+import {
+  EmptyState,
+  LoadingState,
+  ModuleErrorState as ErrorState,
+  ModuleHeader,
+} from '@educonnect/mobile-ui';
 import { useAuth } from '../contexts/AuthContext';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { apiClient } from '../lib/api-client';
@@ -131,10 +136,7 @@ export function AiAssistantScreen() {
     return (
       <View style={styles.flex}>
         <ModuleHeader title="AI Assistant" subtitle="Role-aware assistant." />
-        <View style={styles.centered}>
-          <ActivityIndicator color={colors.ai} />
-          <Text style={styles.statusText}>Checking AI availability...</Text>
-        </View>
+        <LoadingState title="Checking AI availability" />
       </View>
     );
   }
@@ -143,16 +145,15 @@ export function AiAssistantScreen() {
     return (
       <View style={styles.flex}>
         <ModuleHeader title="AI Assistant" subtitle="Role-aware assistant." />
-        <View style={styles.centered}>
-          <Text style={styles.unavailableTitle}>AI Unavailable</Text>
-          <Text style={styles.unavailableBody}>
-            AI services are not configured for this tenant or your account. Please contact your
-            administrator.
-          </Text>
-          <TouchableOpacity onPress={refreshStatus} style={styles.retryButton}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
+        <EmptyState
+          title="AI Unavailable"
+          body="AI services are not configured for this tenant or your account. Please contact your administrator."
+          action={{
+            label: 'Retry',
+            onPress: refreshStatus,
+            accessibilityLabel: 'Retry AI availability check',
+          }}
+        />
       </View>
     );
   }
@@ -175,13 +176,10 @@ export function AiAssistantScreen() {
         data={logs}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>How can I help?</Text>
-            <Text style={styles.emptyBody}>
-              Ask about assignments, attendance, fees, performance, or library resources available
-              to your role.
-            </Text>
-          </View>
+          <EmptyState
+            title="How can I help?"
+            body="Ask about assignments, attendance, fees, performance, or library resources available to your role."
+          />
         }
         renderItem={({ item }) => (
           <View style={styles.messageWrapper}>
@@ -243,12 +241,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  centered: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-    padding: 20,
-  },
   chatList: {
     flexGrow: 1,
     paddingBottom: 10,
@@ -262,26 +254,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 10,
     paddingVertical: 8,
-  },
-  emptyBody: {
-    color: colors.muted,
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 6,
-    textAlign: 'center',
-  },
-  emptyCard: {
-    alignItems: 'center',
-    backgroundColor: colors.card,
-    borderColor: colors.border,
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: 24,
-  },
-  emptyTitle: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: '900',
   },
   flex: {
     backgroundColor: colors.background,
@@ -301,18 +273,6 @@ const styles = StyleSheet.create({
   messageWrapper: {
     marginBottom: 12,
   },
-  retryButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 16,
-    marginTop: 18,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-  },
-  retryButtonText: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '900',
-  },
   sendButton: {
     backgroundColor: colors.primary,
     borderRadius: 16,
@@ -326,22 +286,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 14,
     fontWeight: '900',
-  },
-  statusText: {
-    color: colors.muted,
-    marginTop: 12,
-  },
-  unavailableBody: {
-    color: colors.muted,
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: 'center',
-  },
-  unavailableTitle: {
-    color: colors.danger,
-    fontSize: 22,
-    fontWeight: '900',
-    marginBottom: 8,
   },
   userBubble: {
     alignSelf: 'flex-end',
