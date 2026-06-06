@@ -8,8 +8,8 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
+  type StyleProp,
   type ViewStyle,
-  type TextStyle,
 } from 'react-native';
 import { colors, spacing, radii, typography } from '@educonnect/design-tokens';
 
@@ -188,6 +188,146 @@ export const LoadingState: React.FC<LoadingStateProps> = ({ title = 'Loading mod
     <Text style={styles.emptyBody}>{title}</Text>
   </View>
 );
+
+// --- MODULE ERROR STATE ---
+interface ModuleErrorStateProps {
+  message: string;
+  onRetry: () => void;
+}
+
+export const ModuleErrorState: React.FC<ModuleErrorStateProps> = ({ message, onRetry }) => (
+  <View
+    accessibilityRole="alert"
+    accessibilityLabel={`Could not load data. ${message}`}
+    style={styles.emptyState}
+  >
+    <Text style={styles.moduleErrorTitle}>Could not load data</Text>
+    <Text style={styles.emptyBody}>{message}</Text>
+    <TouchableOpacity
+      accessibilityLabel="Retry loading module data"
+      accessibilityRole="button"
+      style={styles.secondaryButton}
+      onPress={onRetry}
+    >
+      <Text style={styles.secondaryButtonText}>Retry</Text>
+    </TouchableOpacity>
+  </View>
+);
+
+// --- STAT CARD ---
+export type StatTone = 'primary' | 'cyan' | 'green' | 'violet' | 'amber' | 'red';
+
+interface StatCardProps {
+  title: string;
+  value: string;
+  detail: string;
+  tone?: StatTone;
+}
+
+export const StatCard: React.FC<StatCardProps> = ({ title, value, detail, tone = 'primary' }) => {
+  const toneStyle =
+    tone === 'green'
+      ? styles.statIconGreen
+      : tone === 'cyan'
+        ? styles.statIconCyan
+        : tone === 'violet'
+          ? styles.statIconViolet
+          : tone === 'amber'
+            ? styles.statIconAmber
+            : tone === 'red'
+              ? styles.statIconRed
+              : styles.statIconPrimary;
+
+  return (
+    <View
+      accessibilityLabel={`${title}: ${value}. ${detail}`}
+      accessibilityRole="summary"
+      style={styles.statCard}
+    >
+      <View style={styles.statHeader}>
+        <Text style={styles.statLabel}>{title}</Text>
+        <View style={[styles.statIcon, toneStyle]} />
+      </View>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statDetail}>{detail}</Text>
+    </View>
+  );
+};
+
+// --- MODULE HEADER ---
+interface ModuleHeaderProps {
+  title: string;
+  subtitle: string;
+  children?: React.ReactNode;
+}
+
+export const ModuleHeader: React.FC<ModuleHeaderProps> = ({ title, subtitle, children }) => (
+  <View style={styles.moduleHeader}>
+    <View style={styles.moduleHeaderText}>
+      <Text accessibilityRole="header" style={styles.sectionTitle}>
+        {title}
+      </Text>
+      <Text style={styles.sectionSubtitle}>{subtitle}</Text>
+    </View>
+    {children}
+  </View>
+);
+
+// --- CARD ---
+interface CardProps {
+  children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+}
+
+export const Card: React.FC<CardProps> = ({ children, style }) => (
+  <View style={[styles.moduleCardSurface, style]}>{children}</View>
+);
+
+// --- SEARCH INPUT ---
+interface SearchInputProps {
+  value: string;
+  onChangeText: (value: string) => void;
+  placeholder: string;
+}
+
+export const SearchInput: React.FC<SearchInputProps> = ({ value, onChangeText, placeholder }) => (
+  <TextInput
+    accessibilityLabel={placeholder}
+    autoCapitalize="none"
+    onChangeText={onChangeText}
+    placeholder={placeholder}
+    placeholderTextColor={colors.muted}
+    style={styles.searchInput}
+    value={value}
+  />
+);
+
+// --- PILL ---
+export type PillTone = 'blue' | 'green' | 'red' | 'amber' | 'violet';
+
+interface PillProps {
+  label: string;
+  tone?: PillTone;
+}
+
+export const Pill: React.FC<PillProps> = ({ label, tone = 'blue' }) => {
+  const style =
+    tone === 'green'
+      ? styles.pillGreen
+      : tone === 'red'
+        ? styles.pillRed
+        : tone === 'amber'
+          ? styles.pillAmber
+          : tone === 'violet'
+            ? styles.pillViolet
+            : styles.pillBlue;
+
+  return (
+    <View accessibilityLabel={label} style={[styles.pill, style]}>
+      <Text style={styles.pillText}>{label}</Text>
+    </View>
+  );
+};
 
 // --- BANNER ---
 interface BannerProps {
@@ -418,6 +558,148 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSizes.lg,
     fontWeight: typography.fontWeights.black,
     textAlign: 'center',
+  },
+  moduleErrorTitle: {
+    color: colors.danger,
+    fontSize: typography.fontSizes.lg,
+    fontWeight: typography.fontWeights.black,
+    textAlign: 'center',
+  },
+  secondaryButton: {
+    borderColor: '#4f8cff',
+    borderRadius: radii.md,
+    borderWidth: 1,
+    justifyContent: 'center',
+    marginTop: spacing.lg,
+    minHeight: 44,
+    paddingHorizontal: spacing.lg,
+  },
+  secondaryButtonText: {
+    color: '#8bb7ff',
+    fontWeight: typography.fontWeights.bold,
+  },
+  statCard: {
+    backgroundColor: colors.card,
+    borderRadius: radii.xxl,
+    flexGrow: 1,
+    marginBottom: spacing.md,
+    minWidth: '47%',
+    padding: spacing.lg,
+  },
+  statHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  statIcon: {
+    borderRadius: radii.lg,
+    height: 28,
+    width: 28,
+  },
+  statIconAmber: {
+    backgroundColor: '#f59e0b',
+  },
+  statIconCyan: {
+    backgroundColor: '#0ea5e9',
+  },
+  statIconGreen: {
+    backgroundColor: colors.successStrong,
+  },
+  statIconPrimary: {
+    backgroundColor: colors.primary,
+  },
+  statIconRed: {
+    backgroundColor: '#ef4444',
+  },
+  statIconViolet: {
+    backgroundColor: '#9333ea',
+  },
+  statLabel: {
+    color: colors.muted,
+    fontSize: 11,
+    fontWeight: typography.fontWeights.black,
+    textTransform: 'uppercase',
+  },
+  statValue: {
+    color: colors.text,
+    fontSize: 30,
+    fontWeight: typography.fontWeights.black,
+    marginTop: spacing.md,
+  },
+  statDetail: {
+    color: colors.muted,
+    fontSize: typography.fontSizes.xs,
+    fontWeight: typography.fontWeights.bold,
+    marginTop: spacing.xs,
+  },
+  moduleHeader: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: spacing.md,
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  moduleHeaderText: {
+    flex: 1,
+  },
+  sectionTitle: {
+    color: colors.text,
+    fontSize: typography.fontSizes.display,
+    fontWeight: typography.fontWeights.black,
+  },
+  sectionSubtitle: {
+    color: colors.muted,
+    fontSize: typography.fontSizes.sm,
+    fontWeight: typography.fontWeights.semibold,
+    lineHeight: 19,
+    marginTop: spacing.xs,
+  },
+  moduleCardSurface: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: 22,
+    borderWidth: 1,
+    marginBottom: spacing.md,
+    padding: spacing.lg,
+  },
+  searchInput: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    color: colors.text,
+    fontSize: 15,
+    marginBottom: 14,
+    minHeight: 50,
+    paddingHorizontal: 14,
+  },
+  pill: {
+    alignSelf: 'flex-start',
+    borderRadius: radii.full,
+    marginBottom: spacing.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  pillAmber: {
+    backgroundColor: '#3b2b0c',
+  },
+  pillBlue: {
+    backgroundColor: colors.primarySoft,
+  },
+  pillGreen: {
+    backgroundColor: '#0c2f22',
+  },
+  pillRed: {
+    backgroundColor: '#3a1117',
+  },
+  pillText: {
+    color: colors.ai,
+    fontSize: 10,
+    fontWeight: typography.fontWeights.black,
+    textTransform: 'uppercase',
+  },
+  pillViolet: {
+    backgroundColor: '#25164d',
   },
   formFieldContainer: {
     marginBottom: spacing.md,
