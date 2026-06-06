@@ -329,6 +329,39 @@ export const Pill: React.FC<PillProps> = ({ label, tone = 'blue' }) => {
   );
 };
 
+// --- ACTION TILE ---
+interface ActionTileProps {
+  label: string;
+  title: string;
+  body: string;
+  onPress: () => void;
+  style?: StyleProp<ViewStyle>;
+  pillTone?: PillTone;
+  accessibilityLabel?: string;
+}
+
+export const ActionTile: React.FC<ActionTileProps> = ({
+  label,
+  title,
+  body,
+  onPress,
+  style,
+  pillTone,
+  accessibilityLabel,
+}) => (
+  <TouchableOpacity
+    accessibilityLabel={accessibilityLabel || `${title}. ${body}`}
+    accessibilityRole="button"
+    activeOpacity={0.82}
+    onPress={onPress}
+    style={[styles.actionTile, style]}
+  >
+    <Pill label={label} tone={pillTone} />
+    <Text style={styles.actionTileTitle}>{title}</Text>
+    <Text style={styles.actionTileBody}>{body}</Text>
+  </TouchableOpacity>
+);
+
 // --- BANNER ---
 interface BannerProps {
   title: string;
@@ -700,6 +733,26 @@ const styles = StyleSheet.create({
   },
   pillViolet: {
     backgroundColor: '#25164d',
+  },
+  actionTile: {
+    backgroundColor: colors.cardSoft,
+    borderColor: colors.border,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    minHeight: 138,
+    padding: 14,
+    width: '48%',
+  },
+  actionTileTitle: {
+    color: colors.text,
+    fontSize: typography.fontSizes.lg,
+    fontWeight: typography.fontWeights.black,
+  },
+  actionTileBody: {
+    color: colors.muted,
+    fontSize: typography.fontSizes.sm,
+    lineHeight: 19,
+    marginTop: 6,
   },
   formFieldContainer: {
     marginBottom: spacing.md,

@@ -16,6 +16,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { announcementsService, usersService } from '../lib/api-client';
 import { colors, formatDate } from '../theme';
 import {
+  ActionTile,
   Card,
   EmptyState,
   ModuleErrorState as ErrorState,
@@ -195,17 +196,13 @@ export function DashboardScreen({ onOpenModule }: { onOpenModule: (module: Modul
           {quickModules
             .filter((module) => canAccessModule(role, module, assignedModules))
             .map((module) => (
-              <TouchableOpacity
+              <ActionTile
                 key={module}
-                style={styles.quickActionCard}
+                label={module}
+                title={moduleLabels[module]}
+                body="Open the mobile version of this website module."
                 onPress={() => onOpenModule(module)}
-              >
-                <Pill label={module} />
-                <Text style={styles.quickActionTitle}>{moduleLabels[module]}</Text>
-                <Text style={styles.quickActionBody}>
-                  Open the mobile version of this website module.
-                </Text>
-              </TouchableOpacity>
+              />
             ))}
         </View>
       </Card>
@@ -540,31 +537,11 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '900',
   },
-  quickActionBody: {
-    color: colors.muted,
-    fontSize: 13,
-    lineHeight: 19,
-    marginTop: 6,
-  },
-  quickActionCard: {
-    backgroundColor: colors.cardSoft,
-    borderColor: colors.border,
-    borderRadius: 20,
-    borderWidth: 1,
-    minHeight: 138,
-    padding: 14,
-    width: '48%',
-  },
   quickActionGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
     marginTop: 16,
-  },
-  quickActionTitle: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '900',
   },
   screenContent: {
     paddingBottom: 24,
