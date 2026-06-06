@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  ActivityIndicator,
   StyleSheet,
   Text,
   TextInput,
@@ -11,47 +10,7 @@ import {
 } from 'react-native';
 import { colors } from '../theme';
 
-type ModuleAction = {
-  label: string;
-  onPress: () => void;
-  accessibilityLabel?: string;
-};
-
-export const EmptyState = ({
-  title,
-  body,
-  action,
-}: {
-  title: string;
-  body: string;
-  action?: ModuleAction;
-}) => (
-  <View
-    accessibilityRole="summary"
-    accessibilityLabel={`${title}. ${body}`}
-    style={styles.emptyState}
-  >
-    <Text style={styles.emptyTitle}>{title}</Text>
-    <Text style={styles.emptyBody}>{body}</Text>
-    {action && (
-      <TouchableOpacity
-        accessibilityLabel={action.accessibilityLabel || action.label}
-        accessibilityRole="button"
-        onPress={action.onPress}
-        style={styles.primaryButton}
-      >
-        <Text style={styles.primaryButtonText}>{action.label}</Text>
-      </TouchableOpacity>
-    )}
-  </View>
-);
-
-export const LoadingState = ({ title = 'Loading module' }: { title?: string }) => (
-  <View accessibilityRole="progressbar" accessibilityLabel={title} style={styles.emptyState}>
-    <ActivityIndicator color={colors.ai} />
-    <Text style={styles.emptyBody}>{title}</Text>
-  </View>
-);
+export { EmptyState, LoadingState } from '@educonnect/mobile-ui';
 
 export const ErrorState = ({ message, onRetry }: { message: string; onRetry: () => void }) => (
   <View
@@ -209,12 +168,6 @@ export const styles = StyleSheet.create({
     marginBottom: 12,
     padding: 24,
   },
-  emptyTitle: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '900',
-    textAlign: 'center',
-  },
   errorTitle: {
     color: colors.danger,
     fontSize: 16,
@@ -258,18 +211,6 @@ export const styles = StyleSheet.create({
   },
   pillViolet: {
     backgroundColor: '#25164d',
-  },
-  primaryButton: {
-    backgroundColor: colors.ai,
-    borderRadius: 12,
-    justifyContent: 'center',
-    marginTop: 16,
-    minHeight: 44,
-    paddingHorizontal: 18,
-  },
-  primaryButtonText: {
-    color: '#07111f',
-    fontWeight: '900',
   },
   searchInput: {
     backgroundColor: colors.card,

@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  ActivityIndicator,
   View,
   Text,
   StyleSheet,
@@ -11,6 +12,12 @@ import {
   type TextStyle,
 } from 'react-native';
 import { colors, spacing, radii, typography } from '@educonnect/design-tokens';
+
+export type ModuleAction = {
+  label: string;
+  onPress: () => void;
+  accessibilityLabel?: string;
+};
 
 // --- SCREEN SHELL ---
 interface ScreenShellProps {
@@ -141,6 +148,46 @@ export const FormField: React.FC<FormFieldProps> = ({ label, error, style, ...pr
     </View>
   );
 };
+
+// --- EMPTY STATE ---
+interface EmptyStateProps {
+  title: string;
+  body: string;
+  action?: ModuleAction;
+}
+
+export const EmptyState: React.FC<EmptyStateProps> = ({ title, body, action }) => (
+  <View
+    accessibilityRole="summary"
+    accessibilityLabel={`${title}. ${body}`}
+    style={styles.emptyState}
+  >
+    <Text style={styles.emptyTitle}>{title}</Text>
+    <Text style={styles.emptyBody}>{body}</Text>
+    {action ? (
+      <TouchableOpacity
+        accessibilityLabel={action.accessibilityLabel || action.label}
+        accessibilityRole="button"
+        onPress={action.onPress}
+        style={styles.primaryButton}
+      >
+        <Text style={styles.primaryButtonText}>{action.label}</Text>
+      </TouchableOpacity>
+    ) : null}
+  </View>
+);
+
+// --- LOADING STATE ---
+interface LoadingStateProps {
+  title?: string;
+}
+
+export const LoadingState: React.FC<LoadingStateProps> = ({ title = 'Loading module' }) => (
+  <View accessibilityRole="progressbar" accessibilityLabel={title} style={styles.emptyState}>
+    <ActivityIndicator color={colors.ai} />
+    <Text style={styles.emptyBody}>{title}</Text>
+  </View>
+);
 
 // --- BANNER ---
 interface BannerProps {
@@ -350,6 +397,28 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSizes.sm,
     lineHeight: 18,
   },
+  emptyBody: {
+    color: colors.muted,
+    fontSize: typography.fontSizes.md,
+    lineHeight: 20,
+    marginTop: spacing.xs,
+    textAlign: 'center',
+  },
+  emptyState: {
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    marginBottom: spacing.md,
+    padding: spacing.xxl,
+  },
+  emptyTitle: {
+    color: colors.text,
+    fontSize: typography.fontSizes.lg,
+    fontWeight: typography.fontWeights.black,
+    textAlign: 'center',
+  },
   formFieldContainer: {
     marginBottom: spacing.md,
     width: '100%',
@@ -379,6 +448,18 @@ const styles = StyleSheet.create({
     color: colors.danger,
     fontSize: typography.fontSizes.xs,
     marginTop: spacing.xs,
+  },
+  primaryButton: {
+    backgroundColor: colors.ai,
+    borderRadius: radii.md,
+    justifyContent: 'center',
+    marginTop: spacing.lg,
+    minHeight: 44,
+    paddingHorizontal: spacing.xl,
+  },
+  primaryButtonText: {
+    color: '#07111f',
+    fontWeight: typography.fontWeights.black,
   },
   bannerContainer: {
     paddingHorizontal: spacing.lg,

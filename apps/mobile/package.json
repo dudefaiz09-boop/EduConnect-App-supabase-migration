@@ -20,6 +20,7 @@
     "verify:android-apk": "node scripts/verify-android-apk.mjs"
   },
   "dependencies": {
+    "@educonnect/mobile-ui": "workspace:*",
     "@educonnect/shared": "workspace:*",
     "@educonnect/shared-api": "workspace:*",
     "@react-native-async-storage/async-storage": "^1.24.0",

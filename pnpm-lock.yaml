@@ -223,6 +223,9 @@ importers:
 
   apps/mobile:
     dependencies:
+      '@educonnect/mobile-ui':
+        specifier: workspace:*
+        version: link:../../packages/mobile-ui
       '@educonnect/shared':
         specifier: workspace:*
         version: link:../../packages/shared
