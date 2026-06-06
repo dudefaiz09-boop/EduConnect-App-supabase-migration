@@ -13,7 +13,7 @@
     "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "paths": {
-      "@educonnect/*": ["packages/*/src/index.ts"]
+      "@educonnect/*": ["packages/*/src/index.ts", "packages/*/src/index.tsx"]
     }
   }
 }

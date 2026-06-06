@@ -418,11 +418,36 @@ importers:
         specifier: ^8.0.11
         version: 8.0.11(@types/node@25.6.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.8.4)
 
+  packages/design-tokens:
+    devDependencies:
+      typescript:
+        specifier: ~5.8.2
+        version: 5.8.3
+
   packages/logger:
     dependencies:
       pino:
         specifier: ^10.3.1
         version: 10.3.1
+
+  packages/mobile-ui:
+    dependencies:
+      '@educonnect/design-tokens':
+        specifier: workspace:*
+        version: link:../design-tokens
+    devDependencies:
+      '@types/react':
+        specifier: ^18.3.1
+        version: 18.3.28
+      react:
+        specifier: 18.3.1
+        version: 18.3.1
+      react-native:
+        specifier: 0.76.3
+        version: 0.76.3(@babel/core@7.29.0)(@babel/preset-env@7.29.5(@babel/core@7.29.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.28)(react@18.3.1)
+      typescript:
+        specifier: ~5.8.2
+        version: 5.8.3
 
   packages/shared:
     dependencies:
@@ -502,6 +527,28 @@ importers:
         version: 5.8.3
 
   packages/types: {}
+
+  packages/ui:
+    dependencies:
+      '@educonnect/design-tokens':
+        specifier: workspace:*
+        version: link:../design-tokens
+    devDependencies:
+      '@types/react':
+        specifier: ^19.2.14
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.14)
+      react:
+        specifier: ^19.2.6
+        version: 19.2.6
+      react-dom:
+        specifier: ^19.2.6
+        version: 19.2.6(react@19.2.6)
+      typescript:
+        specifier: ~5.8.2
+        version: 5.8.3
 
 packages:
 

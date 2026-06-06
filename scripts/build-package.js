@@ -8,10 +8,19 @@ const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
 async function build() {
   // Find all .ts files in src/hooks and src/services to ensure they are also entry points
   // if we want to keep them as separate files, or we just bundle everything into index.js
+  const entryPoint = ['src/index.ts', 'src/index.tsx']
+    .map((entry) => path.resolve(entry))
+    .find((entry) => fs.existsSync(entry));
+
+  if (!entryPoint) {
+    throw new Error(
+      `No package entrypoint found for ${pkg.name}. Expected src/index.ts or src/index.tsx.`
+    );
+  }
 
   await esbuild.build({
     absWorkingDir: process.cwd(),
-    entryPoints: [path.resolve('src/index.ts')],
+    entryPoints: [entryPoint],
     bundle: true,
     platform: 'node', // or 'browser' depending on the package, but 'node' is safer for shared
     format: 'esm',
