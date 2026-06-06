@@ -18,12 +18,12 @@ import { colors, formatDate } from '../theme';
 import {
   Card,
   EmptyState,
-  ErrorState,
+  ModuleErrorState as ErrorState,
   ModuleHeader,
   Pill,
   SearchInput,
   StatCard,
-} from '../components/ModuleUi';
+} from '@educonnect/mobile-ui';
 
 type UserRecord = {
   id?: string;

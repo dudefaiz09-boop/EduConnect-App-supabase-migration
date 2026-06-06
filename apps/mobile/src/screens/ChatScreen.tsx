@@ -16,11 +16,11 @@ import { colors, formatDate } from '../theme';
 import {
   Card,
   EmptyState,
-  ErrorState,
+  ModuleErrorState as ErrorState,
   ModuleHeader,
   Pill,
   SearchInput,
-} from '../components/ModuleUi';
+} from '@educonnect/mobile-ui';
 
 function initials(value: string) {
   return (
