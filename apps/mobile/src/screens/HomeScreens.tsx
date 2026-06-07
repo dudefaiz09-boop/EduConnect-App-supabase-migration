@@ -19,6 +19,7 @@ import {
   ActionTile,
   Card,
   EmptyState,
+  LoadingState,
   ModuleErrorState as ErrorState,
   ModuleHeader,
   Pill,
@@ -265,7 +266,9 @@ export function AnnouncementsScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
-            isLoading ? null : (
+            isLoading ? (
+              <LoadingState title="Loading announcements" />
+            ) : (
               <EmptyState
                 title="No announcements found"
                 body="Try a different search or pull to refresh."
@@ -286,7 +289,7 @@ export function AnnouncementsScreen() {
           }
           renderItem={({ item }) => (
             <Card>
-              <Pill label={(item as any).priority || item.visibility || 'update'} />
+              <Pill label={item.visibility || 'update'} />
               <Text style={styles.cardTitle}>{item.title}</Text>
               <Text style={styles.cardContent}>{item.content}</Text>
               <Text style={styles.cardDate}>{formatDate(item.createdAt)}</Text>
@@ -312,13 +315,13 @@ export function DirectoryScreen({ type }: { type: 'student' | 'teacher' | 'all' 
   const [query, setQuery] = useState('');
   const directoryRole = type === 'all' ? undefined : type;
   const usersQuery = useMobileUsers(schoolId, directoryRole);
-  const users = usersQuery.data || [];
   const loading = usersQuery.isLoading;
   const error = usersQuery.error as Error | null;
 
   const filtered = useMemo(() => {
+    const data = usersQuery.data || [];
     const normalized = query.trim().toLowerCase();
-    return users.filter((profile) => {
+    return data.filter((profile) => {
       const role = roleOf(profile);
       const matchesType = type === 'all' || role === type;
       const haystack = `${profile.displayName || ''} ${profile.email || ''} ${role} ${
@@ -326,7 +329,7 @@ export function DirectoryScreen({ type }: { type: 'student' | 'teacher' | 'all' 
       } ${(profile.subjects || profile.subjectIds || []).join(' ')}`.toLowerCase();
       return matchesType && (!normalized || haystack.includes(normalized));
     });
-  }, [query, type, users]);
+  }, [query, type, usersQuery.data]);
 
   const title =
     type === 'student'
@@ -357,7 +360,9 @@ export function DirectoryScreen({ type }: { type: 'student' | 'teacher' | 'all' 
           keyExtractor={(item, index) => item.uid || item.id || item.email || `user-${index}`}
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
-            loading ? null : (
+            loading ? (
+              <LoadingState title="Loading directory" />
+            ) : (
               <EmptyState
                 title="No profiles found"
                 body="Adjust search terms or refresh this module."
