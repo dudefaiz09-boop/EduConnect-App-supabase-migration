@@ -60,6 +60,7 @@ async function resolveTenant(req: Request, next: NextFunction) {
   const userTenantId = req.user.schoolId;
   const isSuperAdmin = req.user.isSuperAdmin;
   const managedTenantIds = req.user.managedTenantIds || [];
+  const isProduction = process.env.NODE_ENV === 'production';
 
   let resolvedTenantId: string | null = null;
 
@@ -99,18 +100,37 @@ async function resolveTenant(req: Request, next: NextFunction) {
         })
       );
     }
-    resolvedTenantId = userTenantId;
+
+    // Only fall back to the user's token tenantId if one exists.
+    // In production, log when the x-school-id header is absent so operators
+    // can confirm that all expected clients are sending explicit tenant context.
+    if (userTenantId) {
+      if (isProduction && !headerTenantId) {
+        logger.warn(
+          {
+            uid: req.user.uid,
+            tenantId: userTenantId,
+            path: req.path,
+            correlationId: getCorrelationId(),
+          },
+          'Tenant resolved from user token without x-school-id header'
+        );
+      }
+      resolvedTenantId = userTenantId;
+    }
   }
 
   if (!resolvedTenantId) {
     logger.warn(
-      { path: req.path, uid: req.user.uid, correlationId: getCorrelationId() },
+      { path: req.path, uid: req.user.uid, correlationId: getCorrelationId(), isProduction },
       'Missing Tenant ID'
     );
     return next(
       new AppError({
         code: 'TENANT_REQUIRED',
-        message: 'Tenant Context Required',
+        message: isProduction
+          ? 'Tenant context is required. Provide x-school-id header or ensure user token includes a schoolId claim.'
+          : 'Tenant Context Required',
         statusCode: 400,
       })
     );
