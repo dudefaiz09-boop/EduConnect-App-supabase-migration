@@ -3,6 +3,38 @@ import { join } from 'node:path';
 import request from 'supertest';
 import { describe, it, expect } from '@jest/globals';
 import app from '../apps/functions/src/app.js';
+import { buildFallbackReadyBody } from '../api/index.js';
+
+const envKeys = [
+  'NODE_ENV',
+  'VERCEL_ENV',
+  'VERCEL_URL',
+  'SUPABASE_URL',
+  'SUPABASE_SERVICE_ROLE_KEY',
+  'CORS_ORIGINS',
+] as const;
+
+function withEnv(overrides: Partial<Record<(typeof envKeys)[number], string | undefined>>) {
+  const original = Object.fromEntries(envKeys.map((key) => [key, process.env[key]]));
+
+  for (const [key, value] of Object.entries(overrides)) {
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+
+  return () => {
+    for (const [key, value] of Object.entries(original)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  };
+}
 
 describe('Vercel Entrypoint Verification', () => {
   it('api/index.ts imports the compiled Express app, not source or listener bundles', () => {
@@ -99,6 +131,64 @@ describe('Vercel Entrypoint Verification', () => {
       if (originalUrl) process.env.SUPABASE_URL = originalUrl;
       if (originalServiceRoleKey) process.env.SUPABASE_SERVICE_ROLE_KEY = originalServiceRoleKey;
       if (originalCorsOrigins) process.env.CORS_ORIGINS = originalCorsOrigins;
+    }
+  });
+
+  it('fallback /api/ready hides diagnostics in production', () => {
+    const restoreEnv = withEnv({
+      NODE_ENV: 'production',
+      VERCEL_ENV: 'production',
+      VERCEL_URL: 'educonnect-api-sigma.vercel.app',
+      SUPABASE_URL: undefined,
+      SUPABASE_SERVICE_ROLE_KEY: undefined,
+      CORS_ORIGINS: undefined,
+    });
+
+    try {
+      const body = buildFallbackReadyBody('startup failed: missing SUPABASE_SERVICE_ROLE_KEY');
+      const serialized = JSON.stringify(body);
+
+      expect(body).toHaveProperty('status', 'not_ready');
+      expect(body).toHaveProperty('checks', { expressAppLoaded: false });
+      expect(body).toHaveProperty('timestamp');
+      expect(body).not.toHaveProperty('missing');
+      expect(body).not.toHaveProperty('startupError');
+      expect(body).not.toHaveProperty('vercelUrl');
+      expect(serialized).not.toContain('SUPABASE_SERVICE_ROLE_KEY');
+      expect(serialized).not.toContain('SUPABASE_URL');
+      expect(serialized).not.toContain('CORS_ORIGINS');
+      expect(serialized).not.toContain('startup failed');
+    } finally {
+      restoreEnv();
+    }
+  });
+
+  it('fallback /api/ready includes local diagnostics outside production', () => {
+    const restoreEnv = withEnv({
+      NODE_ENV: 'test',
+      VERCEL_ENV: undefined,
+      VERCEL_URL: undefined,
+      SUPABASE_URL: undefined,
+      SUPABASE_SERVICE_ROLE_KEY: undefined,
+      CORS_ORIGINS: undefined,
+    });
+
+    try {
+      const body = buildFallbackReadyBody('startup failed');
+
+      expect(body).toHaveProperty('status', 'not_ready');
+      expect(body).toHaveProperty('startupError', 'startup failed');
+      expect(body.missing).toEqual(
+        expect.arrayContaining(['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'CORS_ORIGINS'])
+      );
+      expect(body.checks).toMatchObject({
+        hasSupabaseUrl: false,
+        hasServiceRoleKey: false,
+        hasCorsOrigins: false,
+        expressAppLoaded: false,
+      });
+    } finally {
+      restoreEnv();
     }
   });
 
