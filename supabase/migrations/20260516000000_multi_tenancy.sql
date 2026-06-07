@@ -102,8 +102,10 @@ using (
 );
 
 -- 8. Add updated_at triggers
+drop trigger if exists tenants_updated_at on public.tenants;
 create trigger tenants_updated_at before update on public.tenants
 for each row execute function public.set_updated_at();
 
+drop trigger if exists user_tenants_updated_at on public.user_tenants;
 create trigger user_tenants_updated_at before update on public.user_tenants
 for each row execute function public.set_updated_at();

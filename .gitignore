@@ -27,3 +27,4 @@ playwright-report/
 test-results/
 .lighthouseci/
 .git-rewrite/
+supabase/.temp/
