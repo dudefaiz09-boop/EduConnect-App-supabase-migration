@@ -16,6 +16,7 @@ import { colors, formatDate } from '../theme';
 import {
   Card,
   EmptyState,
+  LoadingState,
   ModuleErrorState as ErrorState,
   ModuleHeader,
   Pill,
@@ -165,7 +166,9 @@ export function ChatScreen() {
           keyExtractor={(item) => item.uid || item.id}
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
-            contactsQuery.isLoading ? null : (
+            contactsQuery.isLoading ? (
+              <LoadingState title="Loading contacts" />
+            ) : (
               <EmptyState
                 title="No contacts available"
                 body="No eligible people were found for your role."
@@ -215,7 +218,9 @@ export function ChatScreen() {
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.messagesContent}
               ListEmptyComponent={
-                messagesQuery.isLoading ? null : (
+                messagesQuery.isLoading ? (
+                  <LoadingState title="Loading messages" />
+                ) : (
                   <EmptyState
                     title="No messages yet"
                     body="Send the first message to start the conversation."
@@ -274,7 +279,9 @@ export function ChatScreen() {
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
             ListEmptyComponent={
-              conversationsQuery.isLoading ? null : (
+              conversationsQuery.isLoading ? (
+                <LoadingState title="Loading conversations" />
+              ) : (
                 <EmptyState
                   title="No conversations found"
                   body="Start a conversation with an eligible contact."
