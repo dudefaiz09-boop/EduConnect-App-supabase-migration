@@ -17,9 +17,24 @@ const env = getConfig();
 const PORT = env.PORT || 3000;
 
 async function startServer() {
-  app.listen(PORT, '0.0.0.0', () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
     logger.info({ env: env.NODE_ENV, port: PORT }, 'Server running');
   });
+
+  const shutdown = (signal: string) => {
+    logger.info({ signal }, 'Shutting down gracefully');
+    server.close(() => {
+      logger.info({ signal }, 'Server closed');
+      process.exit(0);
+    });
+    setTimeout(() => {
+      logger.error({ signal }, 'Forced shutdown after timeout');
+      process.exit(1);
+    }, 10_000).unref();
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 if (process.env.NODE_ENV !== 'test') {

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { StudentRepository } from './student.repository.js';
+import { AppError } from '../../middleware/error.js';
 
 export class StudentController {
   static async create(req: Request, res: Response, next: NextFunction) {
@@ -33,7 +34,13 @@ export class StudentController {
     try {
       const students = Array.isArray(req.body?.students) ? req.body.students : [];
       if (students.length === 0) {
-        return res.status(400).json({ error: 'students array is required' });
+        return next(
+          new AppError({
+            code: 'VALIDATION_ERROR',
+            message: 'students array is required',
+            statusCode: 400,
+          })
+        );
       }
 
       const actor = {
