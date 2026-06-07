@@ -1,13 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import {
-  FlatList,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { FlatList, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import type { AttendanceRecord } from '@educonnect/shared';
 import {
@@ -28,6 +20,7 @@ import {
   ModuleHeader,
   Pill,
   SearchInput,
+  SegmentedControl,
   StatCard,
 } from '@educonnect/mobile-ui';
 
@@ -219,22 +212,14 @@ export function AttendanceScreen() {
         }
       />
       {canManageAttendance && (
-        <View style={styles.segmentRow}>
-          {[
-            ['class', 'Class Today'],
-            ['history', 'My History'],
-          ].map(([key, label]) => (
-            <TouchableOpacity
-              key={key}
-              onPress={() => setMode(key as 'history' | 'class')}
-              style={[styles.segmentButton, mode === key && styles.segmentButtonActive]}
-            >
-              <Text style={[styles.segmentText, mode === key && styles.segmentTextActive]}>
-                {label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <SegmentedControl
+          options={[
+            { key: 'class', label: 'Class Today' },
+            { key: 'history', label: 'My History' },
+          ]}
+          selectedKey={mode}
+          onSelect={(key) => setMode(key as 'history' | 'class')}
+        />
       )}
       <View style={styles.statGrid}>
         <StatCard title="Present" value={String(present)} detail="Loaded records" tone="green" />
@@ -687,21 +672,12 @@ export function ParentPortalScreen() {
         subtitle="Linked children, attendance, assignments, fees, and grades."
       />
       {linkedStudentIds.length > 1 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalTabs}>
-          {linkedStudentIds.map((id, idx) => (
-            <TouchableOpacity
-              key={id}
-              onPress={() => setSelectedStudentId(id)}
-              style={[styles.segmentButton, selectedStudentId === id && styles.segmentButtonActive]}
-            >
-              <Text
-                style={[styles.segmentText, selectedStudentId === id && styles.segmentTextActive]}
-              >
-                Student {idx + 1}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        <SegmentedControl
+          options={linkedStudentIds.map((id, idx) => ({ key: id, label: `Student ${idx + 1}` }))}
+          selectedKey={selectedStudentId}
+          onSelect={setSelectedStudentId}
+          scrollable
+        />
       )}
       {!selectedStudentId ? (
         <EmptyState
@@ -817,9 +793,6 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     marginBottom: 8,
   },
-  horizontalTabs: {
-    marginBottom: 12,
-  },
   listContent: {
     paddingBottom: 24,
   },
@@ -844,33 +817,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     lineHeight: 22,
-  },
-  segmentButton: {
-    backgroundColor: colors.card,
-    borderColor: colors.border,
-    borderRadius: 14,
-    borderWidth: 1,
-    marginBottom: 12,
-    marginRight: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  segmentButtonActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  segmentRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
-  },
-  segmentText: {
-    color: colors.muted,
-    fontSize: 12,
-    fontWeight: '900',
-  },
-  segmentTextActive: {
-    color: colors.text,
   },
   statGrid: {
     flexDirection: 'row',

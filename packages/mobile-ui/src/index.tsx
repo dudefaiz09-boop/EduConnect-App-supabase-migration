@@ -441,6 +441,57 @@ export const BottomTabs: React.FC<BottomTabsProps> = ({ tabs, activeTabKey, onSe
   );
 };
 
+// --- SEGMENTED CONTROL ---
+interface SegmentedControlOption {
+  key: string;
+  label: string;
+}
+
+interface SegmentedControlProps {
+  options: SegmentedControlOption[];
+  selectedKey: string;
+  onSelect: (key: string) => void;
+  scrollable?: boolean;
+}
+
+export const SegmentedControl: React.FC<SegmentedControlProps> = ({
+  options,
+  selectedKey,
+  onSelect,
+  scrollable = false,
+}) => {
+  const content = (
+    <View style={styles.segmentRow}>
+      {options.map((option) => {
+        const isActive = selectedKey === option.key;
+        return (
+          <TouchableOpacity
+            key={option.key}
+            onPress={() => onSelect(option.key)}
+            accessibilityRole="button"
+            accessibilityLabel={option.label}
+            style={[styles.segmentButton, isActive && styles.segmentButtonActive]}
+          >
+            <Text style={[styles.segmentText, isActive && styles.segmentTextActive]}>
+              {option.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+
+  if (scrollable) {
+    return (
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.segmentScroll}>
+        {content}
+      </ScrollView>
+    );
+  }
+
+  return content;
+};
+
 // --- ERROR STATE ---
 interface ErrorStateProps {
   error: Error;
@@ -840,6 +891,34 @@ const styles = StyleSheet.create({
   },
   tabButtonTextActive: {
     color: colors.text,
+  },
+  segmentButton: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  segmentButtonActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  segmentRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  segmentText: {
+    color: colors.muted,
+    fontSize: typography.fontSizes.xs,
+    fontWeight: typography.fontWeights.black,
+  },
+  segmentTextActive: {
+    color: colors.text,
+  },
+  segmentScroll: {
+    marginBottom: spacing.sm,
   },
   errorContainer: {
     flex: 1,
