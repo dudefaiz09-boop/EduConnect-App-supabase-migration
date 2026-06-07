@@ -152,3 +152,51 @@ describe('tenant middleware', () => {
     expect(eq).toHaveBeenCalledWith('id', 'tenant-managed');
   });
 });
+
+describe('tenant middleware production hardening', () => {
+  const OLD_ENV = process.env;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    maybeSingle.mockResolvedValue({ data: { status: 'active' }, error: null });
+    process.env = { ...OLD_ENV, NODE_ENV: 'production' };
+  });
+
+  afterAll(() => {
+    process.env = OLD_ENV;
+  });
+
+  it('still binds the assigned tenant for a normal user in production', async () => {
+    const req = request({ user: user({ schoolId: 'tenant-normal' }) });
+
+    const error = await run(req);
+
+    expect(error).toBeUndefined();
+    expect(req.tenantId).toBe('tenant-normal');
+  });
+
+  it('uses a production-specific error message when tenant is missing', async () => {
+    const error = await run(request({ user: user({ schoolId: null }) }));
+
+    expect(error).toMatchObject({
+      code: 'TENANT_REQUIRED',
+      statusCode: 400,
+      message:
+        'Tenant context is required. Provide x-school-id header or ensure user token includes a schoolId claim.',
+    });
+  });
+
+  it('still rejects mismatched tenant headers in production', async () => {
+    const error = await run(
+      request({
+        headers: { 'x-school-id': 'tenant-b' },
+        user: user({ schoolId: 'tenant-a' }),
+      })
+    );
+
+    expect(error).toMatchObject({
+      code: 'TENANT_MISMATCH',
+      statusCode: 403,
+    });
+  });
+});
