@@ -11,6 +11,7 @@ let lastStartupError: unknown = null;
 
 const allowedMethods = 'GET,POST,PUT,PATCH,DELETE,OPTIONS';
 const allowedHeaders = 'Authorization,Content-Type,x-school-id,x-correlation-id,x-idempotency-key';
+const requiredFallbackEnv = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'CORS_ORIGINS'];
 const protectedPrefixes = [
   '/api/notifications',
   '/api/announcements',
@@ -86,6 +87,48 @@ function getStartupErrorMessage(error: unknown) {
   return String(error);
 }
 
+function shouldExposeFallbackDiagnostics() {
+  return process.env.NODE_ENV !== 'production' && process.env.VERCEL_ENV !== 'production';
+}
+
+function getFallbackDiagnostics(startupError: string | null) {
+  const missing = requiredFallbackEnv.filter((name) => !process.env[name]);
+
+  return {
+    environment: process.env.NODE_ENV || 'development',
+    nodeEnv: process.env.NODE_ENV || null,
+    vercelUrl: process.env.VERCEL_URL || null,
+    runtime: process.env.VERCEL_URL ? 'vercel' : 'local',
+    checks: {
+      hasSupabaseUrl: !!process.env.SUPABASE_URL,
+      hasServiceRoleKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      hasCorsOrigins: !!process.env.CORS_ORIGINS,
+      hasOpenRouterKey: !!process.env.OPENROUTER_API_KEY,
+      hasOpenRouterModel: !!process.env.OPENROUTER_MODEL,
+      supabaseDocumentsReachable: false,
+      expressAppLoaded: false,
+    },
+    missing,
+    startupError,
+  };
+}
+
+export function buildFallbackReadyBody(startupError: string | null) {
+  const body: Record<string, unknown> = {
+    status: 'not_ready',
+    checks: {
+      expressAppLoaded: false,
+    },
+    timestamp: new Date().toISOString(),
+  };
+
+  if (shouldExposeFallbackDiagnostics()) {
+    Object.assign(body, getFallbackDiagnostics(startupError));
+  }
+
+  return body;
+}
+
 async function loadApp() {
   if (!appPromise) {
     // The functions build creates this file before Vercel bundles the root API handler.
@@ -107,53 +150,45 @@ async function loadApp() {
 
 function handleFallback(req: IncomingMessage, res: ServerResponse) {
   const path = getPath(req);
-  const missing = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'CORS_ORIGINS'].filter(
-    (name) => !process.env[name]
-  );
   const startupError = getStartupErrorMessage(lastStartupError);
+  const exposeDiagnostics = shouldExposeFallbackDiagnostics();
 
   if (req.method === 'GET' && path === '/api/version') {
-    return sendJson(res, 200, {
+    const body: Record<string, unknown> = {
       status: 'ok',
       app: 'educonnect-api',
       degraded: true,
-      startupError,
       gitSha: process.env.VERCEL_GIT_COMMIT_SHA || null,
-      vercelUrl: process.env.VERCEL_URL || null,
-      nodeEnv: process.env.NODE_ENV || null,
-      corsOrigins: process.env.CORS_ORIGINS || null,
       timestamp: new Date().toISOString(),
-    });
+    };
+
+    if (exposeDiagnostics) {
+      Object.assign(body, {
+        startupError,
+        vercelUrl: process.env.VERCEL_URL || null,
+        nodeEnv: process.env.NODE_ENV || null,
+        corsOrigins: process.env.CORS_ORIGINS || null,
+      });
+    }
+
+    return sendJson(res, 200, body);
   }
 
   if (req.method === 'GET' && path === '/api/health') {
-    return sendJson(res, 503, {
+    const body: Record<string, unknown> = {
       status: 'degraded',
-      startupError,
       timestamp: new Date().toISOString(),
-    });
+    };
+
+    if (exposeDiagnostics) {
+      body.startupError = startupError;
+    }
+
+    return sendJson(res, 503, body);
   }
 
   if (req.method === 'GET' && path === '/api/ready') {
-    return sendJson(res, 503, {
-      status: 'not_ready',
-      environment: process.env.NODE_ENV || 'development',
-      nodeEnv: process.env.NODE_ENV || null,
-      vercelUrl: process.env.VERCEL_URL || null,
-      runtime: process.env.VERCEL_URL ? 'vercel' : 'local',
-      checks: {
-        hasSupabaseUrl: !!process.env.SUPABASE_URL,
-        hasServiceRoleKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-        hasCorsOrigins: !!process.env.CORS_ORIGINS,
-        hasOpenRouterKey: !!process.env.OPENROUTER_API_KEY,
-        hasOpenRouterModel: !!process.env.OPENROUTER_MODEL,
-        supabaseDocumentsReachable: false,
-        expressAppLoaded: false,
-      },
-      missing,
-      startupError,
-      timestamp: new Date().toISOString(),
-    });
+    return sendJson(res, 503, buildFallbackReadyBody(startupError));
   }
 
   if (protectedPrefixes.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))) {
@@ -166,9 +201,7 @@ function handleFallback(req: IncomingMessage, res: ServerResponse) {
           'AUTH_MISSING',
           'Authentication required',
           req.headers['x-correlation-id'] as string,
-          {
-            startupError,
-          }
+          exposeDiagnostics ? { startupError } : {}
         )
       );
     }
@@ -181,7 +214,7 @@ function handleFallback(req: IncomingMessage, res: ServerResponse) {
       'API_STARTUP_FAILED',
       'The API app could not be loaded. Check Vercel function logs.',
       req.headers['x-correlation-id'] as string,
-      { startupError, timestamp: new Date().toISOString() }
+      exposeDiagnostics ? { startupError, timestamp: new Date().toISOString() } : {}
     )
   );
 }
