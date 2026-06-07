@@ -32,6 +32,24 @@ export const colors = {
   ai: '#67e8f9',
   aiSoft: '#083344',
 
+  // Link / action colors
+  link: '#8bb7ff',
+  linkHover: '#5ea0ff',
+
+  // White with alpha
+  whiteA08: 'rgba(255,255,255,0.08)',
+  whiteA14: 'rgba(255,255,255,0.14)',
+  whiteA16: 'rgba(255,255,255,0.16)',
+
+  // Unique UI surface colors
+  featuredBg: '#132142',
+  featuredBorder: '#2950b8',
+  heroBg: '#081225',
+  heroBorder: '#2a3650',
+  profileCardBg: '#312e81',
+  profileCardBorder: '#4f46e5',
+  progressFill: '#4f8cff',
+
   // Role Specific Brand Colors
   roles: {
     admin: '#f43f5e', // Rose

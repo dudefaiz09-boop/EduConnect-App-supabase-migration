@@ -512,6 +512,38 @@ export const ErrorState: React.FC<ErrorStateProps> = ({ error, resetError }) => 
   );
 };
 
+// --- SHARED STYLE EXPORTS (plain objects, spread into local StyleSheet.create) ---
+export const screenPadding = spacing.lg;
+export const contentInset = spacing.lg;
+
+export const sharedStyles = {
+  flex: { flex: 1, backgroundColor: colors.background } as const,
+  listContent: { padding: spacing.lg, paddingBottom: spacing.huge } as const,
+  statGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 } as const,
+  cardPillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 } as const,
+  syncedText: {
+    color: colors.muted,
+    fontSize: typography.fontSizes.xs,
+    fontWeight: typography.fontWeights.bold,
+  } as const,
+  cardTitle: {
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: typography.fontWeights.black,
+    marginBottom: 8,
+  } as const,
+  cardContent: {
+    color: colors.whiteSoft,
+    fontSize: 14,
+    lineHeight: 21,
+  } as const,
+  cardDate: {
+    color: colors.muted,
+    fontSize: 11,
+    marginTop: 12,
+  } as const,
+};
+
 // --- STYLES ---
 const styles = StyleSheet.create({
   shellContainer: {

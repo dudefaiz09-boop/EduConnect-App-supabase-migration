@@ -22,6 +22,7 @@ import {
   SearchInput,
   SegmentedControl,
   StatCard,
+  sharedStyles,
 } from '@educonnect/mobile-ui';
 
 type FeeRecord = {
@@ -221,7 +222,7 @@ export function AttendanceScreen() {
           onSelect={(key) => setMode(key as 'history' | 'class')}
         />
       )}
-      <View style={styles.statGrid}>
+      <View style={sharedStyles.statGrid}>
         <StatCard title="Present" value={String(present)} detail="Loaded records" tone="green" />
         <StatCard title="Late" value={String(late)} detail="Needs follow-up" tone="amber" />
         <StatCard title="Absent" value={String(absent)} detail="Not present" tone="red" />
@@ -260,9 +261,11 @@ export function AttendanceScreen() {
                   item.status === 'present' ? 'green' : item.status === 'late' ? 'amber' : 'red'
                 }
               />
-              <Text style={styles.cardTitle}>{item.date || selectedDate}</Text>
-              <Text style={styles.cardContent}>Student: {item.studentId}</Text>
-              <Text style={styles.cardDate}>Class {item.classId || selectedClass || 'N/A'}</Text>
+              <Text style={sharedStyles.cardTitle}>{item.date || selectedDate}</Text>
+              <Text style={sharedStyles.cardContent}>Student: {item.studentId}</Text>
+              <Text style={sharedStyles.cardDate}>
+                Class {item.classId || selectedClass || 'N/A'}
+              </Text>
             </Card>
           )}
         />
@@ -324,7 +327,7 @@ export function FeesScreen() {
           data={fees}
           keyExtractor={(item, index) => item.id || `${item.studentId}-${index}`}
           ListHeaderComponent={
-            <View style={styles.statGrid}>
+            <View style={sharedStyles.statGrid}>
               <StatCard
                 title="Paid"
                 value={formatCurrency(paid)}
@@ -355,9 +358,11 @@ export function FeesScreen() {
                 label={item.status || 'pending'}
                 tone={item.status === 'paid' ? 'green' : 'amber'}
               />
-              <Text style={styles.cardTitle}>{formatCurrency(item.amountDue || 0)}</Text>
-              <Text style={styles.cardContent}>Paid {formatCurrency(item.amountPaid || 0)}</Text>
-              <Text style={styles.cardDate}>
+              <Text style={sharedStyles.cardTitle}>{formatCurrency(item.amountDue || 0)}</Text>
+              <Text style={sharedStyles.cardContent}>
+                Paid {formatCurrency(item.amountPaid || 0)}
+              </Text>
+              <Text style={sharedStyles.cardDate}>
                 Due {item.dueDate || 'not set'} - Student {item.studentId}
               </Text>
             </Card>
@@ -418,7 +423,7 @@ export function LibraryScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={
-            <View style={styles.statGrid}>
+            <View style={sharedStyles.statGrid}>
               <StatCard
                 title="Catalog"
                 value={String(resourcesQuery.data?.length || 0)}
@@ -469,11 +474,11 @@ export function LibraryScreen() {
                   <Pill label={item.subject || item.type || 'resource'} />
                   {dueState && <Pill label={dueState.label} tone={dueState.tone} />}
                 </View>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                <Text style={styles.cardContent}>
+                <Text style={sharedStyles.cardTitle}>{item.title}</Text>
+                <Text style={sharedStyles.cardContent}>
                   {item.description || 'No description provided.'}
                 </Text>
-                <Text style={styles.cardDate}>
+                <Text style={sharedStyles.cardDate}>
                   Grade {item.grade || 'All'} -{' '}
                   {(item.tags || []).slice(0, 3).join(', ') || 'No tags'}
                 </Text>
@@ -529,7 +534,7 @@ export function PerformanceScreen() {
           keyExtractor={(item, index) => item.id || `${item.studentId}-${item.subject}-${index}`}
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={
-            <View style={styles.statGrid}>
+            <View style={sharedStyles.statGrid}>
               <StatCard
                 title="Average"
                 value={`${average}%`}
@@ -566,7 +571,7 @@ export function PerformanceScreen() {
                   Number(item.score) >= 80 ? 'green' : Number(item.score) >= 60 ? 'amber' : 'red'
                 }
               />
-              <Text style={styles.cardTitle}>{item.subject}</Text>
+              <Text style={sharedStyles.cardTitle}>{item.subject}</Text>
               <View style={styles.progressTrack}>
                 <View
                   style={[
@@ -575,10 +580,10 @@ export function PerformanceScreen() {
                   ]}
                 />
               </View>
-              <Text style={styles.cardContent}>
+              <Text style={sharedStyles.cardContent}>
                 {item.score}% - {item.term}
               </Text>
-              {!isStudent && <Text style={styles.cardDate}>Student {item.studentId}</Text>}
+              {!isStudent && <Text style={sharedStyles.cardDate}>Student {item.studentId}</Text>}
             </Card>
           )}
         />
@@ -696,11 +701,11 @@ export function ParentPortalScreen() {
           <Card style={styles.profileCard}>
             <Pill label="student profile" />
             <Text style={styles.heroName}>{data?.profile?.displayName || selectedStudentId}</Text>
-            <Text style={styles.cardContent}>
+            <Text style={sharedStyles.cardContent}>
               Class {data?.profile?.classId || 'N/A'} - Section {data?.profile?.section || 'N/A'}
             </Text>
           </Card>
-          <View style={styles.statGrid}>
+          <View style={sharedStyles.statGrid}>
             <StatCard
               title="Attendance"
               value={`${attendanceRate}%`}
@@ -722,25 +727,27 @@ export function ParentPortalScreen() {
             />
           </View>
           <Card>
-            <Text style={styles.cardTitle}>Recent attendance</Text>
+            <Text style={sharedStyles.cardTitle}>Recent attendance</Text>
             {(data?.attendance || []).slice(0, 5).map((item) => (
               <Text key={item.id || `${item.date}-${item.studentId}`} style={styles.rowText}>
                 {item.date}: {item.status}
               </Text>
             ))}
             {(data?.attendance || []).length === 0 && (
-              <Text style={styles.cardContent}>No attendance records are available yet.</Text>
+              <Text style={sharedStyles.cardContent}>No attendance records are available yet.</Text>
             )}
           </Card>
           <Card>
-            <Text style={styles.cardTitle}>Academic workflow</Text>
+            <Text style={sharedStyles.cardTitle}>Academic workflow</Text>
             {(data?.assignments || []).slice(0, 5).map((item) => (
               <Text key={item.id} style={styles.rowText}>
                 {item.title} - due {item.dueDate}
               </Text>
             ))}
             {(data?.assignments || []).length === 0 && (
-              <Text style={styles.cardContent}>No assignments are available for this child.</Text>
+              <Text style={sharedStyles.cardContent}>
+                No assignments are available for this child.
+              </Text>
             )}
           </Card>
         </>
@@ -762,26 +769,10 @@ export function PlaceholderApiScreen({ title, subtitle }: { title: string; subti
 }
 
 const styles = StyleSheet.create({
-  cardContent: {
-    color: colors.whiteSoft,
-    fontSize: 14,
-    lineHeight: 21,
-  },
-  cardDate: {
-    color: colors.muted,
-    fontSize: 11,
-    marginTop: 12,
-  },
   cardPillRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 8,
-  },
-  cardTitle: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: '900',
     marginBottom: 8,
   },
   flex: {
@@ -797,11 +788,11 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   profileCard: {
-    backgroundColor: '#312e81',
-    borderColor: '#4f46e5',
+    backgroundColor: colors.profileCardBg,
+    borderColor: colors.profileCardBorder,
   },
   progressFill: {
-    backgroundColor: '#4f8cff',
+    backgroundColor: colors.progressFill,
     borderRadius: 999,
     height: 10,
   },
@@ -817,11 +808,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     lineHeight: 22,
-  },
-  statGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: 2,
   },
 });

@@ -47,7 +47,7 @@ export const AssignmentsScreen = () => {
       windowSize={5}
       refreshControl={
         <RefreshControl
-          tintColor="#67e8f9"
+          tintColor={colors.ai}
           refreshing={isRefetching}
           onRefresh={() => void refetch()}
         />
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   points: {
-    color: '#8bb7ff',
+    color: colors.link,
     fontSize: 12,
     fontWeight: '900',
   },

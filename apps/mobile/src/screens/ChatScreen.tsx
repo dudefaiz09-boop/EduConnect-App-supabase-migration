@@ -21,6 +21,7 @@ import {
   ModuleHeader,
   Pill,
   SearchInput,
+  sharedStyles,
 } from '@educonnect/mobile-ui';
 
 function initials(value: string) {
@@ -188,8 +189,10 @@ export function ChatScreen() {
               <TouchableOpacity onPress={() => void startConversation(item)}>
                 <Card>
                   <Pill label={item.role || item.roles?.[0] || 'member'} />
-                  <Text style={styles.cardTitle}>{name}</Text>
-                  <Text style={styles.cardContent}>{item.email || 'No email on profile'}</Text>
+                  <Text style={sharedStyles.cardTitle}>{name}</Text>
+                  <Text style={sharedStyles.cardContent}>
+                    {item.email || 'No email on profile'}
+                  </Text>
                 </Card>
               </TouchableOpacity>
             );
@@ -203,8 +206,8 @@ export function ChatScreen() {
           <Card style={styles.chatHeader}>
             <Text style={styles.avatar}>{initials(getChatName(selected))}</Text>
             <View style={styles.chatHeaderText}>
-              <Text style={styles.cardTitle}>{getChatName(selected)}</Text>
-              <Text style={styles.cardContent}>{selected.type}</Text>
+              <Text style={sharedStyles.cardTitle}>{getChatName(selected)}</Text>
+              <Text style={sharedStyles.cardContent}>{selected.type}</Text>
             </View>
           </Card>
           {messagesQuery.isError ? (
@@ -299,11 +302,11 @@ export function ChatScreen() {
               <TouchableOpacity onPress={() => setSelected(item)}>
                 <Card>
                   <Pill label={item.type} />
-                  <Text style={styles.cardTitle}>{getChatName(item)}</Text>
-                  <Text style={styles.cardContent}>
+                  <Text style={sharedStyles.cardTitle}>{getChatName(item)}</Text>
+                  <Text style={sharedStyles.cardContent}>
                     {item.lastMessage || 'Start a conversation'}
                   </Text>
-                  <Text style={styles.cardDate}>
+                  <Text style={sharedStyles.cardDate}>
                     {formatDate(item.updatedAt || item.lastMessageAt)}
                   </Text>
                 </Card>
@@ -331,25 +334,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   backText: {
-    color: '#8bb7ff',
+    color: colors.link,
     fontSize: 13,
     fontWeight: '900',
-  },
-  cardContent: {
-    color: colors.whiteSoft,
-    fontSize: 14,
-    lineHeight: 21,
-  },
-  cardDate: {
-    color: colors.muted,
-    fontSize: 11,
-    marginTop: 12,
-  },
-  cardTitle: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: '900',
-    marginBottom: 8,
   },
   chatHeader: {
     alignItems: 'center',
