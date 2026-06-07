@@ -25,6 +25,7 @@ import {
   Pill,
   SearchInput,
   StatCard,
+  sharedStyles,
 } from '@educonnect/mobile-ui';
 
 type UserRecord = {
@@ -168,7 +169,7 @@ export function DashboardScreen({ onOpenModule }: { onOpenModule: (module: Modul
         </View>
       </View>
 
-      <View style={styles.statGrid}>
+      <View style={sharedStyles.statGrid}>
         <StatCard title="Students" value={String(students.length)} detail="Visible learners" />
         <StatCard
           title="Teachers"
@@ -218,8 +219,8 @@ export function DashboardScreen({ onOpenModule }: { onOpenModule: (module: Modul
             <Text style={styles.linkText}>View all</Text>
           </TouchableOpacity>
         </View>
-        <Text style={styles.cardTitle}>{latest?.title || 'No announcements yet'}</Text>
-        <Text style={styles.cardContent}>
+        <Text style={sharedStyles.cardTitle}>{latest?.title || 'No announcements yet'}</Text>
+        <Text style={sharedStyles.cardContent}>
           {latest?.content || 'New school updates will appear here when available.'}
         </Text>
       </Card>
@@ -290,9 +291,9 @@ export function AnnouncementsScreen() {
           renderItem={({ item }) => (
             <Card>
               <Pill label={item.visibility || 'update'} />
-              <Text style={styles.cardTitle}>{item.title}</Text>
-              <Text style={styles.cardContent}>{item.content}</Text>
-              <Text style={styles.cardDate}>{formatDate(item.createdAt)}</Text>
+              <Text style={sharedStyles.cardTitle}>{item.title}</Text>
+              <Text style={sharedStyles.cardContent}>{item.content}</Text>
+              <Text style={sharedStyles.cardDate}>{formatDate(item.createdAt)}</Text>
             </Card>
           )}
         />
@@ -379,8 +380,8 @@ export function DirectoryScreen({ type }: { type: 'student' | 'teacher' | 'all' 
           renderItem={({ item }) => (
             <Card>
               <Pill label={roleOf(item)} tone={item.status === 'inactive' ? 'red' : 'blue'} />
-              <Text style={styles.cardTitle}>{item.displayName || 'Unnamed user'}</Text>
-              <Text style={styles.cardContent}>{item.email || 'No email on profile'}</Text>
+              <Text style={sharedStyles.cardTitle}>{item.displayName || 'Unnamed user'}</Text>
+              <Text style={sharedStyles.cardContent}>{item.email || 'No email on profile'}</Text>
               <View style={styles.metaGrid}>
                 <View style={styles.metaBox}>
                   <Text style={styles.metaLabel}>Class</Text>
@@ -427,8 +428,8 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   aiInsightCard: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: colors.whiteA08,
+    borderColor: colors.whiteA14,
     borderRadius: 22,
     borderWidth: 1,
     marginTop: 18,
@@ -442,32 +443,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     textTransform: 'uppercase',
   },
-  cardContent: {
-    color: colors.whiteSoft,
-    fontSize: 14,
-    lineHeight: 21,
-  },
-  cardDate: {
-    color: colors.muted,
-    fontSize: 11,
-    marginTop: 12,
-  },
-  cardTitle: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: '900',
-    marginBottom: 8,
-  },
   featuredAnnouncement: {
-    backgroundColor: '#132142',
-    borderColor: '#2950b8',
+    backgroundColor: colors.featuredBg,
+    borderColor: colors.featuredBorder,
   },
   flex: {
     flex: 1,
   },
   heroPanel: {
-    backgroundColor: '#081225',
-    borderColor: '#2a3650',
+    backgroundColor: colors.heroBg,
+    borderColor: colors.heroBorder,
     borderRadius: 28,
     borderWidth: 1,
     marginBottom: 16,
@@ -489,7 +474,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   linkText: {
-    color: '#5ea0ff',
+    color: colors.linkHover,
     fontSize: 13,
     fontWeight: '900',
   },
@@ -551,12 +536,6 @@ const styles = StyleSheet.create({
   screenContent: {
     paddingBottom: 24,
   },
-  statGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: 2,
-  },
   syncedText: {
     color: colors.muted,
     fontSize: 11,
@@ -565,8 +544,8 @@ const styles = StyleSheet.create({
   },
   workspacePill: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderColor: 'rgba(255,255,255,0.16)',
+    backgroundColor: colors.whiteA08,
+    borderColor: colors.whiteA16,
     borderRadius: 999,
     borderWidth: 1,
     paddingHorizontal: 14,
