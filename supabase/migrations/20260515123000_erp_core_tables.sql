@@ -247,19 +247,27 @@ create policy "admin write attendance" on public.attendance for all to authentic
 using (coalesce((auth.jwt() -> 'app_metadata' ->> 'isAdmin')::boolean, false) or (auth.jwt() -> 'app_metadata' -> 'roles') ? 'teacher')
 with check (coalesce((auth.jwt() -> 'app_metadata' ->> 'isAdmin')::boolean, false) or (auth.jwt() -> 'app_metadata' -> 'roles') ? 'teacher');
 
+drop trigger if exists profiles_updated_at on public.profiles;
 create trigger profiles_updated_at before update on public.profiles
 for each row execute function public.set_updated_at();
+drop trigger if exists announcements_updated_at on public.announcements;
 create trigger announcements_updated_at before update on public.announcements
 for each row execute function public.set_updated_at();
+drop trigger if exists attendance_updated_at on public.attendance;
 create trigger attendance_updated_at before update on public.attendance
 for each row execute function public.set_updated_at();
+drop trigger if exists assignments_updated_at on public.assignments;
 create trigger assignments_updated_at before update on public.assignments
 for each row execute function public.set_updated_at();
+drop trigger if exists submissions_updated_at on public.submissions;
 create trigger submissions_updated_at before update on public.submissions
 for each row execute function public.set_updated_at();
+drop trigger if exists library_books_updated_at on public.library_books;
 create trigger library_books_updated_at before update on public.library_books
 for each row execute function public.set_updated_at();
+drop trigger if exists fees_updated_at on public.fees;
 create trigger fees_updated_at before update on public.fees
 for each row execute function public.set_updated_at();
+drop trigger if exists performance_updated_at on public.performance;
 create trigger performance_updated_at before update on public.performance
 for each row execute function public.set_updated_at();
