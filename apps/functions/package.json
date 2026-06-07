@@ -9,6 +9,7 @@
     "dev": "node --watch dist/standalone.js",
     "lint": "eslint . --ext .ts",
     "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
     "seed:supabase": "tsx scripts/seed-supabase.ts",
     "seed:demo-extras": "tsx scripts/seed-demo-extras.ts",
     "verify:demo-seed": "tsx scripts/verify-demo-seed.ts",
@@ -19,7 +20,7 @@
   },
   "dependencies": {
     "@educonnect/shared": "workspace:*",
-    "@supabase/supabase-js": "^2.87.1",
+    "@supabase/supabase-js": "^2.105.4",
     "compression": "^1.7.4",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
