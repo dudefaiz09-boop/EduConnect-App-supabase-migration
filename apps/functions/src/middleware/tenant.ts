@@ -22,6 +22,15 @@ export const tenantMiddleware = (req: Request, res: Response, next: NextFunction
 
 const tenantCache = new Map<string, { active: boolean; expiresAt: number }>();
 const TENANT_CACHE_TTL_MS = 60_000;
+const TENANT_CACHE_CLEANUP_INTERVAL_MS = 300_000;
+
+const tenantCacheCleanup = setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of tenantCache) {
+    if (entry.expiresAt <= now) tenantCache.delete(key);
+  }
+}, TENANT_CACHE_CLEANUP_INTERVAL_MS);
+tenantCacheCleanup.unref();
 
 async function tenantExistsAndActive(tenantId: string) {
   const cached = tenantCache.get(tenantId);

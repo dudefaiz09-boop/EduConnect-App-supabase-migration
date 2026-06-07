@@ -109,6 +109,18 @@ function normalizeError(err: unknown) {
         expose: Number(errorRecord.statusCode || errorRecord.status || 500) < 500,
       });
     }
+
+    if (typeof errorRecord.statusCode === 'number') {
+      const status = errorRecord.statusCode;
+      const message =
+        typeof errorRecord.message === 'string' ? errorRecord.message : 'Request Error';
+      return new AppError({
+        code: status < 500 ? 'REQUEST_ERROR' : 'INTERNAL_ERROR',
+        message,
+        statusCode: status,
+        expose: status < 500,
+      });
+    }
   }
 
   return new AppError({

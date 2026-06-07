@@ -105,7 +105,7 @@ importers:
   apps/admin-console:
     dependencies:
       '@supabase/supabase-js':
-        specifier: ^2.87.1
+        specifier: ^2.105.4
         version: 2.105.4
       lucide-react:
         specifier: ^0.546.0
@@ -145,7 +145,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/shared
       '@supabase/supabase-js':
-        specifier: ^2.87.1
+        specifier: ^2.105.4
         version: 2.105.4
       compression:
         specifier: ^1.7.4
@@ -212,7 +212,7 @@ importers:
         specifier: ^1.24.0
         version: 1.24.0(react-native@0.76.3(@babel/core@7.29.0)(@babel/preset-env@7.29.5(@babel/core@7.29.0))(@react-native-community/cli-server-api@15.0.1)(@types/react@18.3.28)(react@18.3.1))
       '@supabase/supabase-js':
-        specifier: ^2.87.1
+        specifier: ^2.105.4
         version: 2.105.4
       '@tanstack/react-query':
         specifier: ^5.100.9
@@ -324,7 +324,7 @@ importers:
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.75.0(react@19.2.6))
       '@supabase/supabase-js':
-        specifier: ^2.87.1
+        specifier: ^2.105.4
         version: 2.105.4
       '@tanstack/react-query':
         specifier: ^5.100.9
