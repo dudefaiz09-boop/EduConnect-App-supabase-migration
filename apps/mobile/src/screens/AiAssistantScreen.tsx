@@ -6,12 +6,11 @@ import {
   Platform,
   StyleSheet,
   Text,
-  TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import {
   Card,
+  Composer,
   EmptyState,
   LoadingState,
   ModuleErrorState as ErrorState,
@@ -197,28 +196,16 @@ export function AiAssistantScreen() {
           </View>
         )}
       />
-      <View style={styles.composer}>
-        <TextInput
-          editable={!loading && aiAvailable}
-          onChangeText={setQuery}
-          onSubmitEditing={sendQuery}
-          placeholder={isOffline ? 'AI is offline' : 'Ask a question...'}
-          placeholderTextColor={colors.muted}
-          returnKeyType="send"
-          style={styles.input}
-          value={query}
-        />
-        <TouchableOpacity
-          disabled={loading || !query.trim() || !aiAvailable}
-          onPress={sendQuery}
-          style={[
-            styles.sendButton,
-            (loading || !query.trim() || !aiAvailable) && styles.sendButtonDisabled,
-          ]}
-        >
-          <Text style={styles.sendButtonText}>{loading ? '...' : 'Send'}</Text>
-        </TouchableOpacity>
-      </View>
+      <Composer
+        value={query}
+        onChangeText={setQuery}
+        onSubmit={sendQuery}
+        disabled={loading || !query.trim() || !aiAvailable}
+        loading={loading}
+        editable={!loading && aiAvailable}
+        returnKeyType="send"
+        placeholder={isOffline ? 'AI is offline' : 'Ask a question...'}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -239,45 +226,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
   },
-  composer: {
-    alignItems: 'center',
-    borderTopColor: colors.line,
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
   flex: {
     backgroundColor: colors.background,
     flex: 1,
   },
-  input: {
-    backgroundColor: colors.card,
-    borderColor: colors.border,
-    borderRadius: 16,
-    borderWidth: 1,
-    color: colors.text,
-    flex: 1,
-    marginRight: 8,
-    minHeight: 44,
-    paddingHorizontal: 14,
-  },
   messageWrapper: {
     marginBottom: 12,
-  },
-  sendButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  sendButtonDisabled: {
-    opacity: 0.5,
-  },
-  sendButtonText: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '900',
   },
   userBubble: {
     alignSelf: 'flex-end',

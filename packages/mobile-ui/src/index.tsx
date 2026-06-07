@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   ActivityIndicator,
+  RefreshControl,
   View,
   Text,
   StyleSheet,
@@ -512,6 +513,65 @@ export const ErrorState: React.FC<ErrorStateProps> = ({ error, resetError }) => 
   );
 };
 
+// --- ERROR MESSAGE HELPER ---
+export function errorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
+// --- COMPOSER (Input + Send Button) ---
+interface ComposerProps {
+  value: string;
+  onChangeText: (text: string) => void;
+  onSubmit: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+  placeholder?: string;
+  editable?: boolean;
+  onSubmitEditing?: () => void;
+  returnKeyType?: 'default' | 'send' | 'done' | 'go' | 'next' | 'search';
+}
+
+export const Composer: React.FC<ComposerProps> = ({
+  value,
+  onChangeText,
+  onSubmit,
+  disabled = false,
+  loading = false,
+  placeholder = 'Type a message...',
+  editable = true,
+  returnKeyType = 'default',
+}) => (
+  <View style={styles.composer}>
+    <TextInput
+      editable={editable}
+      onChangeText={onChangeText}
+      onSubmitEditing={onSubmit}
+      placeholder={placeholder}
+      placeholderTextColor={colors.muted}
+      returnKeyType={returnKeyType}
+      style={styles.composerInput}
+      value={value}
+    />
+    <TouchableOpacity
+      disabled={disabled}
+      onPress={onSubmit}
+      style={[styles.sendButton, disabled && styles.sendButtonDisabled]}
+    >
+      <Text style={styles.sendButtonText}>{loading ? '...' : 'Send'}</Text>
+    </TouchableOpacity>
+  </View>
+);
+
+// --- APP REFRESH CONTROL ---
+interface AppRefreshControlProps {
+  refreshing: boolean;
+  onRefresh: () => void;
+}
+
+export const AppRefreshControl: React.FC<AppRefreshControlProps> = ({ refreshing, onRefresh }) => (
+  <RefreshControl tintColor={colors.ai} refreshing={refreshing} onRefresh={onRefresh} />
+);
+
 // --- SHARED STYLE EXPORTS (plain objects, spread into local StyleSheet.create) ---
 export const screenPadding = spacing.lg;
 export const contentInset = spacing.lg;
@@ -989,5 +1049,38 @@ const styles = StyleSheet.create({
   errorButtonText: {
     color: colors.text,
     fontWeight: typography.fontWeights.bold,
+  },
+  composer: {
+    alignItems: 'center',
+    borderTopColor: colors.line,
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  composerInput: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: 16,
+    borderWidth: 1,
+    color: colors.text,
+    flex: 1,
+    minHeight: 44,
+    paddingHorizontal: 14,
+  },
+  sendButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  sendButtonDisabled: {
+    opacity: 0.5,
+  },
+  sendButtonText: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: typography.fontWeights.black,
   },
 });

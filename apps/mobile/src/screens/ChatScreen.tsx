@@ -1,21 +1,16 @@
 import React, { useMemo, useState } from 'react';
-import {
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import type { ChatContact, ChatConversation, ChatMessage } from '@educonnect/shared-api';
 import { chatService } from '../lib/api-client';
 import { useAuth } from '../contexts/AuthContext';
 import { colors, formatDate } from '../theme';
 import {
+  AppRefreshControl,
   Card,
+  Composer,
   EmptyState,
+  errorMessage,
   LoadingState,
   ModuleErrorState as ErrorState,
   ModuleHeader,
@@ -33,10 +28,6 @@ function initials(value: string) {
       .map((part) => part[0]?.toUpperCase())
       .join('') || 'EC'
   );
-}
-
-function errorMessage(error: unknown, fallback: string) {
-  return error instanceof Error ? error.message : fallback;
 }
 
 export function ChatScreen() {
@@ -177,8 +168,7 @@ export function ChatScreen() {
             )
           }
           refreshControl={
-            <RefreshControl
-              tintColor={colors.ai}
+            <AppRefreshControl
               refreshing={contactsQuery.isRefetching}
               onRefresh={() => void contactsQuery.refetch()}
             />
@@ -231,8 +221,7 @@ export function ChatScreen() {
                 )
               }
               refreshControl={
-                <RefreshControl
-                  tintColor={colors.ai}
+                <AppRefreshControl
                   refreshing={messagesQuery.isRefetching}
                   onRefresh={() => void messagesQuery.refetch()}
                 />
@@ -257,22 +246,14 @@ export function ChatScreen() {
               }}
             />
           )}
-          <View style={styles.composer}>
-            <TextInput
-              value={message}
-              onChangeText={setMessage}
-              placeholder="Type your message"
-              placeholderTextColor={colors.muted}
-              style={styles.composerInput}
-            />
-            <TouchableOpacity
-              disabled={sending || !message.trim()}
-              onPress={sendMessage}
-              style={styles.sendButton}
-            >
-              <Text style={styles.sendButtonText}>{sending ? '...' : 'Send'}</Text>
-            </TouchableOpacity>
-          </View>
+          <Composer
+            value={message}
+            onChangeText={setMessage}
+            onSubmit={sendMessage}
+            disabled={sending || !message.trim()}
+            loading={sending}
+            placeholder="Type your message"
+          />
         </View>
       ) : (
         <>
@@ -292,8 +273,7 @@ export function ChatScreen() {
               )
             }
             refreshControl={
-              <RefreshControl
-                tintColor={colors.ai}
+              <AppRefreshControl
                 refreshing={conversationsQuery.isRefetching}
                 onRefresh={() => void conversationsQuery.refetch()}
               />
@@ -349,24 +329,7 @@ const styles = StyleSheet.create({
   chatPanel: {
     flex: 1,
   },
-  composer: {
-    alignItems: 'center',
-    borderTopColor: colors.line,
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    gap: 10,
-    paddingTop: 10,
-  },
-  composerInput: {
-    backgroundColor: colors.card,
-    borderColor: colors.border,
-    borderRadius: 16,
-    borderWidth: 1,
-    color: colors.text,
-    flex: 1,
-    minHeight: 48,
-    paddingHorizontal: 14,
-  },
+
   errorText: {
     color: colors.danger,
     fontSize: 13,
@@ -421,17 +384,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   newButtonText: {
-    color: colors.text,
-    fontSize: 12,
-    fontWeight: '900',
-  },
-  sendButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  sendButtonText: {
     color: colors.text,
     fontSize: 12,
     fontWeight: '900',

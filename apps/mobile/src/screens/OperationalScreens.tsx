@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { FlatList, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import type { AttendanceRecord } from '@educonnect/shared';
 import {
@@ -13,8 +13,10 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { colors, formatCurrency } from '../theme';
 import {
+  AppRefreshControl,
   Card,
   EmptyState,
+  errorMessage,
   LoadingState,
   ModuleErrorState as ErrorState,
   ModuleHeader,
@@ -116,10 +118,6 @@ type ParentSubmissionSummary = {
   assignmentId?: string;
   status?: string;
 };
-
-function errorMessage(error: unknown, fallback: string) {
-  return error instanceof Error ? error.message : fallback;
-}
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -247,8 +245,7 @@ export function AttendanceScreen() {
             />
           }
           refreshControl={
-            <RefreshControl
-              tintColor={colors.ai}
+            <AppRefreshControl
               refreshing={query.isRefetching}
               onRefresh={() => void query.refetch()}
             />
@@ -346,8 +343,7 @@ export function FeesScreen() {
             />
           }
           refreshControl={
-            <RefreshControl
-              tintColor={colors.ai}
+            <AppRefreshControl
               refreshing={query.isRefetching}
               onRefresh={() => void query.refetch()}
             />
@@ -455,8 +451,7 @@ export function LibraryScreen() {
             />
           }
           refreshControl={
-            <RefreshControl
-              tintColor={colors.ai}
+            <AppRefreshControl
               refreshing={resourcesQuery.isRefetching || historyQuery.isRefetching}
               onRefresh={() => {
                 void resourcesQuery.refetch();
@@ -557,8 +552,7 @@ export function PerformanceScreen() {
             />
           }
           refreshControl={
-            <RefreshControl
-              tintColor={colors.ai}
+            <AppRefreshControl
               refreshing={query.isRefetching}
               onRefresh={() => void query.refetch()}
             />
@@ -665,11 +659,7 @@ export function ParentPortalScreen() {
     <ScrollView
       contentContainerStyle={styles.listContent}
       refreshControl={
-        <RefreshControl
-          tintColor={colors.ai}
-          refreshing={query.isRefetching}
-          onRefresh={() => void query.refetch()}
-        />
+        <AppRefreshControl refreshing={query.isRefetching} onRefresh={() => void query.refetch()} />
       }
     >
       <ModuleHeader
