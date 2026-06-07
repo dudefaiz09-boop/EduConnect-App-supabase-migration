@@ -61,7 +61,7 @@ export function ChatScreen() {
     refetchInterval: selected ? 15000 : false,
   });
 
-  const contacts = contactsQuery.data || [];
+  const contacts = useMemo(() => contactsQuery.data ?? [], [contactsQuery.data]);
 
   const userMap = useMemo(() => {
     return new Map(contacts.map((profile) => [profile.uid || profile.id, profile]));
