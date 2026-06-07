@@ -52,7 +52,6 @@
   "devDependencies": {
     "@axe-core/playwright": "4.10.2",
     "@eslint/js": "^10.0.1",
-    "@google/genai": "^2.0.1",
     "@lhci/cli": "0.15.1",
     "@percy/cli": "1.31.3",
     "@percy/playwright": "1.1.0",

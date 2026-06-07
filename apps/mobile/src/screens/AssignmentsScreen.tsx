@@ -1,6 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl } from 'react-native';
-import { Card, EmptyState, LoadingState, ModuleErrorState, Pill } from '@educonnect/mobile-ui';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
+import {
+  AppRefreshControl,
+  Card,
+  EmptyState,
+  LoadingState,
+  ModuleErrorState,
+  Pill,
+} from '@educonnect/mobile-ui';
 import { useAssignments } from '@educonnect/shared-api';
 import { useAuth } from '../contexts/AuthContext';
 import { assignmentsService } from '../lib/api-client';
@@ -46,11 +53,7 @@ export const AssignmentsScreen = () => {
       maxToRenderPerBatch={8}
       windowSize={5}
       refreshControl={
-        <RefreshControl
-          tintColor={colors.ai}
-          refreshing={isRefetching}
-          onRefresh={() => void refetch()}
-        />
+        <AppRefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />
       }
       renderItem={({ item }) => (
         <Card>

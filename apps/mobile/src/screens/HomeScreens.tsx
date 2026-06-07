@@ -1,14 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  FlatList,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAnnouncements } from '@educonnect/shared-api';
 import { canAccessModule, type ModuleKey } from '@educonnect/shared';
 import { AssignmentsScreen } from './AssignmentsScreen';
@@ -17,6 +9,7 @@ import { announcementsService, usersService } from '../lib/api-client';
 import { colors, formatDate } from '../theme';
 import {
   ActionTile,
+  AppRefreshControl,
   Card,
   EmptyState,
   LoadingState,
@@ -150,11 +143,7 @@ export function DashboardScreen({ onOpenModule }: { onOpenModule: (module: Modul
     <ScrollView
       contentContainerStyle={styles.screenContent}
       refreshControl={
-        <RefreshControl
-          tintColor={colors.ai}
-          refreshing={isRefetching || usersLoading}
-          onRefresh={refresh}
-        />
+        <AppRefreshControl refreshing={isRefetching || usersLoading} onRefresh={refresh} />
       }
     >
       <View style={styles.heroPanel}>
@@ -282,11 +271,7 @@ export function AnnouncementsScreen() {
             ) : null
           }
           refreshControl={
-            <RefreshControl
-              tintColor={colors.ai}
-              refreshing={isRefetching}
-              onRefresh={() => void refetch()}
-            />
+            <AppRefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />
           }
           renderItem={({ item }) => (
             <Card>
@@ -371,8 +356,7 @@ export function DirectoryScreen({ type }: { type: 'student' | 'teacher' | 'all' 
             )
           }
           refreshControl={
-            <RefreshControl
-              tintColor={colors.ai}
+            <AppRefreshControl
               refreshing={usersQuery.isRefetching}
               onRefresh={() => void usersQuery.refetch()}
             />
