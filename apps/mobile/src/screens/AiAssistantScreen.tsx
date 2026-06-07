@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import {
+  Card,
   EmptyState,
   LoadingState,
   ModuleErrorState as ErrorState,
@@ -183,16 +184,16 @@ export function AiAssistantScreen() {
         }
         renderItem={({ item }) => (
           <View style={styles.messageWrapper}>
-            <View style={[styles.bubble, styles.userBubble]}>
+            <View style={styles.userBubble}>
               <Text style={styles.userText}>{item.query}</Text>
             </View>
-            <View style={[styles.bubble, styles.aiBubble]}>
+            <Card style={styles.aiBubbleCard}>
               {item.response ? (
                 <Text style={styles.aiText}>{item.response}</Text>
               ) : (
                 <ActivityIndicator color={colors.ai} />
               )}
-            </View>
+            </Card>
           </View>
         )}
       />
@@ -223,23 +224,14 @@ export function AiAssistantScreen() {
 }
 
 const styles = StyleSheet.create({
-  aiBubble: {
+  aiBubbleCard: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.card,
-    borderColor: colors.border,
-    borderWidth: 1,
     marginTop: 6,
   },
   aiText: {
     color: colors.whiteSoft,
     fontSize: 14,
     lineHeight: 20,
-  },
-  bubble: {
-    borderRadius: 18,
-    maxWidth: '84%',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
   },
   chatList: {
     flexGrow: 1,
@@ -290,6 +282,10 @@ const styles = StyleSheet.create({
   userBubble: {
     alignSelf: 'flex-end',
     backgroundColor: colors.primary,
+    borderRadius: 18,
+    maxWidth: '84%',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   userText: {
     color: colors.text,
