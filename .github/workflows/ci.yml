@@ -45,9 +45,6 @@ jobs:
         run: corepack pnpm build
       - name: Dependency audit
         run: corepack pnpm audit --audit-level high
-        continue-on-error: true
-        # TODO: Remove continue-on-error once @lhci/cli no longer pulls tmp <0.2.6.
-        # Current high: GHSA-ph9p-34f9-6g65 (tmp, path traversal) in @lhci/cli (dev-only).
       - name: Format check
         run: corepack pnpm format:check
       - name: Shared API boundary audit
