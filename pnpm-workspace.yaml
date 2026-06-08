@@ -12,3 +12,4 @@ allowBuilds:
   protobufjs: false
   re2: false
   '@firebase/util': true
+  sharp: true

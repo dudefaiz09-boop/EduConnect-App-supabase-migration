@@ -3,6 +3,6 @@ import rootConfig from '../../eslint.config.js';
 export default [
   ...rootConfig,
   {
-    ignores: ['dist/**', 'node_modules/**'],
+    ignores: ['dist/**', 'node_modules/**', 'scripts/**'],
   },
 ];
