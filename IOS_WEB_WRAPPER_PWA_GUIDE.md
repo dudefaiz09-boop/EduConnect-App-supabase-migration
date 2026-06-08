@@ -5,6 +5,7 @@
 This is a **Progressive Web App (PWA) web wrapper** for EduConnect Web, allowing iPhone and iPad users to add EduConnect to their iOS Home Screen via Safari's **Add to Home Screen** feature.
 
 The PWA provides:
+
 - **Standalone/app-like** launch (no browser address bar or tab bar)
 - **App icon** on the Home Screen (like a native app)
 - **Fast initial load** via service worker static asset caching
@@ -39,6 +40,7 @@ The PWA provides:
 ## How to Test Locally
 
 ### Prerequisites
+
 - Node.js >= 22
 - pnpm >= 11.1.0
 
@@ -68,6 +70,7 @@ pnpm --filter @educonnect/web dev
 For full PWA testing on iOS, you must deploy to a publicly accessible URL (see next section). iOS Safari requires HTTPS to register a service worker.
 
 However, you can partially test on desktop:
+
 1. In Chrome DevTools, toggle **Device Toolbar** (Ctrl+Shift+M).
 2. Select **iPhone** or **iPad** from the device list.
 3. Reload the page.
@@ -99,23 +102,27 @@ Or push to the Git branch that Vercel auto-deploys.
 ## Troubleshooting
 
 ### Add to Home Screen is missing/grayed out
+
 - Ensure you are using **Safari**, not Chrome or another browser on iOS.
 - Ensure the page loads over **HTTPS** (required for service workers and manifest). Local testing via `localhost` works, but production requires HTTPS.
 - Check that `manifest.webmanifest` is served with the correct MIME type (`application/manifest+json`). Vite/Vercel handles this automatically.
 - Verify the manifest is valid JSON (no trailing commas). Run `pnpm --filter @educonnect/web build` and check `apps/web/dist/manifest.webmanifest`.
 
 ### Icon not showing on Home Screen
+
 - Ensure `icon-192x192.png`, `icon-512x512.png`, and `apple-touch-icon.png` exist in `apps/web/public/icons/` and `apps/web/public/`.
 - Regenerate icons: `cd apps/web && node scripts/generate-pwa-icons.mjs`
 - Rebuild: `pnpm --filter @educonnect/web build`
 - Clear Safari cache on iPhone: Settings → Safari → Clear History and Website Data.
 
 ### App opens in Safari instead of standalone
+
 - Ensure the manifest has `"display": "standalone"`.
 - Ensure the `<meta name="apple-mobile-web-app-capable" content="yes">` tag is present in `index.html`.
 - Delete the Home Screen icon and re-add it.
 
 ### Blank screen after refresh
+
 - Open the page in Safari, not from Home Screen. Check for JavaScript errors.
 - Try clearing the service worker:
   1. Open the URL in Safari.
@@ -125,17 +132,21 @@ Or push to the Git branch that Vercel auto-deploys.
 - Or on-device: Settings → Safari → Clear History and Website Data → Close Safari → Re-add to Home Screen.
 
 ### Stale service worker cache
+
 The service worker is configured with `registerType: 'autoUpdate'`, which means it updates in the background and takes control on the next page load.
+
 - If you see stale content, close all Safari tabs, kill Safari from the app switcher, and relaunch.
 - The service worker precaches only static build assets (JS, CSS, HTML, fonts, images). No API data is cached.
 
 ### Login/session issues
+
 - The service worker does NOT intercept auth requests (no runtime caching for API/Supabase routes).
 - Auth is handled by Supabase Auth SDK, which uses its own session storage (localStorage in the browser).
 - If login fails in PWA mode, try opening in regular Safari first, login, then re-add to Home Screen.
 - Clearing Safari data will also clear Supabase sessions. You will need to log in again.
 
 ### Direct route 404 on Vercel
+
 - The root `vercel.json` already includes SPA catch-all rewrites: `{ "source": "/(.*)", "destination": "/index.html" }`.
 - If a route returns 404, verify the Vercel deployment includes this rewrite rule.
 - The web app's `apps/web/vercel.json` also has the same SPA catch-all for standalone deployments.
@@ -144,18 +155,18 @@ The service worker is configured with `registerType: 'autoUpdate'`, which means 
 
 ### Files Changed for PWA Support
 
-| File | Change |
-|------|--------|
-| `apps/web/package.json` | Added `vite-plugin-pwa` and `sharp` as devDependencies |
-| `apps/web/vite.config.ts` | Added `VitePWA()` plugin with manifest and static-asset-only workbox |
-| `apps/web/index.html` | Added manifest link, theme-color, Apple PWA meta tags, apple-touch-icon, PNG favicon |
-| `apps/web/src/App.tsx` | Added `PwaInstallBanner` component |
-| `apps/web/src/components/PwaInstallBanner.tsx` | **New** — iOS/Android install helper banner |
-| `apps/web/scripts/generate-pwa-icons.mjs` | **New** — Icon generation script using sharp |
-| `apps/web/public/icons/icon-192x192.png` | **New** — 192x192 PWA icon |
-| `apps/web/public/icons/icon-512x512.png` | **New** — 512x512 PWA icon |
-| `apps/web/public/apple-touch-icon.png` | **New** — 180x180 Apple touch icon |
-| `apps/web/public/favicon.png` | **New** — 48x48 PNG favicon fallback |
+| File                                           | Change                                                                               |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `apps/web/package.json`                        | Added `vite-plugin-pwa` and `sharp` as devDependencies                               |
+| `apps/web/vite.config.ts`                      | Added `VitePWA()` plugin with manifest and static-asset-only workbox                 |
+| `apps/web/index.html`                          | Added manifest link, theme-color, Apple PWA meta tags, apple-touch-icon, PNG favicon |
+| `apps/web/src/App.tsx`                         | Added `PwaInstallBanner` component                                                   |
+| `apps/web/src/components/PwaInstallBanner.tsx` | **New** — iOS/Android install helper banner                                          |
+| `apps/web/scripts/generate-pwa-icons.mjs`      | **New** — Icon generation script using sharp                                         |
+| `apps/web/public/icons/icon-192x192.png`       | **New** — 192x192 PWA icon                                                           |
+| `apps/web/public/icons/icon-512x512.png`       | **New** — 512x512 PWA icon                                                           |
+| `apps/web/public/apple-touch-icon.png`         | **New** — 180x180 Apple touch icon                                                   |
+| `apps/web/public/favicon.png`                  | **New** — 48x48 PNG favicon fallback                                                 |
 
 ### Service Worker Caching Strategy
 
@@ -181,13 +192,13 @@ The following Android/publishing files remain **unchanged**:
 
 ### Limitations of iOS PWA Compared to Native App
 
-| Feature | iOS PWA | Native App |
-|---------|---------|------------|
-| Push notifications | Not supported on iOS PWAs | Supported |
-| Camera / file access | Limited Web APIs only | Full native access |
-| Background sync | Not available | Available |
-| Cache storage | ~50MB limit | Device storage |
-| App Store presence | None | Available |
-| Installation friction | User must manually Add to Home Screen | One-tap from App Store |
-| Updates | Auto-updates via service worker on next launch | App Store update flow |
-| Session persistence | Safari WebKit (may be cleared) | Full device storage |
+| Feature               | iOS PWA                                        | Native App             |
+| --------------------- | ---------------------------------------------- | ---------------------- |
+| Push notifications    | Not supported on iOS PWAs                      | Supported              |
+| Camera / file access  | Limited Web APIs only                          | Full native access     |
+| Background sync       | Not available                                  | Available              |
+| Cache storage         | ~50MB limit                                    | Device storage         |
+| App Store presence    | None                                           | Available              |
+| Installation friction | User must manually Add to Home Screen          | One-tap from App Store |
+| Updates               | Auto-updates via service worker on next launch | App Store update flow  |
+| Session persistence   | Safari WebKit (may be cleared)                 | Full device storage    |

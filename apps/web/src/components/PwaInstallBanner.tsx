@@ -7,14 +7,19 @@ const STORAGE_KEY = 'educonnect-pwa-banner-dismissed';
 
 function getOS() {
   const ua = navigator.userAgent;
-  const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isIOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   if (isIOS) return 'ios';
   if (/Android/.test(ua)) return 'android';
   return 'other';
 }
 
 function isStandalone() {
-  return window.matchMedia('(display-mode: standalone)').matches || (window.navigator as { standalone?: boolean }).standalone === true;
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as { standalone?: boolean }).standalone === true
+  );
 }
 
 function isMobile() {
@@ -64,9 +69,7 @@ export function PwaInstallBanner() {
               <Smartphone size={20} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-slate-900 dark:text-white">
-                Install EduConnect
-              </p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">Install EduConnect</p>
               <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                 {isIOS
                   ? 'Tap Share, then Add to Home Screen for the best experience.'
