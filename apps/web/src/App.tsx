@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { PwaInstallBanner } from './components/PwaInstallBanner';
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
@@ -54,6 +55,7 @@ export default function App() {
       <AuthProvider>
         <Router>
           <AppContent />
+          <PwaInstallBanner />
         </Router>
       </AuthProvider>
     </ErrorBoundary>
