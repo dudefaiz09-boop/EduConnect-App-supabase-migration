@@ -1,5 +1,14 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import type { AttendanceRecord } from '@educonnect/shared';
 import {
@@ -181,10 +190,16 @@ function useApiData<T>(key: unknown[], loader: () => Promise<T>, enabled = true)
 }
 
 // ─── Attendance status config (mirrors web ATTENDANCE_STATUS_UI) ─────────────
-const ATTENDANCE_STATUS: { id: 'present' | 'absent' | 'late'; label: string; color: string; bg: string; border: string }[] = [
+const ATTENDANCE_STATUS: {
+  id: 'present' | 'absent' | 'late';
+  label: string;
+  color: string;
+  bg: string;
+  border: string;
+}[] = [
   { id: 'present', label: 'Present', color: '#10b981', bg: '#064e3b', border: '#10b981' },
-  { id: 'absent',  label: 'Absent',  color: '#f87171', bg: '#2a1218', border: '#f87171' },
-  { id: 'late',    label: 'Late',    color: '#fbbf24', bg: '#2a210f', border: '#fbbf24' },
+  { id: 'absent', label: 'Absent', color: '#f87171', bg: '#2a1218', border: '#f87171' },
+  { id: 'late', label: 'Late', color: '#fbbf24', bg: '#2a210f', border: '#fbbf24' },
 ];
 
 type AttendanceTab = 'mark' | 'history' | 'reports';
@@ -210,7 +225,7 @@ export function AttendanceScreen() {
   const tabOptions = useMemo(() => {
     if (canManageAttendance) {
       return [
-        { key: 'mark',    label: 'Mark' },
+        { key: 'mark', label: 'Mark' },
         { key: 'history', label: 'History' },
         { key: 'reports', label: 'Reports' },
       ];
@@ -256,7 +271,10 @@ export function AttendanceScreen() {
   // Reports (class-level summary)
   const reportsQuery = useApiData<{ date: string; attendanceRate: number }[]>(
     ['mobile-attendance-report', selectedClass],
-    () => attendanceService.report(selectedClass) as Promise<{ date: string; attendanceRate: number }[]>,
+    () =>
+      attendanceService.report(selectedClass) as Promise<
+        { date: string; attendanceRate: number }[]
+      >,
     canManageAttendance && Boolean(selectedClass) && tab === 'reports'
   );
 
@@ -267,13 +285,14 @@ export function AttendanceScreen() {
     const q = search.toLowerCase();
     return students.filter(
       (s) =>
-        (s.displayName || '').toLowerCase().includes(q) ||
-        (s.email || '').toLowerCase().includes(q)
+        (s.displayName || '').toLowerCase().includes(q) || (s.email || '').toLowerCase().includes(q)
     );
   }, [students, search]);
 
   const markSummary = useMemo(() => {
-    let present = 0, absent = 0, late = 0;
+    let present = 0,
+      absent = 0,
+      late = 0;
     students.forEach((s) => {
       const status = attendanceMarkings[s.uid] || 'absent';
       if (status === 'present') present++;
@@ -287,8 +306,8 @@ export function AttendanceScreen() {
     const records = historyQuery.data || [];
     return {
       present: records.filter((r) => r.status === 'present').length,
-      late:    records.filter((r) => r.status === 'late').length,
-      absent:  records.filter((r) => r.status === 'absent').length,
+      late: records.filter((r) => r.status === 'late').length,
+      absent: records.filter((r) => r.status === 'absent').length,
     };
   }, [historyQuery.data]);
 
@@ -301,7 +320,9 @@ export function AttendanceScreen() {
 
   const markAllPresent = useCallback(() => {
     const next: Record<string, 'present' | 'absent' | 'late'> = {};
-    students.forEach((s) => { next[s.uid] = attendanceMarkings[s.uid] || 'present'; });
+    students.forEach((s) => {
+      next[s.uid] = attendanceMarkings[s.uid] || 'present';
+    });
     setMarkings((prev) => ({ ...prev, ...next }));
   }, [students, attendanceMarkings]);
 
@@ -359,9 +380,24 @@ export function AttendanceScreen() {
         >
           {/* Stat summary row */}
           <View style={sharedStyles.statGrid}>
-            <StatCard title="Present" value={String(markSummary.present)} detail="Marked" tone="green" />
-            <StatCard title="Late"    value={String(markSummary.late)}    detail="Follow-up" tone="amber" />
-            <StatCard title="Absent"  value={String(markSummary.absent)}  detail="Unmarked" tone="red" />
+            <StatCard
+              title="Present"
+              value={String(markSummary.present)}
+              detail="Marked"
+              tone="green"
+            />
+            <StatCard
+              title="Late"
+              value={String(markSummary.late)}
+              detail="Follow-up"
+              tone="amber"
+            />
+            <StatCard
+              title="Absent"
+              value={String(markSummary.absent)}
+              detail="Unmarked"
+              tone="red"
+            />
           </View>
 
           {/* Filters row: class selector + date */}
@@ -429,7 +465,7 @@ export function AttendanceScreen() {
               <View style={attStyles.listHeaderRow}>
                 <Text style={attStyles.listHeaderText}>
                   Mark Attendance
-                  <Text style={attStyles.countBadge}>  {filteredStudents.length} students</Text>
+                  <Text style={attStyles.countBadge}> {filteredStudents.length} students</Text>
                 </Text>
                 <TouchableOpacity onPress={markAllPresent} style={attStyles.markAllBtn}>
                   <Text style={attStyles.markAllText}>Mark All Present</Text>
@@ -446,12 +482,8 @@ export function AttendanceScreen() {
                   </View>
                   {/* Name + email */}
                   <View style={attStyles.studentInfo}>
-                    <Text style={attStyles.studentName}>
-                      {s.displayName || 'Unnamed Student'}
-                    </Text>
-                    {Boolean(s.email) && (
-                      <Text style={attStyles.studentEmail}>{s.email}</Text>
-                    )}
+                    <Text style={attStyles.studentName}>{s.displayName || 'Unnamed Student'}</Text>
+                    {Boolean(s.email) && <Text style={attStyles.studentEmail}>{s.email}</Text>}
                   </View>
                   {/* Status toggles */}
                   <View style={attStyles.statusRow}>
@@ -470,10 +502,7 @@ export function AttendanceScreen() {
                           ]}
                         >
                           <Text
-                            style={[
-                              attStyles.statusBtnText,
-                              isSelected && { color: opt.color },
-                            ]}
+                            style={[attStyles.statusBtnText, isSelected && { color: opt.color }]}
                           >
                             {opt.label}
                           </Text>
@@ -521,9 +550,24 @@ export function AttendanceScreen() {
         <>
           {/* Summary stats */}
           <View style={sharedStyles.statGrid}>
-            <StatCard title="Present" value={String(historySummary.present)} detail="All time" tone="green" />
-            <StatCard title="Late"    value={String(historySummary.late)}    detail="All time" tone="amber" />
-            <StatCard title="Absent"  value={String(historySummary.absent)}  detail="All time" tone="red" />
+            <StatCard
+              title="Present"
+              value={String(historySummary.present)}
+              detail="All time"
+              tone="green"
+            />
+            <StatCard
+              title="Late"
+              value={String(historySummary.late)}
+              detail="All time"
+              tone="amber"
+            />
+            <StatCard
+              title="Absent"
+              value={String(historySummary.absent)}
+              detail="All time"
+              tone="red"
+            />
           </View>
           {historyQuery.isLoading ? (
             <LoadingState title="Loading history…" />
@@ -535,7 +579,9 @@ export function AttendanceScreen() {
           ) : (
             <FlatList
               data={historyQuery.data || []}
-              keyExtractor={(item, index) => item.id || `hist-${item.studentId}-${item.date}-${index}`}
+              keyExtractor={(item, index) =>
+                item.id || `hist-${item.studentId}-${item.date}-${index}`
+              }
               contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
               ListEmptyComponent={
@@ -565,7 +611,10 @@ export function AttendanceScreen() {
                       <View
                         style={[
                           attStyles.statusPill,
-                          statusCfg && { backgroundColor: statusCfg.bg, borderColor: statusCfg.color },
+                          statusCfg && {
+                            backgroundColor: statusCfg.bg,
+                            borderColor: statusCfg.color,
+                          },
                         ]}
                       >
                         <Text
@@ -634,14 +683,20 @@ export function AttendanceScreen() {
                 <Text style={attStyles.reportSummaryLabel}>Overall Average</Text>
                 {(() => {
                   const data = reportsQuery.data || [];
-                  const avg = data.length > 0
-                    ? Math.round((data.reduce((sum, r) => sum + (r.attendanceRate || 0), 0) / data.length) * 100)
-                    : 0;
+                  const avg =
+                    data.length > 0
+                      ? Math.round(
+                          (data.reduce((sum, r) => sum + (r.attendanceRate || 0), 0) /
+                            data.length) *
+                            100
+                        )
+                      : 0;
                   return (
                     <>
                       <Text style={attStyles.reportSummaryValue}>{avg}%</Text>
                       <Text style={attStyles.reportSummarySubtext}>
-                        Based on {data.length} day{data.length !== 1 ? 's' : ''} of records for Class {selectedClass}
+                        Based on {data.length} day{data.length !== 1 ? 's' : ''} of records for
+                        Class {selectedClass}
                       </Text>
                     </>
                   );

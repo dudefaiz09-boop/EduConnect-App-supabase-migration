@@ -721,14 +721,18 @@ const AppContent = () => {
         <View style={styles.brandBlock}>
           <Text style={styles.brandTitle}>EduConnect</Text>
           <Text style={styles.brandSubtitle}>
-            {schoolId ? schoolId.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) : 'EduConnect'}
+            {schoolId
+              ? schoolId.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+              : 'EduConnect'}
           </Text>
         </View>
         <View style={styles.topBarActions}>
           <NotificationBell unreadCount={0} onPress={() => setNotificationsOpen(true)} />
           <View style={styles.userPill}>
             <View style={styles.userTextBlock}>
-              <Text style={styles.userName} numberOfLines={1}>{user.displayName || user.email}</Text>
+              <Text style={styles.userName} numberOfLines={1}>
+                {user.displayName || user.email}
+              </Text>
               <RoleBadge role={role} label={ROLE_LABELS[role] || role} />
             </View>
             <TouchableOpacity

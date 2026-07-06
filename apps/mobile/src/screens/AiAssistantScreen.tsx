@@ -50,7 +50,7 @@ const modes = [
   { key: 'report', label: 'Report' },
   { key: 'announcement', label: 'Draft' },
 ] as const;
-type AiMode = typeof modes[number]['key'];
+type AiMode = (typeof modes)[number]['key'];
 
 const rolePrompts = {
   admin: 'Summarize fee collection risks and recommend next actions.',
@@ -84,7 +84,7 @@ export function AiAssistantScreen() {
   const [logs, setLogs] = useState<ChatLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [mode, setMode] = useState<AiMode>('chat');
   const [selectedModules, setSelectedModules] = useState<string[]>([
     'fees',
@@ -115,9 +115,7 @@ export function AiAssistantScreen() {
 
   const toggleModule = useCallback((moduleKey: string) => {
     setSelectedModules((prev) =>
-      prev.includes(moduleKey)
-        ? prev.filter((m) => m !== moduleKey)
-        : [...prev, moduleKey]
+      prev.includes(moduleKey) ? prev.filter((m) => m !== moduleKey) : [...prev, moduleKey]
     );
   }, []);
 
@@ -148,48 +146,51 @@ export function AiAssistantScreen() {
   const aiEnabled = Boolean(status?.enabled && hasAssignedAiModule);
   const aiAvailable = aiEnabled && !isOffline;
 
-  const sendQuery = useCallback(async (retryQuery?: string) => {
-    const trimmed = (retryQuery || query).trim();
-    if (!trimmed || loading || !aiAvailable) return;
+  const sendQuery = useCallback(
+    async (retryQuery?: string) => {
+      const trimmed = (retryQuery || query).trim();
+      if (!trimmed || loading || !aiAvailable) return;
 
-    const logId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    setLogs((previous) => [...previous, { id: logId, query: trimmed, response: '' }]);
-    setQuery('');
-    setLoading(true);
-    setError(null);
+      const logId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      setLogs((previous) => [...previous, { id: logId, query: trimmed, response: '' }]);
+      setQuery('');
+      setLoading(true);
+      setError(null);
 
-    try {
-      let data: AiResponse;
       try {
-        data = await apiClient.request<AiResponse>('/api/ai/context-query', {
-          method: 'POST',
-          body: JSON.stringify({
-            query: trimmed,
-            mode,
-            modules: selectedModules,
-          }),
-        });
-      } catch {
-        data = await apiClient.request<AiResponse>('/api/ai/query', {
-          method: 'POST',
-          body: JSON.stringify({ query: trimmed, mode }),
-        });
-      }
+        let data: AiResponse;
+        try {
+          data = await apiClient.request<AiResponse>('/api/ai/context-query', {
+            method: 'POST',
+            body: JSON.stringify({
+              query: trimmed,
+              mode,
+              modules: selectedModules,
+            }),
+          });
+        } catch {
+          data = await apiClient.request<AiResponse>('/api/ai/query', {
+            method: 'POST',
+            body: JSON.stringify({ query: trimmed, mode }),
+          });
+        }
 
-      setLogs((previous) =>
-        previous.map((log) =>
-          log.id === logId
-            ? { ...log, id: data.id || logId, response: getAiResponseText(data) }
-            : log
-        )
-      );
-    } catch (err: unknown) {
-      setLogs((previous) => previous.filter((log) => log.id !== logId));
-      setError((err as Error).message || 'Failed to get AI response.');
-    } finally {
-      setLoading(false);
-    }
-  }, [aiAvailable, loading, query, mode, selectedModules]);
+        setLogs((previous) =>
+          previous.map((log) =>
+            log.id === logId
+              ? { ...log, id: data.id || logId, response: getAiResponseText(data) }
+              : log
+          )
+        );
+      } catch (err: unknown) {
+        setLogs((previous) => previous.filter((log) => log.id !== logId));
+        setError((err as Error).message || 'Failed to get AI response.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [aiAvailable, loading, query, mode, selectedModules]
+  );
 
   if (!statusLoaded) {
     return (
@@ -241,7 +242,11 @@ export function AiAssistantScreen() {
 
       <View style={styles.chipsContainer}>
         <Text style={styles.chipsLabel}>Context Modules:</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsScroll}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipsScroll}
+        >
           {contextModules.map((m) => (
             <ModeChip
               key={m}

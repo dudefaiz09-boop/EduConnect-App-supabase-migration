@@ -12,7 +12,14 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { colors, spacing, radii, typography, glowShadows, gradients } from '@educonnect/design-tokens';
+import {
+  colors,
+  spacing,
+  radii,
+  typography,
+  glowShadows,
+  gradients,
+} from '@educonnect/design-tokens';
 
 export type ModuleAction = {
   label: string;
@@ -224,7 +231,12 @@ interface RoleBadgeProps {
 export const RoleBadge: React.FC<RoleBadgeProps> = ({ role, label }) => {
   const roleColor = colors.roles[role as keyof typeof colors.roles] || colors.primary;
   return (
-    <View style={[styles.roleBadgeContainer, { backgroundColor: roleColor + '20', borderColor: roleColor }]}>
+    <View
+      style={[
+        styles.roleBadgeContainer,
+        { backgroundColor: roleColor + '20', borderColor: roleColor },
+      ]}
+    >
       <Text style={[styles.roleBadgeText, { color: roleColor }]}>{label}</Text>
     </View>
   );
@@ -241,14 +253,15 @@ interface ModeChipProps {
 export const ModeChip: React.FC<ModeChipProps> = ({ label, selected, onPress, style }) => (
   <TouchableOpacity
     onPress={onPress}
-    style={[
-      styles.modeChip,
-      selected ? styles.modeChipSelected : styles.modeChipUnselected,
-      style,
-    ]}
+    style={[styles.modeChip, selected ? styles.modeChipSelected : styles.modeChipUnselected, style]}
     activeOpacity={0.7}
   >
-    <Text style={[styles.modeChipText, selected ? styles.modeChipTextSelected : styles.modeChipTextUnselected]}>
+    <Text
+      style={[
+        styles.modeChipText,
+        selected ? styles.modeChipTextSelected : styles.modeChipTextUnselected,
+      ]}
+    >
       {label}
     </Text>
   </TouchableOpacity>
@@ -263,7 +276,13 @@ interface HeroBannerProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export const HeroBanner: React.FC<HeroBannerProps> = ({ title, subtitle, eyebrow, children, style }) => (
+export const HeroBanner: React.FC<HeroBannerProps> = ({
+  title,
+  subtitle,
+  eyebrow,
+  children,
+  style,
+}) => (
   <View style={[styles.heroBanner, style]}>
     {eyebrow ? <View style={styles.heroEyebrow}>{eyebrow}</View> : null}
     <Text style={styles.heroTitle}>{title}</Text>
@@ -279,7 +298,12 @@ interface NotificationBellProps {
 }
 
 export const NotificationBell: React.FC<NotificationBellProps> = ({ unreadCount, onPress }) => (
-  <TouchableOpacity onPress={onPress} style={styles.bellButton} activeOpacity={0.7} accessibilityLabel={`Notifications, ${unreadCount} unread`}>
+  <TouchableOpacity
+    onPress={onPress}
+    style={styles.bellButton}
+    activeOpacity={0.7}
+    accessibilityLabel={`Notifications, ${unreadCount} unread`}
+  >
     <Text style={styles.bellIcon}>🔔</Text>
     {unreadCount > 0 ? (
       <View style={styles.bellBadge}>
