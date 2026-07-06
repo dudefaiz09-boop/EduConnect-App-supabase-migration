@@ -1,4 +1,4 @@
-import { isLocalhostUrl, validateMobileConfig } from './env';
+import { isLocalhostUrl, rewriteLocalhostForMobile, validateMobileConfig } from './env';
 
 describe('mobile env validation', () => {
   it('lists the required public mobile variables when missing', () => {
@@ -29,5 +29,25 @@ describe('mobile env validation', () => {
     });
 
     expect(issues.some((issue) => issue.name === 'API_BASE_URL')).toBe(true);
+  });
+
+  it('allows local Supabase and API endpoints for development builds', () => {
+    const issues = validateMobileConfig({
+      API_BASE_URL: 'http://10.0.2.2:3000/api',
+      IS_PRODUCTION: false,
+      SUPABASE_ANON_KEY: 'anon-key',
+      SUPABASE_URL: 'http://10.0.2.2:54321',
+    });
+
+    expect(issues).toEqual([]);
+  });
+
+  it('rewrites localhost URLs to the mobile emulator host', () => {
+    expect(rewriteLocalhostForMobile('http://localhost:54321', '10.0.2.2')).toBe(
+      'http://10.0.2.2:54321'
+    );
+    expect(rewriteLocalhostForMobile('http://127.0.0.1:3000/api', '192.168.1.5')).toBe(
+      'http://192.168.1.5:3000/api'
+    );
   });
 });

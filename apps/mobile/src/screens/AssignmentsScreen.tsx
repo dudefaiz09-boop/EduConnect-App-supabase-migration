@@ -28,12 +28,13 @@ type MobileAssignment = Awaited<ReturnType<typeof assignmentsService.getAssignme
 type MobileSubmission = Awaited<ReturnType<typeof assignmentsService.getMyHistory>>[number];
 
 export const AssignmentsScreen = () => {
-  const { schoolId, user, classId, classIds, isStudent, isParent, isTeacher, isAdmin } = useAuth();
+  const { user, classId, classIds, isStudent, isParent, isTeacher, isAdmin } = useAuth();
   const uid = user?.uid;
 
   const [selectedClass, setSelectedClass] = useState<string | null>(
     classId || (classIds.length > 0 ? classIds[0] : null)
   );
+  const activeClass = selectedClass || classId || (classIds.length > 0 ? classIds[0] : null);
 
   const [selectedAssignment, setSelectedAssignment] = useState<MobileAssignment | null>(null);
   const [mySubmissions, setMySubmissions] = useState<Record<string, MobileSubmission>>({});
@@ -57,7 +58,7 @@ export const AssignmentsScreen = () => {
     isLoading,
     refetch,
     isRefetching,
-  } = useAssignments(assignmentsService, selectedClass || schoolId);
+  } = useAssignments(assignmentsService, activeClass);
 
   const classOptions = useMemo(() => {
     return classIds.map((id) => ({ key: id, label: id.replace(/-/g, ' ').toUpperCase() }));
@@ -143,6 +144,17 @@ export const AssignmentsScreen = () => {
       setIsGrading(false);
     }
   };
+
+  if (!activeClass) {
+    return (
+      <View style={styles.centered}>
+        <EmptyState
+          title="Class context required"
+          body="Assignments will load after your school profile includes a class assignment."
+        />
+      </View>
+    );
+  }
 
   if (isLoading && !isRefetching) {
     return (
@@ -341,7 +353,7 @@ export const AssignmentsScreen = () => {
           <Text style={styles.selectorLabel}>Class:</Text>
           <SegmentedControl
             options={classOptions}
-            selectedKey={selectedClass || ''}
+            selectedKey={activeClass || ''}
             onSelect={(key) => setSelectedClass(key)}
             scrollable
           />

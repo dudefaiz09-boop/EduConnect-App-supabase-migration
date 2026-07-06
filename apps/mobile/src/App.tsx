@@ -12,8 +12,8 @@ import {
   View,
 } from 'react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { canAccessModule, type ModuleKey, ROLE_LABELS } from '@educonnect/shared';
-import { RoleBadge, NotificationBell } from '@educonnect/mobile-ui';
+import { canAccessModule, type ModuleKey } from '@educonnect/shared';
+import { NotificationBell } from '@educonnect/mobile-ui';
 import { mobileConfigIssues } from './config/env';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useNetworkStatus } from './hooks/useNetworkStatus';
@@ -452,13 +452,12 @@ const MoreScreen = ({
                 onPress={() => onOpenModule(item.key)}
                 style={styles.moduleRow}
               >
-                <View style={styles.moduleIcon}>
-                  <Text style={styles.moduleIconText}>{item.shortLabel.slice(0, 1)}</Text>
-                </View>
+                <View style={styles.moduleLineIcon} />
                 <View style={styles.moduleRowText}>
                   <Text style={styles.moduleTitle}>{item.label}</Text>
                   <Text style={styles.moduleDescription}>{item.description}</Text>
                 </View>
+                <Text style={styles.chevronText}>{'>'}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -466,24 +465,22 @@ const MoreScreen = ({
       <View style={styles.moduleGroup}>
         <Text style={styles.groupLabel}>Account</Text>
         <TouchableOpacity onPress={onOpenProfile} style={styles.moduleRow}>
-          <View style={styles.moduleIcon}>
-            <Text style={styles.moduleIconText}>P</Text>
-          </View>
+          <View style={styles.moduleLineIcon} />
           <View style={styles.moduleRowText}>
             <Text style={styles.moduleTitle}>Profile</Text>
             <Text style={styles.moduleDescription}>Your role, school, and contact details.</Text>
           </View>
+          <Text style={styles.chevronText}>{'>'}</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={onOpenSettings} style={styles.moduleRow}>
-          <View style={styles.moduleIcon}>
-            <Text style={styles.moduleIconText}>S</Text>
-          </View>
+          <View style={styles.moduleLineIcon} />
           <View style={styles.moduleRowText}>
             <Text style={styles.moduleTitle}>Settings</Text>
             <Text style={styles.moduleDescription}>
               Theme preference and app build information.
             </Text>
           </View>
+          <Text style={styles.chevronText}>{'>'}</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={onSignOut} disabled={signingOut} style={styles.moduleRow}>
           <View style={[styles.moduleIcon, styles.signOutIcon]}>
@@ -521,7 +518,7 @@ const ProfileScreen = () => {
           </View>
           <View style={styles.metaBox}>
             <Text style={styles.metaLabel}>School</Text>
-            <Text style={styles.metaValue}>{schoolId || 'Not selected'}</Text>
+            <Text style={styles.metaValue}>{schoolId || 'Profile sync pending'}</Text>
           </View>
         </View>
         <View style={styles.metaGrid}>
@@ -575,6 +572,37 @@ const SettingsScreen = () => (
       </View>
     </View>
   </ScrollView>
+);
+
+const ProfileRecoveryScreen = ({
+  message,
+  onSignOut,
+  signingOut,
+}: {
+  message: string | null;
+  onSignOut: () => void;
+  signingOut: boolean;
+}) => (
+  <SafeAreaView style={styles.container}>
+    <View style={styles.centered}>
+      <View style={styles.recoveryIcon}>
+        <Text style={styles.recoveryIconText}>!</Text>
+      </View>
+      <Text style={styles.configTitle}>Profile Sync Required</Text>
+      <Text style={styles.configBody}>
+        EduConnect could not verify your role and school context. Sign in again after the school
+        profile metadata is repaired.
+      </Text>
+      {message ? <Text style={styles.recoveryDetail}>{message}</Text> : null}
+      <TouchableOpacity
+        disabled={signingOut}
+        onPress={onSignOut}
+        style={[styles.button, signingOut && styles.disabledButton]}
+      >
+        <Text style={styles.buttonText}>{signingOut ? 'Signing out...' : 'Back to sign in'}</Text>
+      </TouchableOpacity>
+    </View>
+  </SafeAreaView>
 );
 
 const ModuleContent = ({
@@ -642,7 +670,8 @@ const ModuleContent = ({
 };
 
 const AppContent = () => {
-  const { user, loading, logout, role, schoolId, assignedModules } = useAuth();
+  const { user, loading, logout, role, profileReady, profileError, schoolId, assignedModules } =
+    useAuth();
   const { isOffline, lastCheckedAt } = useNetworkStatus();
   const [activeModule, setActiveModule] = useState<ActiveRouteKey>('dashboard');
   const [authMode, setAuthMode] = useState<AuthMode>('login');
@@ -697,14 +726,6 @@ const AppContent = () => {
 
   if (!user) return <AuthScreen mode={authMode} onModeChange={setAuthMode} />;
 
-  const primaryTabs = primaryTabOrder
-    .map((key) => modulesForUser.find((item) => item.key === key))
-    .filter((item): item is ModuleDefinition => Boolean(item));
-  const bottomTabs: Array<ModuleDefinition | { key: 'more'; shortLabel: string; label: string }> = [
-    ...primaryTabs,
-    { key: 'more', shortLabel: 'More', label: 'More' },
-  ];
-
   const handleLogout = async () => {
     setSigningOut(true);
     try {
@@ -713,6 +734,26 @@ const AppContent = () => {
       setSigningOut(false);
     }
   };
+
+  if (!profileReady) {
+    return (
+      <ProfileRecoveryScreen
+        message={profileError}
+        onSignOut={handleLogout}
+        signingOut={signingOut}
+      />
+    );
+  }
+
+  const primaryTabs = primaryTabOrder
+    .map((key) => modulesForUser.find((item) => item.key === key))
+    .filter((item): item is ModuleDefinition => Boolean(item));
+  const bottomTabs: Array<ModuleDefinition | { key: 'more'; shortLabel: string; label: string }> = [
+    ...primaryTabs,
+    { key: 'more', shortLabel: 'More', label: 'More' },
+  ];
+
+  const avatarLabel = (user.displayName || user.email || 'EC').slice(0, 2).toUpperCase();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -728,21 +769,9 @@ const AppContent = () => {
         </View>
         <View style={styles.topBarActions}>
           <NotificationBell unreadCount={0} onPress={() => setNotificationsOpen(true)} />
-          <View style={styles.userPill}>
-            <View style={styles.userTextBlock}>
-              <Text style={styles.userName} numberOfLines={1}>
-                {user.displayName || user.email}
-              </Text>
-              <RoleBadge role={role} label={ROLE_LABELS[role] || role} />
-            </View>
-            <TouchableOpacity
-              disabled={signingOut}
-              onPress={handleLogout}
-              style={styles.logoutButton}
-            >
-              <Text style={styles.logoutText}>{signingOut ? '...' : 'Sign out'}</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity onPress={() => setActiveModule('profile')} style={styles.avatarButton}>
+            <Text style={styles.avatarButtonText}>{avatarLabel}</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -801,6 +830,21 @@ const App = () => (
 const styles = StyleSheet.create({
   activeBottomTab: { backgroundColor: colors.primary },
   activeBottomTabText: { color: colors.text },
+  avatarButton: {
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: 999,
+    borderWidth: 1,
+    height: 38,
+    justifyContent: 'center',
+    width: 38,
+  },
+  avatarButtonText: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: '800',
+  },
   authLinks: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -809,23 +853,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 18,
   },
-  authLinkText: { color: '#8bb7ff', fontSize: 13, fontWeight: '900' },
+  authLinkText: { color: colors.link, fontSize: 13, fontWeight: '900' },
   bottomTab: {
     alignItems: 'center',
     backgroundColor: colors.card,
     borderColor: colors.border,
-    borderRadius: 14,
+    borderRadius: 10,
     borderWidth: 1,
     justifyContent: 'center',
     marginRight: 8,
-    minHeight: 46,
+    minHeight: 42,
     minWidth: 82,
     paddingHorizontal: 12,
   },
   bottomTabList: { paddingHorizontal: 14 },
   bottomTabText: { color: colors.muted, fontSize: 12, fontWeight: '900' },
   bottomTabs: {
-    backgroundColor: '#07101f',
+    backgroundColor: colors.background,
     borderTopColor: colors.line,
     borderTopWidth: 1,
     paddingVertical: 10,
@@ -834,15 +878,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'center',
     backgroundColor: colors.primarySoft,
-    borderColor: '#29418a',
-    borderRadius: 999,
+    borderColor: colors.border,
+    borderRadius: 8,
     borderWidth: 1,
     marginBottom: 16,
     paddingHorizontal: 14,
     paddingVertical: 7,
   },
   brandBadgeText: {
-    color: colors.ai,
+    color: colors.link,
     fontSize: 11,
     fontWeight: '900',
     letterSpacing: 1.2,
@@ -850,17 +894,17 @@ const styles = StyleSheet.create({
   },
   brandBlock: { flex: 1, minWidth: 0 },
   brandSubtitle: {
-    color: '#4f8cff',
+    color: colors.muted,
     fontSize: 11,
     fontWeight: '800',
     marginTop: 2,
     textTransform: 'capitalize',
   },
-  brandTitle: { color: colors.text, fontSize: 26, fontWeight: '900' },
+  brandTitle: { color: colors.text, fontSize: 22, fontWeight: '900' },
   button: {
     alignItems: 'center',
     backgroundColor: colors.primary,
-    borderRadius: 16,
+    borderRadius: 10,
     justifyContent: 'center',
     marginTop: 12,
     minHeight: 54,
@@ -896,7 +940,7 @@ const styles = StyleSheet.create({
   disabledButton: { opacity: 0.55 },
   error: { color: colors.danger, marginTop: 10, textAlign: 'center' },
   groupLabel: {
-    color: colors.ai,
+    color: colors.link,
     fontSize: 11,
     fontWeight: '900',
     letterSpacing: 1.2,
@@ -904,9 +948,9 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   input: {
-    backgroundColor: '#091226',
+    backgroundColor: colors.cardSoft,
     borderColor: colors.border,
-    borderRadius: 16,
+    borderRadius: 10,
     borderWidth: 1,
     color: colors.text,
     fontSize: 16,
@@ -919,24 +963,15 @@ const styles = StyleSheet.create({
   loginPanel: {
     backgroundColor: colors.card,
     borderColor: colors.border,
-    borderRadius: 28,
+    borderRadius: 10,
     borderWidth: 1,
     marginTop: 22,
     padding: 20,
   },
-  logoutButton: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-  },
-  logoutText: { color: '#fda4af', fontSize: 12, fontWeight: '900' },
   metaBox: {
     backgroundColor: colors.cardSoft,
     borderColor: colors.border,
-    borderRadius: 16,
+    borderRadius: 10,
     borderWidth: 1,
     flex: 1,
     padding: 12,
@@ -959,17 +994,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 42,
   },
-  moduleIconText: { color: colors.ai, fontSize: 16, fontWeight: '900' },
+  moduleLineIcon: {
+    backgroundColor: colors.primary,
+    borderRadius: 999,
+    height: 8,
+    opacity: 0.8,
+    width: 8,
+  },
   moduleRow: {
     alignItems: 'center',
     backgroundColor: colors.card,
     borderColor: colors.border,
-    borderRadius: 20,
+    borderRadius: 10,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 10,
-    padding: 14,
+    marginBottom: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
   moduleRowText: { flex: 1 },
   moduleTitle: { color: colors.text, fontSize: 16, fontWeight: '900' },
@@ -987,7 +1029,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'flex-start',
     backgroundColor: colors.primary,
-    borderRadius: 28,
+    borderRadius: 999,
     height: 56,
     justifyContent: 'center',
     marginTop: 18,
@@ -1006,10 +1048,32 @@ const styles = StyleSheet.create({
   profilePanel: {
     backgroundColor: colors.card,
     borderColor: colors.border,
-    borderRadius: 22,
+    borderRadius: 10,
     borderWidth: 1,
     marginTop: 14,
     padding: 16,
+  },
+  recoveryDetail: {
+    color: colors.warning,
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: 14,
+    textAlign: 'center',
+  },
+  recoveryIcon: {
+    alignItems: 'center',
+    borderColor: colors.warning,
+    borderRadius: 999,
+    borderWidth: 1,
+    height: 48,
+    justifyContent: 'center',
+    marginBottom: 16,
+    width: 48,
+  },
+  recoveryIconText: {
+    color: colors.warning,
+    fontSize: 24,
+    fontWeight: '900',
   },
   sectionSubtitle: {
     color: colors.muted,
@@ -1025,7 +1089,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 7,
   },
-  settingsBadgeText: { color: colors.ai, fontSize: 11, fontWeight: '900' },
+  settingsBadgeText: { color: colors.link, fontSize: 11, fontWeight: '900' },
   settingsRow: {
     alignItems: 'center',
     borderBottomColor: colors.border,
@@ -1047,33 +1111,25 @@ const styles = StyleSheet.create({
   },
   topBar: {
     alignItems: 'center',
+    backgroundColor: colors.background,
     borderBottomColor: colors.line,
     borderBottomWidth: 1,
     flexDirection: 'row',
     gap: 12,
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   topBarActions: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 10,
   },
-  userName: { color: colors.text, fontSize: 13, fontWeight: '900' },
-  userPill: {
-    alignItems: 'center',
-    backgroundColor: colors.card,
-    borderColor: colors.border,
-    borderRadius: 18,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 10,
-    maxWidth: '58%',
-    paddingHorizontal: 10,
-    paddingVertical: 9,
+  chevronText: {
+    color: colors.muted,
+    fontSize: 18,
+    fontWeight: '700',
   },
-  userTextBlock: { flexShrink: 1 },
 });
 
 export default App;

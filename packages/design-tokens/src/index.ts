@@ -1,40 +1,40 @@
 export const colors = {
   // Brand colors
-  primary: '#2563eb',
-  primarySoft: '#172554',
-  primaryHover: '#1d4ed8',
+  primary: '#4f46e5',
+  primarySoft: '#1e1b4b',
+  primaryHover: '#4338ca',
 
   // Interface colors
-  background: '#020617',
-  backgroundMuted: '#090e1f',
-  card: '#0f172a',
-  cardMuted: '#111c33',
-  cardSoft: '#15213a',
-  border: '#24324a',
-  line: '#1e293b',
+  background: '#0f172a',
+  backgroundMuted: '#111827',
+  card: '#1e293b',
+  cardMuted: '#263449',
+  cardSoft: '#334155',
+  border: '#475569',
+  line: '#334155',
   text: '#f8fafc',
   muted: '#94a3b8',
   whiteSoft: '#e2e8f0',
 
   // Status colors
-  success: '#86efac',
+  success: '#34d399',
   successStrong: '#10b981',
-  successSoft: '#064e3b',
+  successSoft: '#123b33',
   danger: '#f87171',
-  dangerSoft: '#2a1218',
+  dangerSoft: '#3f1d24',
   dangerHover: '#ef4444',
   warning: '#fbbf24',
-  warningSoft: '#2a210f',
-  info: '#3b82f6',
-  infoSoft: '#1e3a8a',
+  warningSoft: '#3a2f16',
+  info: '#60a5fa',
+  infoSoft: '#1e3a5f',
 
   // Feature/AI color
-  ai: '#67e8f9',
-  aiSoft: '#083344',
+  ai: '#93c5fd',
+  aiSoft: '#1e3a5f',
 
   // Link / action colors
-  link: '#8bb7ff',
-  linkHover: '#5ea0ff',
+  link: '#bfdbfe',
+  linkHover: '#93c5fd',
 
   // White with alpha
   whiteA08: 'rgba(255,255,255,0.08)',
@@ -42,13 +42,13 @@ export const colors = {
   whiteA16: 'rgba(255,255,255,0.16)',
 
   // Unique UI surface colors
-  featuredBg: '#132142',
-  featuredBorder: '#2950b8',
-  heroBg: '#081225',
-  heroBorder: '#2a3650',
-  profileCardBg: '#312e81',
-  profileCardBorder: '#4f46e5',
-  progressFill: '#4f8cff',
+  featuredBg: '#1e293b',
+  featuredBorder: '#475569',
+  heroBg: '#1e293b',
+  heroBorder: '#475569',
+  profileCardBg: '#1e293b',
+  profileCardBorder: '#475569',
+  progressFill: '#4f46e5',
 
   // Role Specific Brand Colors
   roles: {
@@ -151,38 +151,38 @@ export const elevation = {
 
 export const glowShadows = {
   card: {
-    shadowColor: '#7ea2ff',
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
+    shadowColor: '#000000',
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
   stat: {
-    shadowColor: '#4f8cff',
-    shadowOpacity: 0.22,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 6,
+    shadowColor: '#000000',
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   floating: {
-    shadowColor: '#0ea5ff',
-    shadowOpacity: 0.28,
-    shadowRadius: 32,
-    shadowOffset: { width: 0, height: 14 },
-    elevation: 12,
+    shadowColor: '#000000',
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 4,
   },
   hero: {
-    shadowColor: '#2563eb',
-    shadowOpacity: 0.35,
-    shadowRadius: 40,
-    shadowOffset: { width: 0, height: 16 },
-    elevation: 14,
+    shadowColor: '#000000',
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
 };
 
 export const gradients = {
-  hero: ['#081225', '#0d1f4f', '#07163f'],
-  primary: ['#1a3a8f', '#2563eb', '#3b82f6'],
-  ai: ['#083344', '#0ea5e9', '#67e8f9'],
-  stat: ['#0f172a', '#1e293b'],
+  hero: ['#0f172a', '#1e293b', '#334155'],
+  primary: ['#3730a3', '#4f46e5', '#2563eb'],
+  ai: ['#1e3a5f', '#2563eb', '#93c5fd'],
+  stat: ['#1e293b', '#334155'],
 };

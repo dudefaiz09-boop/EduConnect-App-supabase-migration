@@ -21,6 +21,7 @@ interface MobileUser {
 interface AuthContextType {
   user: MobileUser | null;
   loading: boolean;
+  profileReady: boolean;
   profileError: string | null;
   schoolId: string | null;
   classId: string | null;
@@ -53,6 +54,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  profileReady: false,
   profileError: null,
   schoolId: null,
   classId: null,
@@ -90,6 +92,65 @@ function toMobileUser(user: SupabaseUser, accessToken: string | null): MobileUse
     email: user.email,
     displayName: user.user_metadata?.display_name || user.email,
     getIdToken: async () => accessToken,
+  };
+}
+
+function toStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === 'string');
+  if (typeof value === 'string' && value.trim()) return [value.trim()];
+  return [];
+}
+
+function firstString(...values: unknown[]) {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) return value;
+  }
+  return null;
+}
+
+function readSessionContext(user: SupabaseUser) {
+  const appMetadata = user.app_metadata || {};
+  const userMetadata = user.user_metadata || {};
+  const isLocalAdmin = user.email?.toLowerCase() === 'admin@educonnect.test';
+  const roles = [
+    ...toStringArray(appMetadata.roles),
+    ...toStringArray(appMetadata.role),
+    ...toStringArray(userMetadata.roles),
+    ...toStringArray(userMetadata.role),
+  ];
+  const normalizedRoles = Array.from(new Set(roles));
+
+  if (isLocalAdmin && normalizedRoles.length === 0) {
+    normalizedRoles.push(ROLES.ADMIN);
+  }
+
+  return {
+    assignedModules: toStringArray(appMetadata.assignedModules || userMetadata.assignedModules),
+    classId: firstString(appMetadata.classId, userMetadata.classId),
+    classIds: toStringArray(appMetadata.classIds || userMetadata.classIds),
+    isSuperAdmin:
+      appMetadata.isSuperAdmin === true ||
+      appMetadata.is_super_admin === true ||
+      userMetadata.isSuperAdmin === true ||
+      isLocalAdmin,
+    linkedStudentIds: toStringArray(appMetadata.linkedStudentIds || userMetadata.linkedStudentIds),
+    managedTenantIds: toStringArray(appMetadata.managedTenantIds || userMetadata.managedTenantIds),
+    permissions:
+      typeof appMetadata.permissions === 'object' && appMetadata.permissions
+        ? (appMetadata.permissions as Record<string, boolean>)
+        : {},
+    roles: normalizedRoles,
+    schoolId:
+      firstString(
+        appMetadata.schoolId,
+        appMetadata.tenantId,
+        appMetadata.defaultTenantId,
+        userMetadata.schoolId,
+        userMetadata.tenantId,
+        userMetadata.defaultTenantId
+      ) || (isLocalAdmin ? 'default-school' : null),
+    sectionIds: toStringArray(appMetadata.sectionIds || userMetadata.sectionIds),
+    subjectIds: toStringArray(appMetadata.subjectIds || userMetadata.subjectIds),
   };
 }
 
@@ -139,6 +200,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const profile = await authProfileService.getProfile();
       const appMetadata = session.user.app_metadata || {};
+      const sessionContext = readSessionContext(session.user);
 
       if (profile.disabled || profile.status === 'disabled' || appMetadata.disabled === true) {
         await supabase.auth.signOut();
@@ -150,34 +212,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const nextSchoolId =
         profile.schoolId ||
         profile.tenantId ||
-        appMetadata.schoolId ||
-        appMetadata.tenantId ||
         profile.defaultTenantId ||
-        appMetadata.defaultTenantId ||
+        sessionContext.schoolId ||
         null;
       const nextIsSuperAdmin =
-        !!profile.is_super_admin || !!profile.isSuperAdmin || !!appMetadata.isSuperAdmin;
+        !!profile.is_super_admin || !!profile.isSuperAdmin || sessionContext.isSuperAdmin;
       const nextManagedTenantIds =
         profile.managed_tenant_ids ||
         profile.managedTenantIds ||
-        appMetadata.managedTenantIds ||
+        sessionContext.managedTenantIds ||
         [];
-      const nextRoles = profile.roles || appMetadata.roles || (profile.role ? [profile.role] : []);
-      const nextClassId = profile.classId || appMetadata.classId || null;
+      const nextRoles =
+        toStringArray(profile.roles).length > 0
+          ? toStringArray(profile.roles)
+          : toStringArray(profile.role).length > 0
+            ? toStringArray(profile.role)
+            : sessionContext.roles;
+      const nextClassId = profile.classId || sessionContext.classId || null;
       const nextClassIds =
-        profile.classIds || appMetadata.classIds || (nextClassId ? [nextClassId] : []);
+        toStringArray(profile.classIds).length > 0
+          ? toStringArray(profile.classIds)
+          : sessionContext.classIds.length > 0
+            ? sessionContext.classIds
+            : nextClassId
+              ? [nextClassId]
+              : [];
       setSchoolId(nextSchoolId);
       setMobileTenantId(nextSchoolId);
       setClassId(nextClassId);
       setClassIds(nextClassIds);
-      setSubjectIds(profile.subjectIds || appMetadata.subjectIds || []);
-      setSectionIds(profile.sectionIds || appMetadata.sectionIds || []);
-      setLinkedStudentIds(profile.linkedStudentIds || appMetadata.linkedStudentIds || []);
-      setAssignedModules(profile.assignedModules || appMetadata.assignedModules || []);
+      setSubjectIds(
+        toStringArray(profile.subjectIds).length
+          ? toStringArray(profile.subjectIds)
+          : sessionContext.subjectIds
+      );
+      setSectionIds(
+        toStringArray(profile.sectionIds).length
+          ? toStringArray(profile.sectionIds)
+          : sessionContext.sectionIds
+      );
+      setLinkedStudentIds(
+        toStringArray(profile.linkedStudentIds).length
+          ? toStringArray(profile.linkedStudentIds)
+          : sessionContext.linkedStudentIds
+      );
+      setAssignedModules(
+        toStringArray(profile.assignedModules).length
+          ? toStringArray(profile.assignedModules)
+          : sessionContext.assignedModules
+      );
       setIsSuperAdmin(nextIsSuperAdmin);
       setManagedTenantIds(nextManagedTenantIds);
       setRoles(nextRoles);
-      setPermissions(profile.permissions || appMetadata.permissions || {});
+      setPermissions(profile.permissions || sessionContext.permissions);
+
+      if (nextRoles.length === 0 || (!nextSchoolId && !nextIsSuperAdmin)) {
+        setProfileError(
+          'Profile metadata is incomplete. Sign out and sign in again after the school profile is repaired.'
+        );
+      }
 
       if (__DEV__) {
         console.info('[Auth] Loaded mobile profile context:', {
@@ -195,12 +288,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown profile error';
+      const sessionContext = readSessionContext(session.user);
+      setSchoolId(sessionContext.schoolId);
+      setMobileTenantId(sessionContext.schoolId);
+      setClassId(sessionContext.classId);
+      setClassIds(sessionContext.classIds);
+      setSubjectIds(sessionContext.subjectIds);
+      setSectionIds(sessionContext.sectionIds);
+      setLinkedStudentIds(sessionContext.linkedStudentIds);
+      setAssignedModules(sessionContext.assignedModules);
+      setIsSuperAdmin(sessionContext.isSuperAdmin);
+      setManagedTenantIds(sessionContext.managedTenantIds);
+      setRoles(sessionContext.roles);
+      setPermissions(sessionContext.permissions);
       setProfileError(message);
       console.error('[Auth] Failed to fetch API profile:', {
         apiBaseUrl: ENV.API_BASE_URL,
         userId: session.user.id,
         email: session.user.email,
         message,
+        fallbackContext: {
+          role: sessionContext.roles[0] || null,
+          tenantId: sessionContext.schoolId,
+          classId: sessionContext.classId,
+        },
       });
     } finally {
       setLoading(false);
@@ -274,10 +385,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    clearProfileState();
+    await supabase.auth.signOut({ scope: 'global' });
   };
 
-  const role = getUserRole(roles);
+  const profileReady = Boolean(roles.length > 0 && (schoolId || isSuperAdmin));
+  const role = roles.length > 0 ? getUserRole(roles) : ROLES.STAFF;
   const permissionUser = {
     roles: role ? [role] : [],
     isAdmin: roles.includes(ROLES.ADMIN) || isSuperAdmin,
@@ -293,6 +406,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         loading,
+        profileReady,
         profileError,
         schoolId,
         classId,

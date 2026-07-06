@@ -11,6 +11,7 @@ export function useAssignments(service: AssignmentsService, classId?: string | n
   const query = useQuery({
     queryKey,
     queryFn: () => service.getAssignments(classId || undefined),
+    enabled: Boolean(classId),
   });
 
   const createMutation = useMutation({

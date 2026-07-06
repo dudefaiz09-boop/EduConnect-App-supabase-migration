@@ -12,14 +12,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import {
-  colors,
-  spacing,
-  radii,
-  typography,
-  glowShadows,
-  gradients,
-} from '@educonnect/design-tokens';
+import { colors, spacing, radii, typography } from '@educonnect/design-tokens';
 
 export type ModuleAction = {
   label: string;
@@ -206,11 +199,15 @@ interface ModuleErrorStateProps {
 export const ModuleErrorState: React.FC<ModuleErrorStateProps> = ({ message, onRetry }) => (
   <View
     accessibilityRole="alert"
-    accessibilityLabel={`Could not load data. ${message}`}
+    accessibilityLabel={`Data sync paused. ${message}`}
     style={styles.emptyState}
   >
-    <Text style={styles.moduleErrorTitle}>Could not load data</Text>
-    <Text style={styles.emptyBody}>{message}</Text>
+    <View style={styles.moduleErrorIcon}>
+      <Text style={styles.moduleErrorIconText}>!</Text>
+    </View>
+    <Text style={styles.moduleErrorTitle}>Data sync paused</Text>
+    <Text style={styles.emptyBody}>Viewing offline cache mode. Pull down to refresh.</Text>
+    <Text style={styles.errorDetailText}>{message}</Text>
     <TouchableOpacity
       accessibilityLabel="Retry loading module data"
       accessibilityRole="button"
@@ -744,11 +741,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.card,
-    borderRadius: radii.md,
+    borderRadius: radii.sm,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.xs,
   },
   rowIcon: {
     width: 36,
@@ -824,7 +822,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.card,
     borderColor: colors.border,
-    borderRadius: radii.xl,
+    borderRadius: radii.sm,
     borderWidth: 1,
     marginBottom: spacing.md,
     padding: spacing.xxl,
@@ -836,14 +834,36 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   moduleErrorTitle: {
-    color: colors.danger,
+    color: colors.text,
     fontSize: typography.fontSizes.lg,
-    fontWeight: typography.fontWeights.black,
+    fontWeight: typography.fontWeights.bold,
+    textAlign: 'center',
+  },
+  moduleErrorIcon: {
+    alignItems: 'center',
+    borderColor: colors.border,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    height: 42,
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+    width: 42,
+  },
+  moduleErrorIconText: {
+    color: colors.muted,
+    fontSize: typography.fontSizes.xl,
+    fontWeight: typography.fontWeights.bold,
+  },
+  errorDetailText: {
+    color: colors.muted,
+    fontSize: typography.fontSizes.xs,
+    lineHeight: 18,
+    marginTop: spacing.sm,
     textAlign: 'center',
   },
   secondaryButton: {
-    borderColor: '#4f8cff',
-    borderRadius: radii.md,
+    borderColor: colors.border,
+    borderRadius: radii.sm,
     borderWidth: 1,
     justifyContent: 'center',
     marginTop: spacing.lg,
@@ -851,17 +871,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   secondaryButtonText: {
-    color: '#8bb7ff',
+    color: colors.link,
     fontWeight: typography.fontWeights.bold,
   },
   statCard: {
     backgroundColor: colors.card,
-    borderRadius: radii.xxl,
+    borderColor: colors.border,
+    borderRadius: radii.sm,
+    borderWidth: 1,
     flexGrow: 1,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
     minWidth: '47%',
-    padding: spacing.lg,
-    ...glowShadows.stat,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   statHeader: {
     alignItems: 'center',
@@ -870,8 +892,8 @@ const styles = StyleSheet.create({
   },
   statIcon: {
     borderRadius: radii.lg,
-    height: 28,
-    width: 28,
+    height: 8,
+    width: 8,
   },
   statIconAmber: {
     backgroundColor: '#f59e0b',
@@ -899,9 +921,9 @@ const styles = StyleSheet.create({
   },
   statValue: {
     color: colors.text,
-    fontSize: 30,
-    fontWeight: typography.fontWeights.black,
-    marginTop: spacing.md,
+    fontSize: typography.fontSizes.xxl,
+    fontWeight: typography.fontWeights.bold,
+    marginTop: spacing.xs,
   },
   statDetail: {
     color: colors.muted,
@@ -934,11 +956,10 @@ const styles = StyleSheet.create({
   moduleCardSurface: {
     backgroundColor: colors.card,
     borderColor: colors.border,
-    borderRadius: 22,
+    borderRadius: radii.sm,
     borderWidth: 1,
     marginBottom: spacing.md,
     padding: spacing.lg,
-    ...glowShadows.card,
   },
   searchInput: {
     backgroundColor: colors.card,
@@ -982,7 +1003,7 @@ const styles = StyleSheet.create({
   actionTile: {
     backgroundColor: colors.cardSoft,
     borderColor: colors.border,
-    borderRadius: radii.xl,
+    borderRadius: radii.sm,
     borderWidth: 1,
     minHeight: 138,
     padding: 14,
@@ -1057,7 +1078,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xxs,
   },
   bottomTabsContainer: {
-    backgroundColor: '#07101f',
+    backgroundColor: colors.background,
     borderTopWidth: 1,
     borderTopColor: colors.line,
     paddingVertical: spacing.sm,
@@ -1224,13 +1245,12 @@ const styles = StyleSheet.create({
     color: colors.muted,
   },
   heroBanner: {
-    backgroundColor: '#081225',
-    borderColor: '#2a3650',
-    borderRadius: radii.xl,
+    backgroundColor: colors.heroBg,
+    borderColor: colors.heroBorder,
+    borderRadius: radii.sm,
     borderWidth: 1,
     padding: spacing.xl,
     marginBottom: spacing.lg,
-    ...glowShadows.hero,
   },
   heroEyebrow: {
     marginBottom: spacing.sm,
