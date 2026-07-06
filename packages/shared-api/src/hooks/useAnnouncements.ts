@@ -11,6 +11,7 @@ export function useAnnouncements(service: AnnouncementsService, schoolId?: strin
   const query = useQuery({
     queryKey,
     queryFn: () => service.getAll(),
+    enabled: Boolean(schoolId),
   });
 
   const createMutation = useMutation({

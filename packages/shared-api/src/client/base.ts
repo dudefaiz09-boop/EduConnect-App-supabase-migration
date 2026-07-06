@@ -78,6 +78,34 @@ function makeCorrelationId() {
   return `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2)}`;
 }
 
+function errorDiagnostics(error: any) {
+  return {
+    message: error?.message,
+    details: error?.details || error?.data?.details,
+    hint: error?.hint || error?.data?.hint,
+    code: error?.code || error?.data?.code || error?.data?.error,
+    status: error?.status,
+    correlationId: error?.correlationId || error?.data?.correlationId,
+    endpoint: error?.endpoint,
+    method: error?.method,
+  };
+}
+
+function logCriticalSupabaseError(error: any) {
+  const diagnostics = errorDiagnostics(error);
+  const hasStructuredCause = Boolean(
+    diagnostics.code ||
+    diagnostics.details ||
+    diagnostics.hint ||
+    diagnostics.status ||
+    diagnostics.correlationId
+  );
+
+  if (!hasStructuredCause && error?.message !== 'NETWORK_OFFLINE') return;
+
+  console.error('[EduConnect] CRITICAL SUPABASE MIGRATION ERROR:', diagnostics);
+}
+
 function runtimeOrigin() {
   if (typeof window !== 'undefined' && window.location?.origin) {
     return window.location.origin;
@@ -159,7 +187,15 @@ export class ApiClient {
       if (allowOfflineQueue && fetchConfig.method !== 'GET') {
         throw new Error('OFFLINE_QUEUED');
       }
-      throw new Error('NETWORK_OFFLINE');
+      const offlineError = new ApiRequestError({
+        kind: 'network',
+        message: 'NETWORK_OFFLINE',
+        endpoint: path,
+        method: (fetchConfig.method || 'GET').toUpperCase(),
+        data: { baseUrl: this.config.baseUrl },
+      });
+      logCriticalSupabaseError(offlineError);
+      throw offlineError;
     }
 
     // Construct URL with params. Supports both `/api` and absolute
@@ -225,7 +261,7 @@ export class ApiClient {
         if (!response.ok) {
           const errorBody = await response.json().catch(() => ({}));
           const kind = classifyResponse(response.status, errorBody);
-          throw new ApiRequestError({
+          const requestError = new ApiRequestError({
             kind,
             code: errorBody.code || errorBody.error,
             status: response.status,
@@ -235,6 +271,8 @@ export class ApiClient {
             method,
             data: errorBody,
           });
+          logCriticalSupabaseError(requestError);
+          throw requestError;
         }
 
         let data = await response.json();
@@ -272,13 +310,15 @@ export class ApiClient {
           throw error;
         }
 
-        throw new ApiRequestError({
+        const requestError = new ApiRequestError({
           kind: 'network',
           message: userSafeMessage('network', error?.message || 'Network request failed'),
           endpoint: url.pathname,
           method: (fetchConfig.method || 'GET').toUpperCase(),
           data: formatError(error),
         });
+        logCriticalSupabaseError(requestError);
+        throw requestError;
       }
     };
 
