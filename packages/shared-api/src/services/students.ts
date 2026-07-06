@@ -25,4 +25,8 @@ export class StudentsService {
   async getProfile(uid: string) {
     return this.client.get(`/students/${uid}`);
   }
+
+  async listByClass(classId: string) {
+    return this.client.get(`/students?classId=${encodeURIComponent(classId)}`);
+  }
 }

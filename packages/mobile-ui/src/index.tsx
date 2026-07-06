@@ -12,7 +12,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { colors, spacing, radii, typography } from '@educonnect/design-tokens';
+import { colors, spacing, radii, typography, glowShadows, gradients } from '@educonnect/design-tokens';
 
 export type ModuleAction = {
   label: string;
@@ -213,6 +213,80 @@ export const ModuleErrorState: React.FC<ModuleErrorStateProps> = ({ message, onR
       <Text style={styles.secondaryButtonText}>Retry</Text>
     </TouchableOpacity>
   </View>
+);
+
+// --- ROLE BADGE ---
+interface RoleBadgeProps {
+  role: keyof typeof colors.roles | string;
+  label: string;
+}
+
+export const RoleBadge: React.FC<RoleBadgeProps> = ({ role, label }) => {
+  const roleColor = colors.roles[role as keyof typeof colors.roles] || colors.primary;
+  return (
+    <View style={[styles.roleBadgeContainer, { backgroundColor: roleColor + '20', borderColor: roleColor }]}>
+      <Text style={[styles.roleBadgeText, { color: roleColor }]}>{label}</Text>
+    </View>
+  );
+};
+
+// --- MODE CHIP ---
+interface ModeChipProps {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+  style?: StyleProp<ViewStyle>;
+}
+
+export const ModeChip: React.FC<ModeChipProps> = ({ label, selected, onPress, style }) => (
+  <TouchableOpacity
+    onPress={onPress}
+    style={[
+      styles.modeChip,
+      selected ? styles.modeChipSelected : styles.modeChipUnselected,
+      style,
+    ]}
+    activeOpacity={0.7}
+  >
+    <Text style={[styles.modeChipText, selected ? styles.modeChipTextSelected : styles.modeChipTextUnselected]}>
+      {label}
+    </Text>
+  </TouchableOpacity>
+);
+
+// --- HERO BANNER ---
+interface HeroBannerProps {
+  title: string;
+  subtitle?: string;
+  eyebrow?: React.ReactNode;
+  children?: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+}
+
+export const HeroBanner: React.FC<HeroBannerProps> = ({ title, subtitle, eyebrow, children, style }) => (
+  <View style={[styles.heroBanner, style]}>
+    {eyebrow ? <View style={styles.heroEyebrow}>{eyebrow}</View> : null}
+    <Text style={styles.heroTitle}>{title}</Text>
+    {subtitle ? <Text style={styles.heroSubtitle}>{subtitle}</Text> : null}
+    {children}
+  </View>
+);
+
+// --- NOTIFICATION BELL ---
+interface NotificationBellProps {
+  unreadCount: number;
+  onPress: () => void;
+}
+
+export const NotificationBell: React.FC<NotificationBellProps> = ({ unreadCount, onPress }) => (
+  <TouchableOpacity onPress={onPress} style={styles.bellButton} activeOpacity={0.7} accessibilityLabel={`Notifications, ${unreadCount} unread`}>
+    <Text style={styles.bellIcon}>🔔</Text>
+    {unreadCount > 0 ? (
+      <View style={styles.bellBadge}>
+        <Text style={styles.bellBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+      </View>
+    ) : null}
+  </TouchableOpacity>
 );
 
 // --- STAT CARD ---
@@ -449,10 +523,11 @@ interface SegmentedControlOption {
 }
 
 interface SegmentedControlProps {
-  options: SegmentedControlOption[];
+  options: readonly SegmentedControlOption[];
   selectedKey: string;
   onSelect: (key: string) => void;
   scrollable?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const SegmentedControl: React.FC<SegmentedControlProps> = ({
@@ -460,9 +535,10 @@ export const SegmentedControl: React.FC<SegmentedControlProps> = ({
   selectedKey,
   onSelect,
   scrollable = false,
+  style,
 }) => {
   const content = (
-    <View style={styles.segmentRow}>
+    <View style={[styles.segmentRow, style]}>
       {options.map((option) => {
         const isActive = selectedKey === option.key;
         return (
@@ -761,6 +837,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     minWidth: '47%',
     padding: spacing.lg,
+    ...glowShadows.stat,
   },
   statHeader: {
     alignItems: 'center',
@@ -837,6 +914,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: spacing.md,
     padding: spacing.lg,
+    ...glowShadows.card,
   },
   searchInput: {
     backgroundColor: colors.card,
@@ -1081,6 +1159,93 @@ const styles = StyleSheet.create({
   sendButtonText: {
     color: colors.text,
     fontSize: 14,
+    fontWeight: typography.fontWeights.black,
+  },
+  roleBadgeContainer: {
+    alignSelf: 'flex-start',
+    borderRadius: radii.sm,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  roleBadgeText: {
+    fontSize: 10,
+    fontWeight: typography.fontWeights.bold,
+    textTransform: 'uppercase',
+  },
+  modeChip: {
+    borderRadius: radii.full,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    marginRight: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  modeChipSelected: {
+    backgroundColor: colors.aiSoft,
+    borderColor: colors.ai,
+  },
+  modeChipUnselected: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+  },
+  modeChipText: {
+    fontSize: typography.fontSizes.xs,
+    fontWeight: typography.fontWeights.semibold,
+  },
+  modeChipTextSelected: {
+    color: colors.ai,
+  },
+  modeChipTextUnselected: {
+    color: colors.muted,
+  },
+  heroBanner: {
+    backgroundColor: '#081225',
+    borderColor: '#2a3650',
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    padding: spacing.xl,
+    marginBottom: spacing.lg,
+    ...glowShadows.hero,
+  },
+  heroEyebrow: {
+    marginBottom: spacing.sm,
+  },
+  heroTitle: {
+    color: colors.text,
+    fontSize: typography.fontSizes.xxl,
+    fontWeight: typography.fontWeights.black,
+  },
+  heroSubtitle: {
+    color: colors.muted,
+    fontSize: typography.fontSizes.sm,
+    marginTop: spacing.xs,
+    lineHeight: 18,
+  },
+  bellButton: {
+    position: 'relative',
+    padding: spacing.xs,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bellIcon: {
+    fontSize: 22,
+  },
+  bellBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: colors.danger,
+    borderRadius: radii.full,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 2,
+  },
+  bellBadgeText: {
+    color: colors.text,
+    fontSize: 9,
     fontWeight: typography.fontWeights.black,
   },
 });

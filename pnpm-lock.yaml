@@ -199,6 +199,9 @@ importers:
 
   apps/mobile:
     dependencies:
+      '@educonnect/design-tokens':
+        specifier: workspace:*
+        version: link:../../packages/design-tokens
       '@educonnect/mobile-ui':
         specifier: workspace:*
         version: link:../../packages/mobile-ui
