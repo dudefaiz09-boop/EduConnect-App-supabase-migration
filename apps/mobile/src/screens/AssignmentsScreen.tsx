@@ -1,5 +1,15 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import {
   AppRefreshControl,
   Card,
@@ -50,7 +60,7 @@ export const AssignmentsScreen = () => {
   } = useAssignments(assignmentsService, selectedClass || schoolId);
 
   const classOptions = useMemo(() => {
-    return classIds.map(id => ({ key: id, label: id.replace(/-/g, ' ').toUpperCase() }));
+    return classIds.map((id) => ({ key: id, label: id.replace(/-/g, ' ').toUpperCase() }));
   }, [classIds]);
 
   const loadMyHistory = useCallback(async () => {
@@ -160,12 +170,16 @@ export const AssignmentsScreen = () => {
         <TouchableOpacity style={styles.backButton} onPress={() => setSelectedAssignment(null)}>
           <Text style={styles.backButtonText}>← Back to List</Text>
         </TouchableOpacity>
-        
+
         <View style={styles.detailHeader}>
           <Pill label={selectedAssignment.status} />
           <Text style={styles.detailTitle}>{selectedAssignment.title}</Text>
-          <Text style={styles.detailDueDate}>Due {new Date(selectedAssignment.dueDate).toLocaleDateString()}</Text>
-          <Text style={styles.detailPoints}>{selectedAssignment.pointsPossible} points possible</Text>
+          <Text style={styles.detailDueDate}>
+            Due {new Date(selectedAssignment.dueDate).toLocaleDateString()}
+          </Text>
+          <Text style={styles.detailPoints}>
+            {selectedAssignment.pointsPossible} points possible
+          </Text>
         </View>
 
         <Text style={styles.detailLabel}>Description</Text>
@@ -180,11 +194,13 @@ export const AssignmentsScreen = () => {
               <Card style={styles.submissionCard}>
                 <Text style={styles.submissionLabel}>Submitted Answer:</Text>
                 <Text style={styles.submissionTextContent}>{mySub.content}</Text>
-                
+
                 {mySub.checkedByAI ? (
                   <View style={styles.aiFeedbackBlock}>
                     <Text style={styles.aiFeedbackTitle}>🤖 AI Grade & Feedback</Text>
-                    <Text style={styles.aiScore}>Score: {mySub.aiScore} / {selectedAssignment.pointsPossible}</Text>
+                    <Text style={styles.aiScore}>
+                      Score: {mySub.aiScore} / {selectedAssignment.pointsPossible}
+                    </Text>
                     <Text style={styles.aiFeedback}>{mySub.aiFeedback}</Text>
                   </View>
                 ) : (
@@ -194,7 +210,9 @@ export const AssignmentsScreen = () => {
                 {mySub.teacherScore !== undefined && mySub.teacherScore !== null && (
                   <View style={styles.teacherFeedbackBlock}>
                     <Text style={styles.teacherFeedbackTitle}>👨‍🏫 Teacher Feedback</Text>
-                    <Text style={styles.teacherScore}>Score: {mySub.teacherScore} / {selectedAssignment.pointsPossible}</Text>
+                    <Text style={styles.teacherScore}>
+                      Score: {mySub.teacherScore} / {selectedAssignment.pointsPossible}
+                    </Text>
                     <Text style={styles.teacherFeedback}>{mySub.teacherFeedback}</Text>
                   </View>
                 )}
@@ -211,11 +229,16 @@ export const AssignmentsScreen = () => {
                   onChangeText={setSubmissionContent}
                 />
                 <TouchableOpacity
-                  style={[styles.submitButton, !submissionContent.trim() && styles.submitButtonDisabled]}
+                  style={[
+                    styles.submitButton,
+                    !submissionContent.trim() && styles.submitButtonDisabled,
+                  ]}
                   onPress={handleSubmission}
                   disabled={!submissionContent.trim() || isSubmitting}
                 >
-                  <Text style={styles.submitButtonText}>{isSubmitting ? 'Submitting...' : 'Submit Work'}</Text>
+                  <Text style={styles.submitButtonText}>
+                    {isSubmitting ? 'Submitting...' : 'Submit Work'}
+                  </Text>
                 </TouchableOpacity>
               </Card>
             )}
@@ -235,10 +258,12 @@ export const AssignmentsScreen = () => {
                   <Card key={sub.id} style={styles.submissionCard}>
                     <Text style={styles.studentName}>Student ID: {sub.studentId}</Text>
                     <Text style={styles.subContent}>{sub.content}</Text>
-                    
+
                     {sub.checkedByAI && (
                       <View style={styles.aiFeedbackBlockSmall}>
-                        <Text style={styles.aiTitleSmall}>AI Recommendation: {sub.aiScore} pts</Text>
+                        <Text style={styles.aiTitleSmall}>
+                          AI Recommendation: {sub.aiScore} pts
+                        </Text>
                         <Text style={styles.aiFeedbackSmall}>{sub.aiFeedback}</Text>
                       </View>
                     )}
@@ -256,14 +281,18 @@ export const AssignmentsScreen = () => {
                           placeholder="Score"
                           placeholderTextColor={colors.muted}
                           value={activeGradingState.grade}
-                          onChangeText={(t) => setGradingState(prev => prev ? { ...prev, grade: t } : null)}
+                          onChangeText={(t) =>
+                            setGradingState((prev) => (prev ? { ...prev, grade: t } : null))
+                          }
                         />
                         <TextInput
                           style={styles.feedbackInput}
                           placeholder="Feedback"
                           placeholderTextColor={colors.muted}
                           value={activeGradingState.feedback}
-                          onChangeText={(t) => setGradingState(prev => prev ? { ...prev, feedback: t } : null)}
+                          onChangeText={(t) =>
+                            setGradingState((prev) => (prev ? { ...prev, feedback: t } : null))
+                          }
                         />
                         <View style={styles.gradingFormActions}>
                           <TouchableOpacity
@@ -284,7 +313,13 @@ export const AssignmentsScreen = () => {
                     ) : (
                       <TouchableOpacity
                         style={styles.gradeButton}
-                        onPress={() => setGradingState({ studentId: sub.studentId, grade: sub.aiScore?.toString() || '', feedback: '' })}
+                        onPress={() =>
+                          setGradingState({
+                            studentId: sub.studentId,
+                            grade: sub.aiScore?.toString() || '',
+                            feedback: '',
+                          })
+                        }
                       >
                         <Text style={styles.gradeButtonText}>Grade Submission</Text>
                       </TouchableOpacity>
@@ -334,7 +369,9 @@ export const AssignmentsScreen = () => {
                 {item.description}
               </Text>
               <View style={styles.footer}>
-                <Text style={styles.dueDate}>Due {new Date(item.dueDate).toLocaleDateString()}</Text>
+                <Text style={styles.dueDate}>
+                  Due {new Date(item.dueDate).toLocaleDateString()}
+                </Text>
                 <Text style={styles.points}>{item.pointsPossible} pts</Text>
               </View>
             </Card>
