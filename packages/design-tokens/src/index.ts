@@ -148,3 +148,18 @@ export const elevation = {
     elevation: 8,
   },
 };
+
+export const glowShadows = {
+  card:    { shadowColor: '#7ea2ff', shadowOpacity: 0.18, shadowRadius: 24, shadowOffset: { width: 0, height: 10 }, elevation: 8 },
+  stat:    { shadowColor: '#4f8cff', shadowOpacity: 0.22, shadowRadius: 20, shadowOffset: { width: 0, height: 8 },  elevation: 6 },
+  floating:{ shadowColor: '#0ea5ff', shadowOpacity: 0.28, shadowRadius: 32, shadowOffset: { width: 0, height: 14 }, elevation: 12 },
+  hero:    { shadowColor: '#2563eb', shadowOpacity: 0.35, shadowRadius: 40, shadowOffset: { width: 0, height: 16 }, elevation: 14 },
+};
+
+export const gradients = {
+  hero:    ['#081225', '#0d1f4f', '#07163f'],
+  primary: ['#1a3a8f', '#2563eb', '#3b82f6'],
+  ai:      ['#083344', '#0ea5e9', '#67e8f9'],
+  stat:    ['#0f172a', '#1e293b'],
+};
+

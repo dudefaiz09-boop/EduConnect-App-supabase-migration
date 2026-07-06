@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -7,6 +7,8 @@ import {
   StyleSheet,
   Text,
   View,
+  ScrollView,
+  TouchableOpacity,
 } from 'react-native';
 import {
   Card,
@@ -15,6 +17,8 @@ import {
   LoadingState,
   ModuleErrorState as ErrorState,
   ModuleHeader,
+  SegmentedControl,
+  ModeChip,
 } from '@educonnect/mobile-ui';
 import { useAuth } from '../contexts/AuthContext';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
@@ -39,6 +43,26 @@ type ChatLog = {
   response: string;
 };
 
+const modes = [
+  { key: 'chat', label: 'Ask' },
+  { key: 'lesson', label: 'Lesson' },
+  { key: 'quiz', label: 'Quiz' },
+  { key: 'report', label: 'Report' },
+  { key: 'announcement', label: 'Draft' },
+] as const;
+type AiMode = typeof modes[number]['key'];
+
+const rolePrompts = {
+  admin: 'Summarize fee collection risks and recommend next actions.',
+  principal: 'Create a weekly academic leadership briefing.',
+  teacher: 'Generate a 10-question quiz with answers for tomorrow.',
+  student: 'Explain a difficult concept with examples and revision notes.',
+  parent: 'Summarize what I should check for my child this week.',
+  librarian: 'Recommend books for Grade 10 science enrichment.',
+  accountant: 'Create a friendly pending-fee reminder.',
+  staff: "Summarize today's support priorities.",
+};
+
 function getAiResponseText(data: AiResponse) {
   return data.response || data.answer || data.content || 'No response.';
 }
@@ -52,7 +76,7 @@ async function fetchAiStatus(): Promise<AiStatus> {
 }
 
 export function AiAssistantScreen() {
-  const { assignedModules, schoolId } = useAuth();
+  const { assignedModules, schoolId, role } = useAuth();
   const { isOffline } = useNetworkStatus();
   const [status, setStatus] = useState<AiStatus | null>(null);
   const [statusLoaded, setStatusLoaded] = useState(false);
@@ -60,11 +84,26 @@ export function AiAssistantScreen() {
   const [logs, setLogs] = useState<ChatLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const [mode, setMode] = useState<AiMode>('chat');
+  const [selectedModules, setSelectedModules] = useState<string[]>([
+    'fees',
+    'attendance',
+    'assignments',
+    'performance',
+    'library',
+  ]);
+
+  const listRef = useRef<FlatList>(null);
 
   const contextModules = useMemo(
     () => ['fees', 'attendance', 'assignments', 'performance', 'library'],
     []
   );
+
+  const suggested = useMemo(() => {
+    return rolePrompts[role as keyof typeof rolePrompts] || rolePrompts.student;
+  }, [role]);
 
   const refreshStatus = useCallback(async () => {
     setStatusLoaded(false);
@@ -72,6 +111,14 @@ export function AiAssistantScreen() {
     const data = await fetchAiStatus();
     setStatus(data);
     setStatusLoaded(true);
+  }, []);
+
+  const toggleModule = useCallback((moduleKey: string) => {
+    setSelectedModules((prev) =>
+      prev.includes(moduleKey)
+        ? prev.filter((m) => m !== moduleKey)
+        : [...prev, moduleKey]
+    );
   }, []);
 
   useEffect(() => {
@@ -88,13 +135,21 @@ export function AiAssistantScreen() {
     };
   }, [schoolId]);
 
+  useEffect(() => {
+    if (logs.length > 0) {
+      setTimeout(() => {
+        listRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [logs, loading]);
+
   const hasAssignedAiModule =
     assignedModules.length === 0 || assignedModules.includes('aiAssistant');
   const aiEnabled = Boolean(status?.enabled && hasAssignedAiModule);
   const aiAvailable = aiEnabled && !isOffline;
 
-  const sendQuery = useCallback(async () => {
-    const trimmed = query.trim();
+  const sendQuery = useCallback(async (retryQuery?: string) => {
+    const trimmed = (retryQuery || query).trim();
     if (!trimmed || loading || !aiAvailable) return;
 
     const logId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -108,12 +163,16 @@ export function AiAssistantScreen() {
       try {
         data = await apiClient.request<AiResponse>('/api/ai/context-query', {
           method: 'POST',
-          body: JSON.stringify({ query: trimmed, mode: 'chat', modules: contextModules }),
+          body: JSON.stringify({
+            query: trimmed,
+            mode,
+            modules: selectedModules,
+          }),
         });
       } catch {
         data = await apiClient.request<AiResponse>('/api/ai/query', {
           method: 'POST',
-          body: JSON.stringify({ query: trimmed, mode: 'chat' }),
+          body: JSON.stringify({ query: trimmed, mode }),
         });
       }
 
@@ -130,7 +189,7 @@ export function AiAssistantScreen() {
     } finally {
       setLoading(false);
     }
-  }, [aiAvailable, contextModules, loading, query]);
+  }, [aiAvailable, loading, query, mode, selectedModules]);
 
   if (!statusLoaded) {
     return (
@@ -169,17 +228,55 @@ export function AiAssistantScreen() {
         subtitle={
           isOffline ? 'Reconnect to ask AI questions.' : 'Ask questions about your work or studies.'
         }
-      />
-      {error ? <ErrorState message={error} onRetry={sendQuery} /> : null}
+      >
+        <View style={styles.modeControl}>
+          <SegmentedControl
+            options={modes}
+            selectedKey={mode}
+            onSelect={(key) => setMode(key as AiMode)}
+            scrollable
+          />
+        </View>
+      </ModuleHeader>
+
+      <View style={styles.chipsContainer}>
+        <Text style={styles.chipsLabel}>Context Modules:</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsScroll}>
+          {contextModules.map((m) => (
+            <ModeChip
+              key={m}
+              label={m.charAt(0).toUpperCase() + m.slice(1)}
+              selected={selectedModules.includes(m)}
+              onPress={() => toggleModule(m)}
+            />
+          ))}
+        </ScrollView>
+      </View>
+
+      {error ? <ErrorState message={error} onRetry={() => sendQuery()} /> : null}
+
       <FlatList
+        ref={listRef}
         contentContainerStyle={styles.chatList}
         data={logs}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
-          <EmptyState
-            title="How can I help?"
-            body="Ask about assignments, attendance, fees, performance, or library resources available to your role."
-          />
+          <View style={styles.emptyContainer}>
+            <EmptyState
+              title="How can I help?"
+              body="Ask about assignments, attendance, fees, performance, or library resources available to your role."
+            />
+            {suggested ? (
+              <TouchableOpacity
+                onPress={() => setQuery(suggested)}
+                style={styles.suggestionCard}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.suggestionTitle}>💡 Suggested for you:</Text>
+                <Text style={styles.suggestionText}>{suggested}</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
         }
         renderItem={({ item }) => (
           <View style={styles.messageWrapper}>
@@ -199,7 +296,7 @@ export function AiAssistantScreen() {
       <Composer
         value={query}
         onChangeText={setQuery}
-        onSubmit={sendQuery}
+        onSubmit={() => sendQuery()}
         disabled={loading || !query.trim() || !aiAvailable}
         loading={loading}
         editable={!loading && aiAvailable}
@@ -233,6 +330,9 @@ const styles = StyleSheet.create({
   messageWrapper: {
     marginBottom: 12,
   },
+  modeControl: {
+    width: 150,
+  },
   userBubble: {
     alignSelf: 'flex-end',
     backgroundColor: colors.primary,
@@ -245,6 +345,44 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 14,
     fontWeight: '700',
+  },
+  chipsContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  chipsLabel: {
+    color: colors.muted,
+    fontSize: 11,
+    fontWeight: '700',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+  },
+  chipsScroll: {
+    flexDirection: 'row',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  suggestionCard: {
+    backgroundColor: colors.cardMuted || '#111c33',
+    borderColor: colors.border,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 14,
+    marginTop: 12,
+    width: '100%',
+  },
+  suggestionTitle: {
+    color: colors.ai,
+    fontSize: 12,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  suggestionText: {
+    color: colors.whiteSoft,
+    fontSize: 13,
+    lineHeight: 18,
   },
 });
 

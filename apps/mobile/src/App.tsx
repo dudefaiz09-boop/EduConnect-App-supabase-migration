@@ -12,7 +12,8 @@ import {
   View,
 } from 'react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { canAccessModule, type ModuleKey } from '@educonnect/shared';
+import { canAccessModule, type ModuleKey, ROLE_LABELS } from '@educonnect/shared';
+import { RoleBadge, NotificationBell } from '@educonnect/mobile-ui';
 import { mobileConfigIssues } from './config/env';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useNetworkStatus } from './hooks/useNetworkStatus';
@@ -34,6 +35,7 @@ import {
   ParentPortalScreen,
   PerformanceScreen,
 } from './screens/OperationalScreens';
+import { NotificationsScreen } from './screens/NotificationsScreen';
 import { colors, formatDate } from './theme';
 
 type ModuleDefinition = {
@@ -640,11 +642,12 @@ const ModuleContent = ({
 };
 
 const AppContent = () => {
-  const { user, loading, logout, role, roles, schoolId, assignedModules } = useAuth();
+  const { user, loading, logout, role, schoolId, assignedModules } = useAuth();
   const { isOffline, lastCheckedAt } = useNetworkStatus();
   const [activeModule, setActiveModule] = useState<ActiveRouteKey>('dashboard');
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [signingOut, setSigningOut] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   useEffect(() => {
     const handleUrl = (url: string | null) => {
@@ -718,34 +721,41 @@ const AppContent = () => {
         <View style={styles.brandBlock}>
           <Text style={styles.brandTitle}>EduConnect</Text>
           <Text style={styles.brandSubtitle}>
-            {schoolId ? `School ${schoolId}` : 'EduConnect'} - {role}
+            {schoolId ? schoolId.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) : 'EduConnect'}
           </Text>
         </View>
-        <View style={styles.userPill}>
-          <View style={styles.userTextBlock}>
-            <Text style={styles.userName}>{user.displayName || user.email}</Text>
-            <Text style={styles.roleText}>{roles.length ? roles.join(' / ') : role}</Text>
+        <View style={styles.topBarActions}>
+          <NotificationBell unreadCount={0} onPress={() => setNotificationsOpen(true)} />
+          <View style={styles.userPill}>
+            <View style={styles.userTextBlock}>
+              <Text style={styles.userName} numberOfLines={1}>{user.displayName || user.email}</Text>
+              <RoleBadge role={role} label={ROLE_LABELS[role] || role} />
+            </View>
+            <TouchableOpacity
+              disabled={signingOut}
+              onPress={handleLogout}
+              style={styles.logoutButton}
+            >
+              <Text style={styles.logoutText}>{signingOut ? '...' : 'Sign out'}</Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            disabled={signingOut}
-            onPress={handleLogout}
-            style={styles.logoutButton}
-          >
-            <Text style={styles.logoutText}>{signingOut ? '...' : 'Sign out'}</Text>
-          </TouchableOpacity>
         </View>
       </View>
 
       <View style={styles.content}>
-        <ModuleContent
-          activeModule={resolvedActiveModule}
-          modulesForUser={modulesForUser}
-          onOpenModule={setActiveModule}
-          onOpenProfile={() => setActiveModule('profile')}
-          onOpenSettings={() => setActiveModule('settings')}
-          onSignOut={handleLogout}
-          signingOut={signingOut}
-        />
+        {notificationsOpen ? (
+          <NotificationsScreen onClose={() => setNotificationsOpen(false)} />
+        ) : (
+          <ModuleContent
+            activeModule={resolvedActiveModule}
+            modulesForUser={modulesForUser}
+            onOpenModule={setActiveModule}
+            onOpenProfile={() => setActiveModule('profile')}
+            onOpenSettings={() => setActiveModule('settings')}
+            onSignOut={handleLogout}
+            signingOut={signingOut}
+          />
+        )}
       </View>
 
       <View style={styles.bottomTabs}>
@@ -997,13 +1007,6 @@ const styles = StyleSheet.create({
     marginTop: 14,
     padding: 16,
   },
-  roleText: {
-    color: colors.ai,
-    fontSize: 10,
-    fontWeight: '800',
-    marginTop: 3,
-    textTransform: 'capitalize',
-  },
   sectionSubtitle: {
     color: colors.muted,
     fontSize: 13,
@@ -1047,6 +1050,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
+  },
+  topBarActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
   },
   userName: { color: colors.text, fontSize: 13, fontWeight: '900' },
   userPill: {

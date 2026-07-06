@@ -19,6 +19,8 @@ import {
   SearchInput,
   StatCard,
   sharedStyles,
+  HeroBanner,
+  SegmentedControl,
 } from '@educonnect/mobile-ui';
 
 type UserRecord = {
@@ -146,17 +148,20 @@ export function DashboardScreen({ onOpenModule }: { onOpenModule: (module: Modul
         <AppRefreshControl refreshing={isRefetching || usersLoading} onRefresh={refresh} />
       }
     >
-      <View style={styles.heroPanel}>
-        <View style={styles.workspacePill}>
-          <Text style={styles.workspacePillText}>{role} workspace</Text>
-        </View>
-        <Text style={styles.heroTitle}>{copy.title}</Text>
-        <Text style={styles.heroSubtitle}>{copy.subtitle}</Text>
+      <HeroBanner
+        title={copy.title}
+        subtitle={copy.subtitle}
+        eyebrow={
+          <View style={styles.workspacePill}>
+            <Text style={styles.workspacePillText}>{role} workspace</Text>
+          </View>
+        }
+      >
         <View style={styles.aiInsightCard}>
           <Text style={styles.aiInsightEyebrow}>Access aware</Text>
           <Text style={styles.aiInsightBody}>{copy.insight}</Text>
         </View>
-      </View>
+      </HeroBanner>
 
       <View style={sharedStyles.statGrid}>
         <StatCard title="Students" value={String(students.length)} detail="Visible learners" />
@@ -220,6 +225,15 @@ export function DashboardScreen({ onOpenModule }: { onOpenModule: (module: Modul
 export function AnnouncementsScreen() {
   const { schoolId } = useAuth();
   const [query, setQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+
+  const categories = [
+    { key: 'all', label: 'All' },
+    { key: 'school', label: 'School' },
+    { key: 'class', label: 'Class' },
+    { key: 'urgent', label: 'Urgent' },
+  ];
+
   const {
     data: announcements = [],
     dataUpdatedAt,
@@ -231,12 +245,42 @@ export function AnnouncementsScreen() {
   } = useAnnouncements(announcementsService, schoolId);
 
   const filtered = useMemo(() => {
+    let list = announcements;
+
+    if (selectedCategory !== 'all') {
+      list = list.filter((item) => {
+        const visibility = item.visibility as string | undefined;
+        const priorityItem = item as typeof item & { priority?: string; urgent?: boolean };
+        if (selectedCategory === 'urgent') {
+          return (
+            visibility === 'urgent' ||
+            priorityItem.priority === 'urgent' ||
+            priorityItem.urgent === true
+          );
+        }
+        return visibility === selectedCategory;
+      });
+    }
+
     const normalized = query.trim().toLowerCase();
-    if (!normalized) return announcements;
-    return announcements.filter((item) =>
+    if (!normalized) return list;
+    return list.filter((item) =>
       `${item.title || ''} ${item.content || ''}`.toLowerCase().includes(normalized)
     );
-  }, [announcements, query]);
+  }, [announcements, query, selectedCategory]);
+
+  const getPillTone = (visibility: string | undefined) => {
+    switch (visibility?.toLowerCase()) {
+      case 'urgent':
+        return 'red';
+      case 'class':
+        return 'green';
+      case 'school':
+        return 'blue';
+      default:
+        return 'blue';
+    }
+  };
 
   return (
     <View style={styles.flex}>
@@ -244,7 +288,16 @@ export function AnnouncementsScreen() {
         title="School Updates"
         subtitle="Priority-aware broadcasts and role-targeted announcements."
       />
-      <SearchInput value={query} onChangeText={setQuery} placeholder="Search announcements" />
+      <View style={styles.categorySelector}>
+        <SegmentedControl
+          options={categories}
+          selectedKey={selectedCategory}
+          onSelect={(key) => setSelectedCategory(key)}
+        />
+      </View>
+      <View style={styles.searchWrapper}>
+        <SearchInput value={query} onChangeText={setQuery} placeholder="Search announcements" />
+      </View>
       {isError ? (
         <ErrorState
           message={(error as Error)?.message || 'Announcements are temporarily unavailable.'}
@@ -275,7 +328,7 @@ export function AnnouncementsScreen() {
           }
           renderItem={({ item }) => (
             <Card>
-              <Pill label={item.visibility || 'update'} />
+              <Pill label={item.visibility || 'update'} tone={getPillTone(item.visibility)} />
               <Text style={sharedStyles.cardTitle}>{item.title}</Text>
               <Text style={sharedStyles.cardContent}>{item.content}</Text>
               <Text style={sharedStyles.cardDate}>{formatDate(item.createdAt)}</Text>
@@ -431,31 +484,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.featuredBg,
     borderColor: colors.featuredBorder,
   },
+  categorySelector: {
+    marginBottom: 8,
+    paddingHorizontal: 16,
+  },
   flex: {
     flex: 1,
-  },
-  heroPanel: {
-    backgroundColor: colors.heroBg,
-    borderColor: colors.heroBorder,
-    borderRadius: 28,
-    borderWidth: 1,
-    marginBottom: 16,
-    overflow: 'hidden',
-    padding: 22,
-  },
-  heroSubtitle: {
-    color: colors.whiteSoft,
-    fontSize: 16,
-    fontWeight: '600',
-    lineHeight: 24,
-    marginTop: 10,
-  },
-  heroTitle: {
-    color: colors.text,
-    fontSize: 38,
-    fontWeight: '900',
-    lineHeight: 40,
-    marginTop: 16,
   },
   linkText: {
     color: colors.linkHover,
@@ -519,6 +553,9 @@ const styles = StyleSheet.create({
   },
   screenContent: {
     paddingBottom: 24,
+  },
+  searchWrapper: {
+    paddingHorizontal: 16,
   },
   syncedText: {
     color: colors.muted,

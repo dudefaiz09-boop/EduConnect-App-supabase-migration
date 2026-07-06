@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { FlatList, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { ActivityIndicator, FlatList, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import type { AttendanceRecord } from '@educonnect/shared';
 import {
@@ -180,92 +180,504 @@ function useApiData<T>(key: unknown[], loader: () => Promise<T>, enabled = true)
   });
 }
 
+// ─── Attendance status config (mirrors web ATTENDANCE_STATUS_UI) ─────────────
+const ATTENDANCE_STATUS: { id: 'present' | 'absent' | 'late'; label: string; color: string; bg: string; border: string }[] = [
+  { id: 'present', label: 'Present', color: '#10b981', bg: '#064e3b', border: '#10b981' },
+  { id: 'absent',  label: 'Absent',  color: '#f87171', bg: '#2a1218', border: '#f87171' },
+  { id: 'late',    label: 'Late',    color: '#fbbf24', bg: '#2a210f', border: '#fbbf24' },
+];
+
+type AttendanceTab = 'mark' | 'history' | 'reports';
+
 export function AttendanceScreen() {
   const { user, canManageAttendance, classId, classIds } = useAuth();
-  const [mode, setMode] = useState<'history' | 'class'>(canManageAttendance ? 'class' : 'history');
-  const selectedClass = resolveClassId(classId, classIds);
-  const selectedDate = todayIso();
 
-  const query = useApiData<AttendanceRecord[]>(
-    ['mobile-attendance', mode, user?.uid, selectedClass, selectedDate],
-    () =>
-      mode === 'class' && canManageAttendance
-        ? (attendanceService.list(selectedClass, selectedDate) as Promise<AttendanceRecord[]>)
-        : (attendanceService.history(user!.uid) as Promise<AttendanceRecord[]>),
-    Boolean(user?.uid) && (mode !== 'class' || !canManageAttendance || Boolean(selectedClass))
+  // Role-gated default tab: teachers/admins start on Mark, students on History
+  const [tab, setTab] = useState<AttendanceTab>(canManageAttendance ? 'mark' : 'history');
+
+  // Shared state
+  const [selectedClass, setSelectedClass] = useState(() => resolveClassId(classId, classIds));
+  const [selectedDate] = useState(todayIso());
+  const [search, setSearch] = useState('');
+
+  // Mark tab state
+  const [markings, setMarkings] = useState<Record<string, 'present' | 'absent' | 'late'>>({});
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // ── Tab options (students only see History) ───────────────────────────────
+  const tabOptions = useMemo(() => {
+    if (canManageAttendance) {
+      return [
+        { key: 'mark',    label: 'Mark' },
+        { key: 'history', label: 'History' },
+        { key: 'reports', label: 'Reports' },
+      ];
+    }
+    return [{ key: 'history', label: 'History' }];
+  }, [canManageAttendance]);
+
+  // ── Data queries ──────────────────────────────────────────────────────────
+  // Students list for Mark tab (only teachers/admins)
+  const studentsQuery = useApiData<StudentProfile[]>(
+    ['mobile-attendance-students', selectedClass],
+    () => studentsService.listByClass(selectedClass) as Promise<StudentProfile[]>,
+    canManageAttendance && Boolean(selectedClass) && tab === 'mark'
   );
 
-  const records = query.data || [];
-  const present = records.filter((item) => item.status === 'present').length;
-  const absent = records.filter((item) => item.status === 'absent').length;
-  const late = records.filter((item) => item.status === 'late').length;
+  // Existing records for Mark tab (pre-populate markings)
+  const existingQuery = useApiData<AttendanceRecord[]>(
+    ['mobile-attendance-existing', selectedClass, selectedDate],
+    () => attendanceService.list(selectedClass, selectedDate) as Promise<AttendanceRecord[]>,
+    canManageAttendance && Boolean(selectedClass) && tab === 'mark'
+  );
 
+  const existingRecords = useMemo(() => existingQuery.data || [], [existingQuery.data]);
+  const existingMarkings = useMemo(() => {
+    const map: Record<string, 'present' | 'absent' | 'late'> = {};
+    existingRecords.forEach((record) => {
+      map[record.studentId] = record.status as 'present' | 'absent' | 'late';
+    });
+    return map;
+  }, [existingRecords]);
+  const attendanceMarkings = useMemo(
+    () => ({ ...existingMarkings, ...markings }),
+    [existingMarkings, markings]
+  );
+
+  // History for current user (or student tab)
+  const historyQuery = useApiData<AttendanceRecord[]>(
+    ['mobile-attendance-history', user?.uid],
+    () => attendanceService.history(user!.uid) as Promise<AttendanceRecord[]>,
+    Boolean(user?.uid) && tab === 'history'
+  );
+
+  // Reports (class-level summary)
+  const reportsQuery = useApiData<{ date: string; attendanceRate: number }[]>(
+    ['mobile-attendance-report', selectedClass],
+    () => attendanceService.report(selectedClass) as Promise<{ date: string; attendanceRate: number }[]>,
+    canManageAttendance && Boolean(selectedClass) && tab === 'reports'
+  );
+
+  // ── Derived data ──────────────────────────────────────────────────────────
+  const students = useMemo(() => studentsQuery.data || [], [studentsQuery.data]);
+  const filteredStudents = useMemo(() => {
+    if (!search.trim()) return students;
+    const q = search.toLowerCase();
+    return students.filter(
+      (s) =>
+        (s.displayName || '').toLowerCase().includes(q) ||
+        (s.email || '').toLowerCase().includes(q)
+    );
+  }, [students, search]);
+
+  const markSummary = useMemo(() => {
+    let present = 0, absent = 0, late = 0;
+    students.forEach((s) => {
+      const status = attendanceMarkings[s.uid] || 'absent';
+      if (status === 'present') present++;
+      else if (status === 'late') late++;
+      else absent++;
+    });
+    return { present, absent, late };
+  }, [students, attendanceMarkings]);
+
+  const historySummary = useMemo(() => {
+    const records = historyQuery.data || [];
+    return {
+      present: records.filter((r) => r.status === 'present').length,
+      late:    records.filter((r) => r.status === 'late').length,
+      absent:  records.filter((r) => r.status === 'absent').length,
+    };
+  }, [historyQuery.data]);
+
+  // ── Actions ───────────────────────────────────────────────────────────────
+  const markStudent = useCallback(
+    (uid: string, status: 'present' | 'absent' | 'late') =>
+      setMarkings((prev) => ({ ...prev, [uid]: status })),
+    []
+  );
+
+  const markAllPresent = useCallback(() => {
+    const next: Record<string, 'present' | 'absent' | 'late'> = {};
+    students.forEach((s) => { next[s.uid] = attendanceMarkings[s.uid] || 'present'; });
+    setMarkings((prev) => ({ ...prev, ...next }));
+  }, [students, attendanceMarkings]);
+
+  const saveAttendance = useCallback(async () => {
+    if (!selectedClass || students.length === 0) return;
+    setSaving(true);
+    setSaveError('');
+    setSaveSuccess(false);
+    try {
+      const records = students.map((s) => ({
+        studentId: s.uid,
+        studentName: s.displayName || '',
+        status: attendanceMarkings[s.uid] || 'absent',
+      }));
+      await attendanceService.mark(
+        { classId: selectedClass, date: selectedDate, records },
+        `attendance-${selectedClass}-${selectedDate}`
+      );
+      setSaveSuccess(true);
+      void existingQuery.refetch();
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err: unknown) {
+      setSaveError(err instanceof Error ? err.message : 'Save failed. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }, [selectedClass, selectedDate, students, attendanceMarkings, existingQuery]);
+
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <View style={styles.flex}>
       <ModuleHeader
         title="Attendance"
         subtitle={
           canManageAttendance
-            ? 'Daily class records and student attendance history.'
+            ? 'Mark daily attendance, view history, and run class reports.'
             : 'Your attendance history and current status.'
         }
       />
-      {canManageAttendance && (
-        <SegmentedControl
-          options={[
-            { key: 'class', label: 'Class Today' },
-            { key: 'history', label: 'My History' },
-          ]}
-          selectedKey={mode}
-          onSelect={(key) => setMode(key as 'history' | 'class')}
-        />
-      )}
-      <View style={sharedStyles.statGrid}>
-        <StatCard title="Present" value={String(present)} detail="Loaded records" tone="green" />
-        <StatCard title="Late" value={String(late)} detail="Needs follow-up" tone="amber" />
-        <StatCard title="Absent" value={String(absent)} detail="Not present" tone="red" />
-      </View>
-      {query.isLoading ? (
-        <LoadingState title="Syncing attendance" />
-      ) : query.isError ? (
-        <ErrorState
-          message={errorMessage(query.error, 'Attendance is temporarily unavailable.')}
-          onRetry={() => void query.refetch()}
-        />
-      ) : (
-        <FlatList
-          data={records}
-          keyExtractor={(item, index) => item.id || `${item.studentId}-${item.date}-${index}`}
+
+      {/* Tab selector */}
+      <SegmentedControl
+        options={tabOptions}
+        selectedKey={tab}
+        onSelect={(key) => setTab(key as AttendanceTab)}
+      />
+
+      {/* ─── MARK TAB ─────────────────────────────────────────────────────── */}
+      {tab === 'mark' && (
+        <ScrollView
+          style={styles.flex}
           contentContainerStyle={styles.listContent}
-          ListEmptyComponent={
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Stat summary row */}
+          <View style={sharedStyles.statGrid}>
+            <StatCard title="Present" value={String(markSummary.present)} detail="Marked" tone="green" />
+            <StatCard title="Late"    value={String(markSummary.late)}    detail="Follow-up" tone="amber" />
+            <StatCard title="Absent"  value={String(markSummary.absent)}  detail="Unmarked" tone="red" />
+          </View>
+
+          {/* Filters row: class selector + date */}
+          <View style={attStyles.filtersRow}>
+            {classIds.length > 1 && (
+              <View style={[attStyles.filterChip, attStyles.filterChipGrow]}>
+                <Text style={attStyles.filterLabel}>Class</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {classIds.map((cid) => (
+                    <TouchableOpacity
+                      key={cid}
+                      onPress={() => setSelectedClass(cid)}
+                      style={[
+                        attStyles.classChip,
+                        selectedClass === cid && attStyles.classChipActive,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          attStyles.classChipText,
+                          selectedClass === cid && attStyles.classChipTextActive,
+                        ]}
+                      >
+                        Class {cid}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+            <View style={attStyles.filterChip}>
+              <Text style={attStyles.filterLabel}>Date</Text>
+              <Text style={attStyles.dateText}>{selectedDate}</Text>
+            </View>
+          </View>
+
+          {/* Search bar */}
+          <View style={attStyles.searchWrap}>
+            <TextInput
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Search students…"
+              placeholderTextColor="#475569"
+              style={attStyles.searchInput}
+            />
+          </View>
+
+          {/* Student list */}
+          {studentsQuery.isLoading || existingQuery.isLoading ? (
+            <LoadingState title="Loading students…" />
+          ) : studentsQuery.isError ? (
+            <ErrorState
+              message={errorMessage(studentsQuery.error, 'Could not load students.')}
+              onRetry={() => void studentsQuery.refetch()}
+            />
+          ) : filteredStudents.length === 0 ? (
             <EmptyState
-              title="No attendance records"
-              body="Records will appear here after they are marked."
-              action={{ label: 'Refresh attendance', onPress: () => void query.refetch() }}
+              title="No students found"
+              body="Assign students to this class first, or adjust your search."
+              action={{ label: 'Refresh', onPress: () => void studentsQuery.refetch() }}
             />
-          }
-          refreshControl={
-            <AppRefreshControl
-              refreshing={query.isRefetching}
-              onRefresh={() => void query.refetch()}
-            />
-          }
-          renderItem={({ item }) => (
-            <Card>
-              <Pill
-                label={item.status}
-                tone={
-                  item.status === 'present' ? 'green' : item.status === 'late' ? 'amber' : 'red'
-                }
-              />
-              <Text style={sharedStyles.cardTitle}>{item.date || selectedDate}</Text>
-              <Text style={sharedStyles.cardContent}>Student: {item.studentId}</Text>
-              <Text style={sharedStyles.cardDate}>
-                Class {item.classId || selectedClass || 'N/A'}
-              </Text>
-            </Card>
+          ) : (
+            <View style={attStyles.studentListWrap}>
+              {/* Header row */}
+              <View style={attStyles.listHeaderRow}>
+                <Text style={attStyles.listHeaderText}>
+                  Mark Attendance
+                  <Text style={attStyles.countBadge}>  {filteredStudents.length} students</Text>
+                </Text>
+                <TouchableOpacity onPress={markAllPresent} style={attStyles.markAllBtn}>
+                  <Text style={attStyles.markAllText}>Mark All Present</Text>
+                </TouchableOpacity>
+              </View>
+
+              {filteredStudents.map((s) => (
+                <View key={s.uid} style={attStyles.studentRow}>
+                  {/* Avatar */}
+                  <View style={attStyles.avatar}>
+                    <Text style={attStyles.avatarText}>
+                      {(s.displayName || '?')[0].toUpperCase()}
+                    </Text>
+                  </View>
+                  {/* Name + email */}
+                  <View style={attStyles.studentInfo}>
+                    <Text style={attStyles.studentName}>
+                      {s.displayName || 'Unnamed Student'}
+                    </Text>
+                    {Boolean(s.email) && (
+                      <Text style={attStyles.studentEmail}>{s.email}</Text>
+                    )}
+                  </View>
+                  {/* Status toggles */}
+                  <View style={attStyles.statusRow}>
+                    {ATTENDANCE_STATUS.map((opt) => {
+                      const isSelected = attendanceMarkings[s.uid] === opt.id;
+                      return (
+                        <TouchableOpacity
+                          key={opt.id}
+                          onPress={() => markStudent(s.uid, opt.id)}
+                          style={[
+                            attStyles.statusBtn,
+                            isSelected && {
+                              backgroundColor: opt.bg,
+                              borderColor: opt.color,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              attStyles.statusBtnText,
+                              isSelected && { color: opt.color },
+                            ]}
+                          >
+                            {opt.label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              ))}
+            </View>
           )}
-        />
+
+          {/* Save feedback */}
+          {saveError.length > 0 && (
+            <View style={attStyles.errorBanner}>
+              <Text style={attStyles.errorBannerText}>{saveError}</Text>
+            </View>
+          )}
+          {saveSuccess && (
+            <View style={attStyles.successBanner}>
+              <Text style={attStyles.successBannerText}>Attendance saved successfully!</Text>
+            </View>
+          )}
+
+          {/* Save button */}
+          <TouchableOpacity
+            onPress={() => void saveAttendance()}
+            disabled={saving || students.length === 0}
+            style={[
+              attStyles.saveBtn,
+              (saving || students.length === 0) && attStyles.saveBtnDisabled,
+            ]}
+          >
+            {saving ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={attStyles.saveBtnText}>Save Daily Record</Text>
+            )}
+          </TouchableOpacity>
+        </ScrollView>
+      )}
+
+      {/* ─── HISTORY TAB ──────────────────────────────────────────────────── */}
+      {tab === 'history' && (
+        <>
+          {/* Summary stats */}
+          <View style={sharedStyles.statGrid}>
+            <StatCard title="Present" value={String(historySummary.present)} detail="All time" tone="green" />
+            <StatCard title="Late"    value={String(historySummary.late)}    detail="All time" tone="amber" />
+            <StatCard title="Absent"  value={String(historySummary.absent)}  detail="All time" tone="red" />
+          </View>
+          {historyQuery.isLoading ? (
+            <LoadingState title="Loading history…" />
+          ) : historyQuery.isError ? (
+            <ErrorState
+              message={errorMessage(historyQuery.error, 'Attendance history unavailable.')}
+              onRetry={() => void historyQuery.refetch()}
+            />
+          ) : (
+            <FlatList
+              data={historyQuery.data || []}
+              keyExtractor={(item, index) => item.id || `hist-${item.studentId}-${item.date}-${index}`}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+              ListEmptyComponent={
+                <EmptyState
+                  title="No attendance history"
+                  body="Records will appear here once attendance has been marked."
+                  action={{ label: 'Refresh', onPress: () => void historyQuery.refetch() }}
+                />
+              }
+              refreshControl={
+                <AppRefreshControl
+                  refreshing={historyQuery.isRefetching}
+                  onRefresh={() => void historyQuery.refetch()}
+                />
+              }
+              renderItem={({ item }) => {
+                const statusCfg = ATTENDANCE_STATUS.find((s) => s.id === item.status);
+                return (
+                  <Card>
+                    <View style={attStyles.historyCardRow}>
+                      <View>
+                        <Text style={sharedStyles.cardTitle}>{item.date || '—'}</Text>
+                        <Text style={sharedStyles.cardContent}>
+                          Class {item.classId || selectedClass || 'N/A'}
+                        </Text>
+                      </View>
+                      <View
+                        style={[
+                          attStyles.statusPill,
+                          statusCfg && { backgroundColor: statusCfg.bg, borderColor: statusCfg.color },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            attStyles.statusPillText,
+                            statusCfg && { color: statusCfg.color },
+                          ]}
+                        >
+                          {item.status?.toUpperCase()}
+                        </Text>
+                      </View>
+                    </View>
+                  </Card>
+                );
+              }}
+            />
+          )}
+        </>
+      )}
+
+      {/* ─── REPORTS TAB ──────────────────────────────────────────────────── */}
+      {tab === 'reports' && (
+        <ScrollView
+          style={styles.flex}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {reportsQuery.isLoading ? (
+            <LoadingState title="Loading reports…" />
+          ) : reportsQuery.isError ? (
+            <ErrorState
+              message={errorMessage(reportsQuery.error, 'Reports unavailable.')}
+              onRetry={() => void reportsQuery.refetch()}
+            />
+          ) : (
+            <>
+              {/* Class + date selector for reports */}
+              {classIds.length > 1 && (
+                <View style={attStyles.filtersRow}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    {classIds.map((cid) => (
+                      <TouchableOpacity
+                        key={cid}
+                        onPress={() => setSelectedClass(cid)}
+                        style={[
+                          attStyles.classChip,
+                          selectedClass === cid && attStyles.classChipActive,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            attStyles.classChipText,
+                            selectedClass === cid && attStyles.classChipTextActive,
+                          ]}
+                        >
+                          Class {cid}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+
+              {/* Summary card */}
+              <View style={attStyles.reportSummaryCard}>
+                <Text style={attStyles.reportSummaryLabel}>Overall Average</Text>
+                {(() => {
+                  const data = reportsQuery.data || [];
+                  const avg = data.length > 0
+                    ? Math.round((data.reduce((sum, r) => sum + (r.attendanceRate || 0), 0) / data.length) * 100)
+                    : 0;
+                  return (
+                    <>
+                      <Text style={attStyles.reportSummaryValue}>{avg}%</Text>
+                      <Text style={attStyles.reportSummarySubtext}>
+                        Based on {data.length} day{data.length !== 1 ? 's' : ''} of records for Class {selectedClass}
+                      </Text>
+                    </>
+                  );
+                })()}
+              </View>
+
+              {/* Daily rows */}
+              {(reportsQuery.data || []).length === 0 ? (
+                <EmptyState
+                  title="No report data"
+                  body="Reports populate once attendance has been marked for this class."
+                  action={{ label: 'Refresh', onPress: () => void reportsQuery.refetch() }}
+                />
+              ) : (
+                (reportsQuery.data || []).map((entry, index) => {
+                  const pct = Math.round((entry.attendanceRate || 0) * 100);
+                  const toneColor = pct >= 90 ? '#10b981' : pct >= 75 ? '#fbbf24' : '#f87171';
+                  return (
+                    <View key={`report-${index}`} style={attStyles.reportRow}>
+                      <Text style={attStyles.reportDate}>{entry.date}</Text>
+                      <View style={attStyles.reportBarTrack}>
+                        <View
+                          style={[
+                            attStyles.reportBarFill,
+                            { width: `${pct}%`, backgroundColor: toneColor },
+                          ]}
+                        />
+                      </View>
+                      <Text style={[attStyles.reportPct, { color: toneColor }]}>{pct}%</Text>
+                    </View>
+                  );
+                })
+              )}
+            </>
+          )}
+        </ScrollView>
       )}
     </View>
   );
@@ -798,5 +1210,292 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     lineHeight: 22,
+  },
+});
+
+// ─── Attendance-specific styles ───────────────────────────────────────────────
+const attStyles = StyleSheet.create({
+  // Filters row
+  filtersRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginBottom: 8,
+  },
+  filterChip: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 10,
+  },
+  filterChipGrow: {
+    flex: 1,
+  },
+  filterLabel: {
+    color: colors.muted,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginBottom: 4,
+    textTransform: 'uppercase',
+  },
+  dateText: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  // Class chips
+  classChip: {
+    borderColor: colors.border,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginRight: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  classChipActive: {
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.primary,
+  },
+  classChipText: {
+    color: colors.muted,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  classChipTextActive: {
+    color: colors.link,
+  },
+
+  // Search
+  searchWrap: {
+    marginHorizontal: 16,
+    marginBottom: 12,
+  },
+  searchInput: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: 12,
+    borderWidth: 1,
+    color: colors.text,
+    fontSize: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+  },
+
+  // Student list
+  studentListWrap: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  listHeaderRow: {
+    alignItems: 'center',
+    borderBottomColor: colors.border,
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  listHeaderText: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  countBadge: {
+    color: colors.muted,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  markAllBtn: {
+    backgroundColor: colors.primarySoft,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  markAllText: {
+    color: colors.link,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  // Student row
+  studentRow: {
+    alignItems: 'center',
+    borderBottomColor: colors.line,
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  avatar: {
+    alignItems: 'center',
+    backgroundColor: colors.cardSoft,
+    borderRadius: 18,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  avatarText: {
+    color: colors.muted,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  studentInfo: {
+    flex: 1,
+  },
+  studentName: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  studentEmail: {
+    color: colors.muted,
+    fontSize: 11,
+    marginTop: 2,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  statusBtn: {
+    borderColor: colors.border,
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+  },
+  statusBtnText: {
+    color: colors.muted,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+
+  // Save button
+  saveBtn: {
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    marginHorizontal: 16,
+    marginBottom: 24,
+    paddingVertical: 16,
+  },
+  saveBtnDisabled: {
+    opacity: 0.5,
+  },
+  saveBtnText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+
+  // Feedback banners
+  errorBanner: {
+    backgroundColor: colors.dangerSoft,
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    padding: 12,
+  },
+  errorBannerText: {
+    color: colors.danger,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  successBanner: {
+    backgroundColor: colors.successSoft,
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    padding: 12,
+  },
+  successBannerText: {
+    color: colors.success,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  // History card
+  historyCardRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  statusPill: {
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  statusPillText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+
+  // Reports tab
+  reportSummaryCard: {
+    backgroundColor: colors.primary,
+    borderRadius: 20,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 24,
+  },
+  reportSummaryLabel: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    marginBottom: 6,
+    textTransform: 'uppercase',
+  },
+  reportSummaryValue: {
+    color: '#ffffff',
+    fontSize: 48,
+    fontWeight: '900',
+    marginBottom: 4,
+  },
+  reportSummarySubtext: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  reportRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+    marginHorizontal: 16,
+    marginBottom: 10,
+  },
+  reportDate: {
+    color: colors.muted,
+    fontSize: 12,
+    fontWeight: '600',
+    width: 80,
+  },
+  reportBarTrack: {
+    backgroundColor: colors.cardSoft,
+    borderRadius: 6,
+    flex: 1,
+    height: 10,
+    overflow: 'hidden',
+  },
+  reportBarFill: {
+    borderRadius: 6,
+    height: 10,
+  },
+  reportPct: {
+    fontSize: 12,
+    fontWeight: '700',
+    width: 36,
+    textAlign: 'right',
   },
 });
